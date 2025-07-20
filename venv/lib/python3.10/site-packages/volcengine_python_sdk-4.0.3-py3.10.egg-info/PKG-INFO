@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: volcengine-python-sdk
+Version: 4.0.3
+Summary: Volcengine SDK for Python
+Home-page: https://github.com/volcengine/volcengine-python-sdk
+License: Apache License 2.0
+Platform: any
+Provides-Extra: ark
+License-File: LICENSE.txt
+License-File: NOTICE.md

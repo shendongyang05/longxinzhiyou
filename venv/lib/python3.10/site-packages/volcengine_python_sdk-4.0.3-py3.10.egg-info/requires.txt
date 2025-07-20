@@ -1,0 +1,13 @@
+certifi>=2017.4.17
+python-dateutil>=2.1
+six>=1.10
+urllib3>=1.23
+
+[ark]
+pydantic<3,>=1.9.0
+httpx<1,>=0.23.0
+anyio<5,>=3.5.0
+cryptography>=42.0.0
+
+[ark:python_version < "3.8"]
+cached-property
