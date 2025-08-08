@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+
+{%endblock%}
+
+{%block content%}
+<h3>资源链条</h3>
+    <iframe id="myIframe" width="100%" height="800px" src="http://10.21.17.188:3000/d/rYdddlPWk/node-exporter-full?from=2024-10-25T10:03:52.429Z&to=2024-10-26T10:03:52.429Z&timezone=browser&var-datasource=fe1uaxn9m2ku8b&var-job=linux&var-node=localhost&var-diskdevices=%5Ba-z%5D%2B%7Cnvme%5B0-9%5D%2Bn%5B0-9%5D%2B%7Cmmcblk%5B0-9%5D%2B&refresh=1m&theme=light" frameborder="0"></iframe>
+{%endblock%}
+
+{%block js%}
+<script>
+// 获取iframe元素
+var iframe = document.getElementById('myIframe');
+
+// 确保iframe加载完成后再执行操作
+iframe.addEventListener('load', function() {
+    // 获取iframe的document对象
+    var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+    // 使用选择器找到对应的元素
+    var selector = 'html > body > div:nth-child(1) > div > div:nth-child(1) > div > main > div:nth-child(3) > div > div > div:nth-child(2) > div > div > div > div > div:nth-child(1) > div > button > span';
+    var element = iframeDoc.querySelector(selector);
+
+    // 如果找到了元素，就移除它
+    if (element) {
+        element.text = "张"
+    }
+});
+</script>
+{%endblock%}

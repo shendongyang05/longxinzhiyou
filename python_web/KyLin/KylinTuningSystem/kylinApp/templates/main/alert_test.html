@@ -1,0 +1,176 @@
+{% extends 'layout.html' %}
+
+{% block title %}预警已读功能测试{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>预警已读功能测试</h1>
+    
+    <div class="test-section">
+        <h3>测试功能</h3>
+        <button onclick="testAddAlert()" class="btn btn-primary">添加测试预警</button>
+        <button onclick="testMultipleAlerts()" class="btn btn-success">添加多个预警</button>
+        <button onclick="showAlertPanel()" class="btn btn-info">打开预警面板</button>
+        <button onclick="clearAllAlerts()" class="btn btn-danger">清除所有预警</button>
+    </div>
+    
+    <div class="info-section">
+        <h3>功能说明</h3>
+        <ul>
+            <li><strong>预警球</strong>: 右下角的预警球显示未读预警数量</li>
+            <li><strong>悬停提示</strong>: 鼠标悬停在预警球上查看未读预警</li>
+            <li><strong>点击面板</strong>: 点击预警球打开预警管理面板</li>
+            <li><strong>标记已读</strong>: 可以单独标记预警为已读</li>
+            <li><strong>全部已读</strong>: 一键标记所有预警为已读</li>
+            <li><strong>清除预警</strong>: 清除所有预警记录</li>
+        </ul>
+    </div>
+    
+    <div class="status-section">
+        <h3>当前状态</h3>
+        <p><strong>总预警数:</strong> <span id="totalAlerts">0</span></p>
+        <p><strong>未读预警数:</strong> <span id="unreadAlerts">0</span></p>
+        <p><strong>已读预警数:</strong> <span id="readAlerts">0</span></p>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.test-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.test-section button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.info-section {
+    background: #e3f2fd;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.info-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.info-section li {
+    margin-bottom: 8px;
+}
+
+.status-section {
+    background: #f3e5f5;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.status-section p {
+    margin: 8px 0;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-primary { background: #007bff; color: white; }
+.btn-success { background: #28a745; color: white; }
+.btn-info { background: #17a2b8; color: white; }
+.btn-danger { background: #dc3545; color: white; }
+</style>
+
+<script>
+function testAddAlert() {
+    if (window.monitorManager) {
+        window.monitorManager.addAlert(
+            'CPU告警',
+            'CPU使用率超过阈值',
+            '85%',
+            '80%'
+        );
+        updateStatus();
+    }
+}
+
+function testMultipleAlerts() {
+    if (window.monitorManager) {
+        // 添加CPU预警
+        window.monitorManager.addAlert(
+            'CPU告警',
+            'CPU使用率过高',
+            '90%',
+            '80%'
+        );
+        
+        // 添加内存预警
+        setTimeout(() => {
+            window.monitorManager.addAlert(
+                '内存告警',
+                '内存使用率过高',
+                '95%',
+                '90%'
+            );
+        }, 1000);
+        
+        // 添加磁盘预警
+        setTimeout(() => {
+            window.monitorManager.addAlert(
+                '磁盘告警',
+                '磁盘使用率过高',
+                '88%',
+                '85%'
+            );
+        }, 2000);
+        
+        updateStatus();
+    }
+}
+
+function showAlertPanel() {
+    if (window.monitorManager) {
+        window.monitorManager.showAlertPanel();
+    }
+}
+
+function clearAllAlerts() {
+    if (window.monitorManager) {
+        window.monitorManager.clearAllAlerts();
+        updateStatus();
+    }
+}
+
+function updateStatus() {
+    if (window.monitorManager) {
+        const total = window.monitorManager.alerts.length;
+        const unread = window.monitorManager.alerts.filter(alert => !alert.isRead).length;
+        const read = total - unread;
+        
+        document.getElementById('totalAlerts').textContent = total;
+        document.getElementById('unreadAlerts').textContent = unread;
+        document.getElementById('readAlerts').textContent = read;
+    }
+}
+
+// 页面加载完成后更新状态
+$(document).ready(function() {
+    setTimeout(updateStatus, 1000);
+    
+    // 定期更新状态
+    setInterval(updateStatus, 2000);
+});
+</script>
+{% endblock %} 

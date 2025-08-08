@@ -1,0 +1,745 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block css %}
+    <style>
+        /* 基础样式重置 */
+        * {
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        /* 主容器样式 */
+        .migration-container {
+            color: #333;
+        }
+
+        .migration-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #333;
+            text-align: left;
+        }
+
+        /* 控制区域样式 */
+        .control-section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-label {
+            font-weight: 600;
+            color: #333;
+            min-width: 120px;
+            font-size: 14px;
+        }
+
+        .control-select, .control-input {
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 200px;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-select:focus, .control-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        /* 统一按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: 1px solid #007bff;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: 1px solid #28a745;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #218838, #1ea080);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border: 1px solid #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c82333, #bd2130);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #e9ecef !important;
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .message-box {
+            position: fixed;
+            top: 30%;
+            right: 0;
+            margin: 0 auto;
+            left: 60%;
+            transform: translateX(-50%);
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            opacity: 1;
+            transition: all 0.5s ease-in-out;
+            display: none; /* 默认隐藏 */
+        }
+
+        .message-box.fade-up {
+            top: -50px; /* 向上移动超出视窗的位置 */
+            opacity: 0;
+        }
+
+        .tranProcessPanelHeight {
+            height: 35px;
+            line-height: 35px;
+        }
+
+        .migrationPIDPlane {
+            position: fixed;
+            top: 30%;
+            right: 0;
+            left: 15%;
+            margin: 0 auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25), /* 主阴影，颜色更深 */ 0 2px 4px rgba(0, 0, 0, 0.30), /* 中等距离的模糊，颜色更深 */ 0 1px 2px rgba(0, 0, 0, 0.35); /* 最近的模糊，颜色更深 */
+        !important;
+        }
+
+        .glyphicon:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        option {
+            color: white;
+        }
+        
+        #messageBox{
+          background-color: #8fe18f;
+            color: white;
+        }
+
+        /* 数据展示区域样式 */
+        .content-section {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 1200px) {
+            .content-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .data-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        /* 表格样式 */
+        .process-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .process-table th,
+        .process-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .process-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .process-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* CPU核心列表样式 */
+        .cpu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .cpu-list li {
+            background: #f8f9fa;
+            margin-bottom: 5px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        /* 迁移面板样式优化 */
+        .migration-panel-modern {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid #e0e0e0;
+            min-width: 500px;
+            display: none;
+        }
+
+        .migration-panel-modern .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #007bff;
+        }
+
+        .migration-panel-modern .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .migration-panel-modern .close-btn:hover {
+            color: #dc3545;
+        }
+
+        .migration-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .migration-info {
+            font-weight: 500;
+            color: #333;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="migration-container">
+    <h1 class="migration-title">自动迁移进程</h1>
+
+    <!-- 控制区域 -->
+    <div class="control-section">
+        <div class="control-group">
+            <span class="control-label">服务器IP地址：</span>
+            <select class="control-select" id="ipSelect" onchange="paddingPort()">
+                <option value="">请选择服务器IP地址...</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <span class="control-label">端口选择：</span>
+            <select class="control-select" id="portSelect">
+                <option value="">请先选择IP地址...</option>
+            </select>
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn btn-primary" onclick="get_info()">
+                <i class="fa fa-search"></i> 获取进程信息
+            </button>
+            <button class="btn btn-success" onclick="startAutoMigration()" id="autoMigrateBtn" disabled>
+                <i class="fa fa-play"></i> 开始自动迁移
+            </button>
+        </div>
+    </div>
+
+    <!-- 数据展示区域 -->
+    <div class="content-section">
+        <div class="data-panel">
+            <h3 class="panel-title">进程详情</h3>
+            <div style="height: 500px; overflow: auto">
+                <table class="process-table">
+                    <thead>
+                    <tr>
+                        <th>进程号</th>
+                        <th>所在核编号</th>
+                        <th>命令</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="data-panel">
+            <h3 class="panel-title">CPU核编号</h3>
+            <ul class="cpu-list" id="CPUBIANHAO">
+            </ul>
+        </div>
+    </div>
+
+    <!-- 消息提示框 -->
+    <div id="messageBox" class="message-box">
+        操作成功！
+    </div>
+
+    <!-- 迁移面板 -->
+    <div id="migrationPanel" class="migration-panel-modern">
+        <div class="panel-header">
+            <h4 style="margin: 0; color: #333;">迁移进程</h4>
+            <button class="close-btn" onclick="hideMigrationPidPannel()" title="关闭">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="migration-content">
+            <span class="migration-info">进程编号：</span>
+            <span id="currProceessPID" class="migration-info" style="font-weight: bold; color: #007bff;"></span>
+            <span class="migration-info">当前核：</span>
+            <span id="currCPUId" class="migration-info" style="font-weight: bold; color: #28a745;"></span>
+            <span class="migration-info">迁移到核：</span>
+            <select id="CPUID" class="control-select" style="min-width: 120px;">
+                <!-- 这里会动态填充CPU核心选项 -->
+            </select>
+            <button onclick="sendMigrationPid()" class="btn btn-success">
+                <i class="fa fa-arrow-right"></i> 确认迁移
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+
+    <script>
+        function hideMigrationPidPannel() {
+            $('#migrationPanel').toggle();
+        }
+
+
+        // PID对应的数据
+        let processData = {};
+        // 进程
+        let pidTag
+        let processID
+        // 核ID
+        let cpuIdTag
+        let CPUID
+        // 更新数据flag
+        let updateFlag = false
+        let runUpdataFlag = false
+        let intervalId;
+
+
+        $(document).ready(function () {
+            console.log("自动迁移进程页面初始化开始...")
+
+            // 初始化页面
+            paddingIp()
+
+            // 默认隐藏迁移面板
+            $('#migrationPanel').hide();
+
+            // 初始化元素引用
+            pidTag = $('#currProceessPID')
+            cpuIdTag = $('#currCPUId')
+
+            // 初始化IP选择下拉框
+            initIpSelect()
+
+            console.log("页面初始化完成！")
+        });
+
+        // 初始化IP选择功能
+        function initIpSelect() {
+            // 加载服务器IP地址列表
+            loadServerIpList()
+        }
+
+        // 加载服务器IP地址列表
+        function loadServerIpList() {
+            console.log("Loading server IP list...")
+
+            $.ajax({
+                url: "/api/FuWuXinXi/select/1-1000/oneModel",
+                method: "POST",
+                data: "{}",
+                contentType: "application/json",
+                success: function(response) {
+                    console.log("Server IP list loaded:", response)
+                    populateIpSelect(response)
+                },
+                error: function(xhr, status, error) {
+                    console.error("Failed to load server IP list:", error)
+                    // 使用默认IP列表
+                    populateIpSelect({
+                        all_data: [
+                            {ip: "192.168.1.100", port: "7788", remarks: "服务器1"},
+                            {ip: "192.168.1.101", port: "7789", remarks: "服务器2"},
+                            {ip: "192.168.1.102", port: "7790", remarks: "服务器3"}
+                        ]
+                    })
+                }
+            })
+        }
+
+        // 填充IP选择下拉框
+        function populateIpSelect(data) {
+            var ipSelect = $("#ipSelect")
+            ipSelect.empty()
+            ipSelect.append('<option value="">请选择服务器IP地址...</option>')
+
+            if (data && data.all_data && data.all_data.length > 0) {
+                data.all_data.forEach(function(server) {
+                    var displayText = server.ip
+                    if (server.remarks && server.remarks.trim() !== "") {
+                        displayText += " (" + server.remarks + ")"
+                    }
+                    ipSelect.append('<option value="' + server.ip + '" data-port="' + server.port + '">' + displayText + '</option>')
+                })
+                console.log("Added " + data.all_data.length + " IP addresses to select")
+            } else {
+                ipSelect.append('<option value="" disabled>暂无可用的服务器IP地址</option>')
+                console.log("No server data available")
+            }
+        }
+
+        // 开始自动迁移功能
+        function startAutoMigration() {
+            if (!validateSelection()) {
+                return
+            }
+
+            var autoBtn = $("#autoMigrateBtn")
+            autoBtn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> 迁移中...')
+
+            // 这里可以添加自动迁移的逻辑
+            setTimeout(function() {
+                alterMessage("自动迁移完成！")
+                autoBtn.prop("disabled", false).html('<i class="fa fa-play"></i> 开始自动迁移')
+            }, 3000)
+        }
+
+        // 验证选择
+        function validateSelection() {
+            var ip = $("#ipSelect").val()
+            var port = $("#portSelect").val()
+
+            if (!ip) {
+                alert("请选择服务器IP地址！")
+                return false
+            }
+
+            if (!port) {
+                alert("请选择端口！")
+                return false
+            }
+
+            return true
+        }
+
+
+        function updataCurrCidPid(pid, cid) {
+            pidTag.text(pid)
+            cpuIdTag.text(cid)
+        }
+
+        function alterMessage(message) {
+            const messageBox = $('#messageBox');
+            messageBox.text(message)
+            // 显示消息框
+            messageBox.css('display', 'block');
+
+            // 延迟1秒后执行
+            setTimeout(() => {
+                messageBox.addClass('fade-up'); // 添加类以触发CSS动画
+            }, 1000); // 1000毫秒等于1秒
+
+            // 动画结束后隐藏消息框
+            messageBox.one('transitionend', function () {
+                if ($(this).hasClass('fade-up')) {
+                    $(this).css('display', 'none');
+                    $(this).removeClass('fade-up'); // 移除类以便下次使用
+                }
+            });
+        }
+
+        function get_info() {
+            let ip = $("#ipSelect").val();
+            let port = $("#portSelect").val();
+            let tp = "GETPIDINFO"
+            if (!runUpdataFlag) {
+                intervalId = setInterval(() => {
+                    requestNewPidData(ip, port, tp)
+                }, 5000)
+            }
+            runUpdataFlag = true
+
+        }
+
+        // 请求新的 PID 数据
+        function requestNewPidData(ip, port, tp, changeCpuId = null, currPid = null) {
+            $.ajax({
+                url: '/api/pidInfo',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    ip: ip,
+                    port: port,
+                    tp: tp,
+                    changeCpuId: changeCpuId,
+                    currPid: currPid
+                },
+                success: function (rep) {
+                    if (tp === "GETPIDINFO") {
+                        // 更新页面数据
+                        const processData = rep.data
+                        const $tableBody = $('#tableBody');
+                        const $tranCPUbody = $("#CPUID")
+                        const $CPUbody = $("#CPUBIANHAO")
+
+
+                        $tableBody.empty()
+                        $CPUbody.empty()
+                        $tranCPUbody.empty()
+                        const processIds = processData['进程号'];
+                        const coreNumbers = processData['CPU核心'];
+                        const commands = processData["启动命令"];
+                        const cpuId = processData["CPUCount"];
+                        // 进程信息
+                        for (let i = 0; i < processIds.length; i++) {
+                            const row = $('<tr></tr>'); // 创建一个新的 tr 元素
+                            row.html(`
+                    <td>${processIds[i]}</td>
+                    <td>${coreNumbers[i]}</td>
+                    <td ><span style="display: block ;width:200px !important; overflow: hidden">${commands[i]}</span></td>
+                    <td><button class="btn btn-sm btn-primary migrate-btn">迁移进程</button></td>
+                `);
+                            $tableBody.append(row);
+
+                            // 为按钮添加点击事件
+                            row.find('.migrate-btn').click(function () {
+                                const cells = $(this).closest('tr').find('td');
+                                const processId = cells.eq(0).text();
+                                const coreNumber = cells.eq(1).text();
+                                const command = cells.eq(2).text();
+                                processID = processId
+                                CPUID = coreNumber
+                                updataCurrCidPid(processId, CPUID)
+                                $('#migrationPanel').toggle();
+                            });
+                        }
+                        // cpu编号
+                        for (let i = 0; i < cpuId.length; i++) {
+                            const row = $("<li></li>")
+                            const transRow = $("<option></option>")
+                            transRow.val(`${cpuId[i]}`)
+                            transRow.text(`${cpuId[i]}`)
+                            row.addClass("list-group-item")
+                            row.text(`${cpuId[i]}`)
+                            $CPUbody.append(row)
+                            $tranCPUbody.append(transRow)
+                        }
+                    } else if (tp === "CHANGECPUID") {
+                        alterMessage("修改成功")
+                    }
+                },
+                error: function (xhr, type, errorThrown) {
+                    if (intervalId !== null) {
+                        clearInterval(intervalId)
+                        runUpdataFlag = false
+                    }
+                    alert("该IP地址无Agent");
+                }
+            });
+        }
+
+        function sendMigrationPid() {
+
+
+            $('#migrationPanel').toggle();
+            let ip = $("#ipSelect").val();
+            let port = $("#portSelect").val();
+            let tp = "CHANGECPUID"
+            let processid = processID
+            let changeCpuID = document.getElementById("CPUID").value
+            requestNewPidData(ip, port, tp, changeCpuID, processid)
+
+        }
+
+        async function requestIpAndPort(tp, name, value = {}) {
+            // 停止请求
+            console.log(intervalId)
+            if (intervalId !== null) {
+                clearInterval(intervalId)
+                runUpdataFlag = false
+            }
+            try {
+                const response = await $.ajax({
+                    url: `/api/${tp}/${name}/twoModel`,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: value,
+                    // 指定请求内容类型
+                    contentType: 'application/json'
+                });
+                return response;
+            } catch (error) {
+                alert("请求超时");
+                return null;
+            }
+        }
+
+
+        async function paddingIp() {
+            let res = await requestIpAndPort("b2", "get_ipadress");
+            // 检查 res 是否有效
+            if (!res) {
+                console.warn("Received undefined or null data");
+                return;
+            }
+
+
+            // 获取 ipSelect 元素
+            const $ipSelect = $('#ipSelect');
+
+            // 清空已有选项
+            $ipSelect.empty();
+            // 遍历 res 数据并创建新的 option 元素
+            for (const ip in res) {
+                const displayValue = res[ip];  // 假设 displayValue 是你想显示的 IP 或 PID 信息
+                for (const i in displayValue) {
+                    $ipSelect.append(`<option value="${displayValue[i]}">IP: ${displayValue[i]}</option>`);
+                }
+            }
+
+            // 选中第一个 IP
+            if ($ipSelect.children().length > 0) {
+                $ipSelect.val(Object.values(res)[0]);  // 选中第一个 IP
+            }
+            paddingPort()
+        }
+
+
+        async function paddingPort() {
+
+            let value = JSON.stringify({
+                ip: $("#ipSelect").val()
+            })
+            let res = await requestIpAndPort("b2", "get_port", value = value);
+            // 检查 res 是否有效
+            if (!res) {
+                console.warn("Received undefined or null data");
+                return;
+            }
+            // 获取 portSelect 元素
+            const $portSelect = $('#portSelect');
+            // 清空已有选项
+            $portSelect.empty();
+
+            // 遍历 res 数据并创建新的 option 元素
+            for (const port in res) {
+                $portSelect.append(`<option value="${res[port]}">PORT: ${res[port]}</option>`);
+            }
+
+            // 选中第一个 PORT
+            if ($portSelect.children().length > 0) {
+                $portSelect.val(Object.values(res)[0]);  // 选中第一个 PORT
+            }
+
+        }
+    </script>
+
+{% endblock %}

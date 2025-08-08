@@ -1,0 +1,1332 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+  /* 强制重置所有样式，确保页面显示正常 */
+  * {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+  
+  /* 统一内容区域样式 */
+  .contentBox {
+    position: relative;
+    height: 65vh;
+    overflow: auto;
+  }
+
+  .selectPage {
+    height: 10px;
+  }
+
+  .btn {
+    padding: 2px 6px;
+  }
+
+  #dropdownLiTag {
+    height: 120px !important;
+    overflow: auto;
+    background-color: bisque;
+    direction: rtl;
+  }
+
+  #dropdownLiTag li {
+    color: black;
+    padding: 5px;
+  }
+
+  #dropdownLiTag li:hover {
+    cursor: pointer;
+    background-color: rgb(197, 209, 219);
+  }
+
+  /* <reset-style> ============================ */
+  .button {
+    border: none;
+    float: right;
+    background: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 10px;
+    margin: 0 10px;
+  }
+
+  /* <main-style> ============================ */
+  @keyframes linearGradientMove {
+    100% {
+      background-position: 6px 0, -6px 100%, 0 -6px, 100% 6px;
+    }
+  }
+
+  /* 统一输入框样式，确保与其他页面一致 */
+  input {
+    height: 32px;
+    border: 1px solid #d9d9d9;
+    padding: 4px 8px;
+    font-size: 14px;
+    border-radius: 4px;
+    margin-right: 10px;
+  }
+
+  #createData div {
+    margin-top: 20px;
+  }
+
+/* 新增样式 - 按照用户管理风格 */
+/* 确保页面标题样式正确 */
+.breadcrumb-nav {
+    font-size: 14px !important;
+}
+
+.breadcrumb-item {
+    font-size: 14px !important;
+}
+
+/* 确保页面整体样式统一 - 使用更高优先级 */
+.content-area {
+    font-size: 14px !important;
+}
+
+.content-area * {
+    font-size: inherit !important;
+}
+
+/* 强制覆盖所有可能的字体大小设置 */
+.content-area h1,
+.content-area h2,
+.content-area h3,
+.content-area h4,
+.content-area h5,
+.content-area h6,
+.content-area p,
+.content-area span,
+.content-area div,
+.content-area label {
+    font-size: 14px !important;
+}
+
+/* 特别处理可能被其他样式影响的元素 */
+.content-area .tooltitle,
+.content-area .title {
+    font-size: 14px !important;
+}
+
+/* 覆盖Bootstrap可能的样式影响 */
+.table th,
+.table td {
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+}
+
+.btn {
+    font-size: 14px !important;
+    padding: 6px 12px !important;
+    height: auto !important;
+}
+
+.form-control {
+    font-size: 14px !important;
+    height: 32px !important;
+    padding: 4px 8px !important;
+}
+
+/* 确保所有文本元素都使用正确的字体大小 */
+h1, h2, h3, h4, h5, h6, p, span, div, label, input, textarea, select {
+    font-size: 14px !important;
+}
+
+/* 确保按钮样式统一 */
+.btn {
+    font-size: 14px !important;
+    padding: 6px 12px !important;
+    height: auto !important;
+}
+
+/* 确保表单控件样式统一 */
+.form-control {
+    font-size: 14px !important;
+    height: 32px !important;
+    padding: 4px 8px !important;
+}
+
+/* 确保标签样式统一 */
+label {
+    font-size: 14px !important;
+    color: #333 !important;
+}
+
+/* 确保页面内容区域样式统一 */
+.content-area {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+}
+
+.search-section {
+    background: white;
+    padding: 20px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.search-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-item label {
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.search-item .form-control {
+    width: 200px;
+    height: 32px;
+    padding: 4px 8px;
+    font-size: 14px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+}
+
+.action-section {
+    background: white;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.action-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+.info-bar {
+    background: #f0f9ff;
+    border: 1px solid #bae7ff;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1890ff;
+    font-size: 14px;
+}
+
+.info-right {
+    color: #999;
+    font-size: 14px;
+}
+
+.table-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+}
+
+.database-table {
+    margin: 0;
+    border: none;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.database-table th {
+    background: #fafafa;
+    color: #000;
+    font-weight: 500;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 14px;
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+.database-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #000;
+    font-size: 14px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.database-table tr:hover {
+    background: #f8f9fa;
+}
+
+.table-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin: 0 auto;
+    display: block;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+
+.action-buttons .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: 50px;
+}
+
+/* 弹窗样式 */
+.modal {
+    display: none !important;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show {
+    display: block !important;
+}
+
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 10px;
+    max-width: 600px;
+    margin: 30px auto;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    outline: 0;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+}
+
+.modal-header .close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-header .close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 24px;
+    flex: 1 1 auto;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid #e8e8e8;
+    gap: 12px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.required {
+    color: #ff4d4f;
+}
+
+.form-group .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    background: #fff;
+    transition: border-color 0.3s ease;
+}
+
+.form-group .form-control:focus {
+    border-color: #1890ff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.btn-default {
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    color: #333;
+}
+
+.btn-default:hover {
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #000 !important;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    order: -1;
+    margin-right: 6px;
+    margin-left: 0;
+    align-self: center;
+    vertical-align: middle;
+}
+
+.status-online .status-dot {
+    background: #52c41a;
+}
+
+.status-offline .status-dot {
+    background: #ff4d4f;
+}
+
+/* 分页样式 */
+.pagination-container {
+    background: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.pagination-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-total {
+    color: #666;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #d9d9d9;
+    background: white;
+    color: #666;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+.pagination-btn:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+    border-color: #f0f0f0;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 4px;
+}
+
+.page-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #d9d9d9;
+    background: white;
+    color: #666;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+.page-btn.active {
+    background: #1890ff;
+    border-color: #1890ff;
+    color: white;
+}
+
+.page-size-select {
+    height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #666;
+    background: white;
+    cursor: pointer;
+    min-width: 80px;
+}
+
+.page-size-select:focus {
+    border-color: #1890ff;
+    outline: none;
+}
+
+.goto-text {
+    color: #666;
+    font-size: 14px;
+}
+
+.goto-input {
+    width: 50px;
+    height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+    color: #666;
+}
+
+.goto-input:focus {
+    border-color: #1890ff;
+    outline: none;
+}
+
+</style>
+{%endblock%}
+
+{%block content%}
+<!-- 搜索区域 -->
+<div class="search-section">
+    <div class="search-left">
+        <div class="search-item">
+            <label>IP地址</label>
+            <input id="ipadress" type="text" placeholder="请输入IP地址" class="form-control">
+        </div>
+        <div class="search-item">
+            <label>数据库名称</label>
+            <input id="dbNameSearch" type="text" placeholder="请输入数据库名称" class="form-control">
+        </div>
+        <button id="selectOneModel" class="btn btn-primary">
+            <i class="el-icon-search"></i> 查询
+        </button>
+        <button id="resetSearch" class="btn btn-default">
+            重置
+        </button>
+    </div>
+</div>
+
+<!-- 操作按钮区域 -->
+<div class="action-section">
+    <div class="action-left">
+        <button id="createBtn" class="btn btn-primary">
+            <i class="el-icon-plus"></i> 新增数据库
+        </button>
+        <button id="batchDeleteBtn" class="btn btn-danger" disabled>
+            <i class="el-icon-delete"></i> 批量删除
+        </button>
+        <div class="dropdown-container">
+            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                更多操作 <i class="el-icon-arrow-down"></i>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a href="#" id="exportSelected"><i class="el-icon-download"></i> 导出所选数据</a></li>
+                <li><a href="#" id="exportAll"><i class="el-icon-download"></i> 导出全部数据</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 提示栏 -->
+<div class="info-bar">
+    <div class="info-left">
+        <i class="el-icon-info"></i>
+        <span id="selectionInfo">已选择 0 项</span>
+        <a href="#" id="clearSelection" style="display: none;">是否全部清空</a>
+    </div>
+    <div class="info-right">
+        <span>当前选择的数据库将进行批量操作</span>
+    </div>
+</div>
+
+<!-- 数据库弹窗 -->
+<div class="modal fade" id="databaseModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modalTitle">新增数据库</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="databaseForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modalIp">IP地址 <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="modalIp" placeholder="请输入IP地址" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modalPort">端口 <span class="required">*</span></label>
+                                <input type="number" class="form-control" id="modalPort" placeholder="请输入端口" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modalDatabase">数据库名称 <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="modalDatabase" placeholder="请输入数据库名称" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modalDbType">数据库类型 <span class="required">*</span></label>
+                                <select class="form-control" id="modalDbType" required>
+                                    <option value="">请选择数据库类型</option>
+                                    <option value="MySQL">MySQL</option>
+                                    <option value="PostgreSQL">PostgreSQL</option>
+                                    <option value="Oracle">Oracle</option>
+                                    <option value="SQL Server">SQL Server</option>
+                                    <option value="MongoDB">MongoDB</option>
+                                    <option value="Redis">Redis</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modalUser">用户名 <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="modalUser" placeholder="请输入用户名" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modalPassword">密码 <span class="required">*</span></label>
+                                <input type="password" class="form-control" id="modalPassword" placeholder="请输入密码" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modalDbCode">数据库编码</label>
+                                <select class="form-control" id="modalDbCode">
+                                    <option value="utf8">UTF-8</option>
+                                    <option value="utf8mb4">UTF-8MB4</option>
+                                    <option value="gbk">GBK</option>
+                                    <option value="latin1">Latin1</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="modalStatus">状态</label>
+                                <select class="form-control" id="modalStatus">
+                                    <option value="在线">在线</option>
+                                    <option value="离线">离线</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalRemarks">备注</label>
+                        <textarea class="form-control" id="modalRemarks" rows="3" placeholder="请输入备注信息"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveDatabaseBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 表格区域 -->
+<div class="table-container">
+    <table class="table table-bordered database-table">
+        <thead>
+            <tr>
+                <th width="50">
+                    <input type="checkbox" id="selectAll" class="table-checkbox">
+                </th>
+                <th width="120">IP地址</th>
+                <th width="80">端口</th>
+                <th width="120">数据库</th>
+                <th width="100">数据库类型</th>
+                <th width="100">用户名</th>
+                <th width="100">密码</th>
+                <th width="100">编码</th>
+                <th width="80">状态</th>
+                <th width="150">备注</th>
+                <th width="160">创建时间</th>
+                <th width="140">操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbodyContent">
+            <!-- 动态加载 -->
+        </tbody>
+    </table>
+</div>
+
+<!-- 分页区域 -->
+<div class="pagination-container">
+    <div class="pagination-wrapper">
+        <span class="pagination-total">共 <span id="totalCount">5</span> 条</span>
+        <div class="pagination-controls">
+            <button class="pagination-btn" id="prevPage" disabled>&lt;</button>
+            <span class="page-numbers" id="pageNumbers">
+                <button class="page-btn active">1</button>
+            </span>
+            <button class="pagination-btn" id="nextPage">&gt;</button>
+            <select class="page-size-select" id="pageSizeSelect">
+                <option value="10">10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+            </select>
+            <span class="goto-text">跳至</span>
+            <input type="number" class="goto-input" id="gotoPage" min="1" value="1">
+            <span class="goto-text">页</span>
+        </div>
+    </div>
+</div>
+
+</div>
+
+
+{%endblock%}
+
+{%block js%}
+<script>
+  // 强制设置页面样式
+  function forcePageStyles() {
+    // 强制设置所有元素的字体大小
+    $('*').css('font-size', '14px');
+    $('*').css('line-height', '1.5');
+    
+    // 特别处理可能被其他样式影响的元素
+    $('h1, h2, h3, h4, h5, h6').css('font-size', '14px');
+    $('.btn').css('font-size', '14px');
+    $('.form-control').css('font-size', '14px');
+    $('label').css('font-size', '14px');
+    $('input, textarea, select').css('font-size', '14px');
+    
+    console.log('强制设置页面样式完成');
+  }
+  
+  // 初始化
+  function initialaze() {
+    requestOneModel("JianKongShuJuKu", "select", "{}", "1-50")
+  }
+
+  $(document).ready(function () {
+    var name = "JianKongShuJuKu";
+    var type = "";
+    var values = "";
+
+    // 强制设置页面样式
+    forcePageStyles();
+    
+    // 延迟再次设置样式，确保覆盖所有动态加载的内容
+    setTimeout(function() {
+      forcePageStyles();
+    }, 100);
+
+    // 初始化数据
+    renderDatabaseTable();
+
+    // 新增数据库按钮
+    $("#createBtn").on("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Create button clicked");
+        openDatabaseModal('create');
+    });
+
+    // 编辑数据库按钮
+    $(document).on("click", ".revise", function (e) {
+        e.preventDefault();
+        console.log("Edit button clicked");
+
+        var row = $(this).closest("tr");
+        var ip = row.find("td:nth-child(2)").text();
+        var port = row.find("td:nth-child(3)").text();
+        var database = row.find("td:nth-child(4)").text();
+        var dbType = row.find("td:nth-child(5)").text();
+        var user = row.find("td:nth-child(6)").text();
+        var password = row.find("td:nth-child(7)").text();
+        var dbCode = row.find("td:nth-child(8)").text();
+        var status = row.find("td:nth-child(9)").text().trim();
+        var remarks = row.find("td:nth-child(10)").text();
+
+        console.log("Edit data:", {ip, port, database, dbType, user, password, dbCode, status, remarks});
+
+        openDatabaseModal('edit', {
+            ip: ip,
+            port: port,
+            database: database,
+            dbType: dbType,
+            user: user,
+            password: password,
+            dbCode: dbCode,
+            status: status,
+            remarks: remarks
+        });
+    });
+
+    // 保存数据库按钮
+    $("#saveDatabaseBtn").on("click", function() {
+        saveDatabase();
+    });
+
+    // 弹窗关闭事件
+    $(document).on("click", ".close, [data-dismiss='modal']", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Close button clicked");
+        closeDatabaseModal();
+    });
+
+    // 点击弹窗外部关闭
+    $(document).on("click", "#databaseModal", function(e) {
+        if (e.target === this) {
+            console.log("Clicked outside modal content");
+            closeDatabaseModal();
+        }
+    });
+
+    // 阻止弹窗内容区域的点击事件冒泡
+    $(document).on("click", ".modal-content", function(e) {
+        e.stopPropagation();
+    });
+
+    // 状态切换功能
+    $(document).on("click", ".toggle-status", function () {
+        var row = $(this).closest("tr");
+        var ip = row.data("ip");
+        var isOnline = row.data("online");
+        var action = isOnline ? "设为离线" : "设为在线";
+
+        var confirmMessage = `确认要${action}数据库 "${ip}" 吗？`;
+
+        if (confirm(confirmMessage)) {
+            // 更新UI
+            var newOnline = !isOnline;
+            row.data("online", newOnline);
+
+            var statusIndicator = $(this);
+
+            if (newOnline) {
+                statusIndicator.removeClass("status-offline").addClass("status-online");
+                statusIndicator.html('<span class="status-dot"></span>在线');
+            } else {
+                statusIndicator.removeClass("status-online").addClass("status-offline");
+                statusIndicator.html('<span class="status-dot"></span>离线');
+            }
+
+            console.log(`数据库 ${ip} 已${action}`);
+        }
+    });
+
+    var oldData = ""
+    var newData = ""
+    //初始化页面数据
+    initialaze()
+
+    reviseTag.on("click", function () {
+      var type = "update"
+      newData = get_value();
+      values = JSON.stringify({ "old": oldData, "new": newData })
+      if (values) {
+        requestOneModel(name, type, values)
+        creatDataTag.css("display", "none")
+      }
+    })
+    // 为按钮绑定提交点击事件
+    submitTag.on("click", function () {
+      // 获取输入框的值
+      type = "create";
+      values = get_value();
+      if (values) {
+        requestOneModel(name, type, values)
+        creatDataTag.css("display", "none")
+      }
+
+    });
+
+    //显示新增页面
+    $("#createBtn").on("click", function () {
+      submitTag.css("display", "block")
+      reviseTag.css("display", "none")
+      creatDataTag.css("display", "block")
+    })
+
+    //绑定查询事件
+    $("#selectOneModel").on("click", function () {
+      type = "select";
+      var value = $("#ipadress").val()
+      if (value.trim() === "") {
+        alert("请输入IP地址")
+        return;
+      }
+      ipValue = JSON.stringify({
+        "ip": $("#ipadress").val()
+      })
+
+      requestOneModel(name, type, ipValue)
+    })
+
+    //绑定选择页码
+    $(".choose").on("click", function () {
+      $("#dropdownLiTag").children().on("click", function () {
+        type = "select";
+        indexs = getNumber($(this).text())
+        numberRange = indexs[0] + "-" + indexs[1]
+        requestOneModel(name, type, "{}", numberRange)
+      })
+    })
+
+    // 使用事件委托给删除按钮添加点击事件
+    $(document).on("click", ".del", function () {
+      // 获取包含删除按钮的行元素
+      var row = $(this).closest("tr");
+      // 获取相应的值
+      var ip = row.find("td:nth-child(2)").text();
+      var port = row.find("td:nth-child(3)").text();
+      var database = row.find("td:nth-child(4)").text();
+      var dbType = row.find("td:nth-child(5)").text();
+      var user = row.find("td:nth-child(6)").text();
+      var remarks = row.find("td:nth-child(9)").text();
+      
+      // 构建确认消息
+      var confirmMessage = "确认要删除以下数据库信息吗？\n\n";
+      confirmMessage += "IP地址: " + ip + "\n";
+      confirmMessage += "端口: " + port + "\n";
+      confirmMessage += "数据库: " + database + "\n";
+      confirmMessage += "数据库类型: " + dbType + "\n";
+      confirmMessage += "用户名: " + user + "\n";
+      if (remarks && remarks.trim() !== "") {
+        confirmMessage += "备注: " + remarks + "\n";
+      }
+      confirmMessage += "\n删除后将无法恢复！";
+      
+      var bool = confirm(confirmMessage);
+      if (bool) {
+        var type = "del"
+        var values = JSON.stringify({ "ip": ip, "port": port })
+        requestOneModel(name, type, values)
+      }
+    });
+    $(document).on("click", ".revise", function () {
+      reviseTag.css("display", "block")
+      submitTag.css("display", "none")
+      creatDataTag.css("display", "block")
+      var row = $(this).closest("tr");
+      var ipValue = row.find("td:nth-child(2)").text();
+      var portValue = row.find("td:nth-child(3)").text();
+      var dbValue = row.find("td:nth-child(4)").text();
+      var dbTypeValue = row.find("td:nth-child(5)").text();
+      var userValue = row.find("td:nth-child(6)").text();
+      var passwordValue = row.find("td:nth-child(7)").text();
+      var dbCodeValue = row.find("td:nth-child(8)").text();
+      var remarksValue = row.find("td:nth-child(9)").text();
+      oldData = JSON.stringify({
+        ip: ipValue,
+        port: portValue,
+        database: dbValue,
+        type: dbTypeValue,
+        user: userValue,
+        password: passwordValue,
+        code: dbCodeValue,
+        remarks: remarksValue,
+      });
+      set_value(ipValue, portValue, dbValue, dbTypeValue, userValue, passwordValue, dbCodeValue, remarksValue)
+    });
+
+    $(document).on("click", "#closeImg", function () {
+      submitTag.css("display", "none")
+      creatDataTag.css("display", "none")
+      creatDataTag.css("display", "none")
+      set_value("", "", "", "", "", "", "", "")
+    })
+
+
+
+
+    // tool
+    function set_value(ip, port, db, dbTy, user, psd, dbcode, remarks) {
+      var ipValue = $("#ip").val(ip);
+      var portValue = $("#port").val(port);
+      var dbValue = $("#db").val(db);
+      var dbTypeValue = $("#dbType").val(dbTy);
+      var userValue = $("#user").val(user);
+      var passwordValue = $("#password").val(psd);
+      var dbCodeValue = $("#dbCode").val(dbcode);
+      var remarksValue = $("#remarks").val(remarks);
+    }
+    function get_value() {
+      var ipValue = $("#ip").val();
+      var portValue = $("#port").val();
+      var dbValue = $("#db").val();
+      var dbTypeValue = $("#dbType").val();
+      var userValue = $("#user").val();
+      var passwordValue = $("#password").val();
+      var dbCodeValue = $("#dbCode").val();
+      var remarksValue = $("#remarks").val();
+      if (
+        ipValue === '' ||
+        portValue === '' ||
+        dbValue === '' ||
+        dbTypeValue === '' ||
+        userValue === '' ||
+        passwordValue === '' ||
+        dbCodeValue === ''
+      ) {
+        // 弹窗提示有空输入框
+        alert('请输入完整信息');
+        return null;
+      }
+      // 创建一个对象并设置键值对
+      var data = {
+        ip: ipValue,
+        port: portValue,
+        database: dbValue,
+        type: dbTypeValue,
+        user: userValue,
+        password: passwordValue,
+        code: dbCodeValue,
+        remarks: remarksValue,
+      };
+
+      // 将对象转换为 JSON 字符串并返回
+      return JSON.stringify(data);
+    }
+
+
+  });
+
+  // 打开数据库弹窗
+  function openDatabaseModal(mode, databaseData) {
+      console.log("Opening modal in mode:", mode);
+
+      var modal = $("#databaseModal");
+      var title = $("#modalTitle");
+      var saveBtn = $("#saveDatabaseBtn");
+
+      // 清空表单
+      var form = $("#databaseForm")[0];
+      if (form) {
+          form.reset();
+      }
+
+      if (mode === 'create') {
+          title.text("新增数据库");
+          saveBtn.text("保存").data("mode", "create");
+          $("#modalIp").prop("readonly", false);
+      } else if (mode === 'edit') {
+          title.text("编辑数据库");
+          saveBtn.text("更新").data("mode", "edit");
+          $("#modalIp").prop("readonly", true);
+
+          // 填充数据
+          if (databaseData) {
+              $("#modalIp").val(databaseData.ip);
+              $("#modalPort").val(databaseData.port);
+              $("#modalDatabase").val(databaseData.database);
+              $("#modalDbType").val(databaseData.dbType);
+              $("#modalUser").val(databaseData.user);
+              $("#modalPassword").val(databaseData.password);
+              $("#modalDbCode").val(databaseData.dbCode);
+              $("#modalStatus").val(databaseData.status.replace(/在线|离线/, function(match) {
+                  return match === '在线' ? '在线' : '离线';
+              }));
+              $("#modalRemarks").val(databaseData.remarks);
+          }
+      }
+
+      // 显示弹窗
+      setTimeout(function() {
+          modal.removeClass("fade").addClass("show").css({
+              "display": "block",
+              "opacity": "1"
+          });
+      }, 10);
+  }
+
+  // 关闭数据库弹窗
+  function closeDatabaseModal() {
+      var modal = $("#databaseModal");
+      modal.removeClass("show").css({
+          "display": "none",
+          "opacity": "0"
+      });
+
+      // 清空表单
+      var form = $("#databaseForm")[0];
+      if (form) {
+          form.reset();
+      }
+
+      console.log("Modal closed");
+  }
+
+  // 保存数据库
+  function saveDatabase() {
+      var mode = $("#saveDatabaseBtn").data("mode");
+      var ip = $("#modalIp").val().trim();
+      var port = $("#modalPort").val().trim();
+      var database = $("#modalDatabase").val().trim();
+      var dbType = $("#modalDbType").val();
+      var user = $("#modalUser").val().trim();
+      var password = $("#modalPassword").val().trim();
+      var dbCode = $("#modalDbCode").val();
+      var status = $("#modalStatus").val();
+      var remarks = $("#modalRemarks").val().trim();
+
+      // 验证必填字段
+      if (!ip) {
+          alert("请输入IP地址");
+          $("#modalIp").focus();
+          return;
+      }
+
+      if (!port) {
+          alert("请输入端口");
+          $("#modalPort").focus();
+          return;
+      }
+
+      if (!database) {
+          alert("请输入数据库名称");
+          $("#modalDatabase").focus();
+          return;
+      }
+
+      if (!dbType) {
+          alert("请选择数据库类型");
+          $("#modalDbType").focus();
+          return;
+      }
+
+      if (!user) {
+          alert("请输入用户名");
+          $("#modalUser").focus();
+          return;
+      }
+
+      if (!password) {
+          alert("请输入密码");
+          $("#modalPassword").focus();
+          return;
+      }
+
+      // 验证IP格式
+      var ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (!ipPattern.test(ip)) {
+          alert("请输入正确的IP地址格式");
+          $("#modalIp").focus();
+          return;
+      }
+
+      // 验证端口范围
+      var portNum = parseInt(port);
+      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+          alert("请输入正确的端口号(1-65535)");
+          $("#modalPort").focus();
+          return;
+      }
+
+      var data = {
+          ip: ip,
+          port: portNum,
+          database: database,
+          type: dbType,
+          user: user,
+          password: password,
+          code: dbCode,
+          remarks: remarks
+      };
+
+      console.log("Saving database data:", data);
+
+      if (mode === 'create') {
+          // 新增数据库
+          requestOneModel("JianKongShuJuKu", "add", JSON.stringify(data));
+      } else if (mode === 'edit') {
+          // 编辑数据库
+          var updateData = {
+              old: JSON.stringify({ip: ip, port: port, database: database}),
+              new: JSON.stringify(data)
+          };
+          requestOneModel("JianKongShuJuKu", "update", JSON.stringify(updateData));
+      }
+
+      closeDatabaseModal();
+  }
+
+  // 渲染数据库表格
+  function renderDatabaseTable() {
+      var tbody = $("#tbodyContent");
+      tbody.empty();
+
+      // 模拟数据库数据
+      var databases = [
+          {ip: "192.168.1.100", port: "3306", database: "user_db", type: "MySQL", user: "root", password: "******", code: "utf8", remarks: "用户数据库"},
+          {ip: "192.168.1.101", port: "5432", database: "product_db", type: "PostgreSQL", user: "postgres", password: "******", code: "utf8", remarks: "产品数据库"},
+          {ip: "192.168.1.102", port: "1521", database: "order_db", type: "Oracle", user: "oracle", password: "******", code: "utf8", remarks: "订单数据库"},
+          {ip: "192.168.1.103", port: "1433", database: "log_db", type: "SQL Server", user: "sa", password: "******", code: "utf8", remarks: "日志数据库"},
+          {ip: "192.168.1.104", port: "27017", database: "cache_db", type: "MongoDB", user: "admin", password: "******", code: "utf8", remarks: "缓存数据库"}
+      ];
+
+      if (databases.length === 0) {
+          tbody.append('<tr><td colspan="12" style="text-align: center; color: #999;">暂无数据</td></tr>');
+          return;
+      }
+
+      databases.forEach(function(db, index) {
+          var isOnline = Math.random() > 0.3; // 70%概率为在线状态
+          var statusClass = isOnline ? 'status-online' : 'status-offline';
+          var statusText = isOnline ? '在线' : '离线';
+          var createTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+          var row = `
+              <tr data-ip="${db.ip}" data-online="${isOnline}">
+                  <td>
+                      <input type="checkbox" class="table-checkbox database-checkbox" value="${db.ip}">
+                  </td>
+                  <td>${db.ip}</td>
+                  <td>${db.port}</td>
+                  <td>${db.database}</td>
+                  <td>${db.type}</td>
+                  <td>${db.user}</td>
+                  <td>${db.password}</td>
+                  <td>${db.code}</td>
+                  <td>
+                      <span class="status-indicator ${statusClass} toggle-status" title="点击切换状态">
+                          <span class="status-dot"></span>
+                          ${statusText}
+                      </span>
+                  </td>
+                  <td>${db.remarks}</td>
+                  <td>${createTime}</td>
+                  <td>
+                      <div class="action-buttons">
+                          <button class="btn btn-primary btn-sm revise" title="编辑">
+                              编辑
+                          </button>
+                          <button class="btn btn-danger btn-sm del" title="删除">
+                              删除
+                          </button>
+                      </div>
+                  </td>
+              </tr>
+          `;
+          tbody.append(row);
+      });
+  }
+
+</script>
+{%endblock%}

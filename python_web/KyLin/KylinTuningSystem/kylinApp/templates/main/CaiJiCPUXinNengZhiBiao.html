@@ -1,0 +1,883 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+    .cpu-collection-container {
+        padding: 20px;
+        background: #f5f5f5;
+        min-height: 100vh;
+        color: #333;
+    }
+
+    .cpu-collection-title {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    .control-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+    }
+
+    .control-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .control-label {
+        font-size: 18px;
+        color: #333;
+        white-space: nowrap;
+    }
+
+    .control-select {
+        background: white;
+        color: #333;
+        border: 1px solid #ccc;
+        padding: 8px 15px;
+        border-radius: 4px;
+        font-size: 16px;
+        min-width: 120px;
+    }
+
+    #refreshIpBtn {
+        background: #6c757d;
+        color: white;
+        border: 1px solid #6c757d;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        margin-left: 10px;
+        transition: background-color 0.2s;
+    }
+
+    #refreshIpBtn:hover {
+        background: #5a6268;
+        border-color: #545b62;
+    }
+
+    #refreshIpBtn:disabled {
+        background: #e9ecef;
+        color: #6c757d;
+        border-color: #dee2e6;
+        cursor: not-allowed;
+    }
+
+    /* 统一按钮样式设计 */
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* 开始采集按钮 - 绿色系 */
+    #startBtn {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border: 1px solid #28a745;
+    }
+
+    #startBtn:hover {
+        background: linear-gradient(135deg, #218838, #1ea080);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        transform: translateY(-1px);
+    }
+
+    #startBtn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    }
+
+    /* 停止采集按钮 - 红色系 */
+    #overBtn {
+        background: linear-gradient(135deg, #dc3545, #e74c3c);
+        color: white;
+        border: 1px solid #dc3545;
+    }
+
+    #overBtn:hover {
+        background: linear-gradient(135deg, #c82333, #d62c1a);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        transform: translateY(-1px);
+    }
+
+    #overBtn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    }
+
+    /* 发送指令按钮 - 蓝色系 */
+    #sendCustomCmdBtn, #sendDefaultCmdBtn {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        border: 1px solid #007bff;
+        margin: 5px;
+    }
+
+    #sendCustomCmdBtn:hover, #sendDefaultCmdBtn:hover {
+        background: linear-gradient(135deg, #0056b3, #004085);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        transform: translateY(-1px);
+    }
+
+    /* 重置按钮 - 橙色系 */
+    .btn-reset {
+        background: linear-gradient(135deg, #fd7e14, #e55a00);
+        color: white;
+        border: 1px solid #fd7e14;
+    }
+
+    .btn-reset:hover {
+        background: linear-gradient(135deg, #e55a00, #cc4900);
+        box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
+        transform: translateY(-1px);
+    }
+
+    /* 禁用状态 */
+    .btn:disabled {
+        background: #e9ecef !important;
+        color: #6c757d !important;
+        border-color: #dee2e6 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    /* 按钮组间距 */
+    .control-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .control-buttons .btn {
+        margin: 0;
+    }
+
+    .control-input {
+        background: white;
+        color: #333;
+        border: 1px solid #ccc;
+        padding: 8px 15px;
+        border-radius: 4px;
+        font-size: 16px;
+        min-width: 100px;
+    }
+
+    .control-input::placeholder {
+        color: #999;
+    }
+
+    .control-btn {
+        background: #f8f9fa;
+        color: #333;
+        border: 1px solid #ccc;
+        padding: 8px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .control-btn:hover {
+        background: #e9ecef;
+    }
+
+    .control-btn.primary {
+        background: #6c757d;
+        color: white;
+        border-color: #6c757d;
+    }
+
+    .control-btn.primary:hover {
+        background: #5a6268;
+    }
+
+    .control-btn.danger {
+        background: #868e96;
+        color: white;
+        border-color: #868e96;
+    }
+
+    .control-btn.danger:hover {
+        background: #6c757d;
+    }
+
+    .control-btn.ai {
+        background: #495057;
+        color: white;
+        border-color: #495057;
+    }
+
+    .control-btn.ai:hover {
+        background: #343a40;
+    }
+
+    .status-section {
+        margin-bottom: 30px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+    }
+
+    .status-input {
+        width: 100%;
+        max-width: 500px;
+        height: 40px;
+        background: #f8f9fa;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        color: #333;
+        padding: 10px;
+        font-size: 16px;
+        resize: none;
+    }
+
+    .status-input::placeholder {
+        color: #999;
+    }
+
+    .content-section {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .data-display-panel, .ai-suggestion-panel {
+        flex: 1;
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        color: #333;
+        min-height: 400px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+    }
+
+    .panel-title {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .panel-content {
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 15px;
+        min-height: 300px;
+        border: 1px solid #ddd;
+        overflow-y: auto;
+        max-height: 400px;
+    }
+
+    .manual-optimization-section {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        color: #333;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+    }
+
+    .manual-controls {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .manual-input {
+        flex: 1;
+        min-width: 250px;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        background: white;
+    }
+
+    .manual-select {
+        min-width: 200px;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        background: white;
+    }
+
+    .manual-btn {
+        background: #6c757d;
+        color: white;
+        border: 1px solid #6c757d;
+        padding: 8px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .manual-btn:hover {
+        background: #5a6268;
+    }
+
+    .feedback-section {
+        margin-top: 15px;
+    }
+
+    .feedback-content {
+        background: #f8f9fa;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 15px;
+        min-height: 100px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        color: #333;
+    }
+
+    .ai-suggestion-textarea {
+        width: 100%;
+        height: 300px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 10px;
+        font-size: 14px;
+        resize: vertical;
+        background: white;
+        color: #333;
+        font-family: 'Courier New', monospace;
+        line-height: 1.4;
+    }
+</style>
+{%endblock%}
+
+{%block content%}
+<div class="cpu-collection-container">
+    <h1 class="cpu-collection-title">CPU性能指标采集</h1>
+
+    <!-- 控制区域 -->
+    <div class="control-section">
+        <div class="control-group">
+            <span class="control-label">服务器选择：</span>
+            <select class="control-select" id="ipSelect">
+                <option value="">请选择服务器...</option>
+            </select>
+            <button type="button" class="btn btn-sm btn-secondary" id="refreshIpBtn" title="刷新IP地址列表">
+                <i class="fa fa-refresh"></i> 刷新
+            </button>
+        </div>
+
+        <div class="control-group">
+            <span class="control-label">选择端口：</span>
+            <input type="text" class="control-input" id="portInput" placeholder="7788" value="7788">
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn" id="startBtn">
+                <i class="fa fa-play"></i> 开始采集
+            </button>
+            <button class="btn" id="overBtn" disabled>
+                <i class="fa fa-stop"></i> 结束采集
+            </button>
+            <button class="btn btn-reset" id="aiOptimizeBtn">
+                <i class="fa fa-magic"></i> AI一键调优
+            </button>
+        </div>
+    </div>
+
+    <!-- 状态区域 -->
+    <div class="status-section">
+        <div class="control-group">
+            <span class="control-label">状态：</span>
+            <textarea class="status-input" id="stateInfo" placeholder="等待开始采集..." readonly></textarea>
+        </div>
+    </div>
+
+    <!-- 数据展示和AI建议区域 -->
+    <div class="content-section">
+        <div class="data-display-panel">
+            <h3 class="panel-title">数据展示</h3>
+            <div class="panel-content" id="dataDisplay">
+                <p>暂无数据，请开始采集...</p>
+            </div>
+        </div>
+
+        <div class="ai-suggestion-panel">
+            <h3 class="panel-title">AI调优建议</h3>
+            <div class="panel-content">
+                <textarea class="ai-suggestion-textarea" id="aiSuggestionText" placeholder="AI调优建议将在这里显示..." readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手动指令调优区域 -->
+    <div class="manual-optimization-section">
+        <h3 class="panel-title">手动指令调优</h3>
+
+        <div class="manual-controls">
+            <input type="text" class="manual-input" id="customCmdInput" placeholder="输入自定义指令">
+            <button class="btn" id="sendCustomCmdBtn">
+                <i class="fa fa-paper-plane"></i> 发送
+            </button>
+
+            <select class="manual-select" id="defaultCmdSelect">
+                <option value="">选择常用指令</option>
+                <option value="1">查看防火墙</option>
+                <option value="2">开启防火墙</option>
+                <option value="3">关闭防火墙</option>
+                <option value="4">优化文件系统</option>
+                <option value="18">清理系统缓存</option>
+                <option value="19">查看磁盘使用情况</option>
+                <option value="20">重启Nginx服务</option>
+                <option value="26">重启MySQL服务</option>
+                <option value="25">重启服务器</option>
+            </select>
+            <button class="btn" id="sendDefaultCmdBtn">
+                <i class="fa fa-send"></i> 发送
+            </button>
+        </div>
+
+        <div class="feedback-section">
+            <h4>指令反馈</h4>
+            <div class="feedback-content" id="cmdFeedback">等待指令执行...</div>
+        </div>
+    </div>
+</div>
+
+  {%endblock%}
+
+  {%block js%}
+  <script>
+
+
+    let hasCollectedData = false;
+    let lastCollectedDataStr = null;
+
+    // 加载服务器IP地址列表
+    function loadServerIpList() {
+        console.log("Loading server IP list...");
+        $("#refreshIpBtn").prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> 加载中...');
+
+        $.ajax({
+            url: "/api/JianKongFuWuQi/select/1-1000/oneModel",  // 获取监控服务器信息管理中的所有数据
+            method: "POST",
+            data: "{}",
+            contentType: "application/json",
+            success: function(response) {
+                console.log("Server IP list loaded:", response);
+                populateIpSelect(response);
+                $("#refreshIpBtn").prop("disabled", false).html('<i class="fa fa-refresh"></i> 刷新');
+            },
+            error: function(xhr, status, error) {
+                console.error("Failed to load server IP list:", error);
+                alert("获取服务器IP地址列表失败，请检查服务器信息管理中是否有数据");
+                $("#refreshIpBtn").prop("disabled", false).html('<i class="fa fa-refresh"></i> 刷新');
+            }
+        });
+    }
+
+    // 填充IP选择下拉框
+    function populateIpSelect(data) {
+        var ipSelect = $("#ipSelect");
+        ipSelect.empty();
+        ipSelect.append('<option value="">请选择服务器...</option>');
+
+        if (data && data.all_data && data.all_data.length > 0) {
+            data.all_data.forEach(function(server) {
+                var displayText = "";
+                // 优先显示备注名字，如果没有备注则显示IP
+                if (server.remarks && server.remarks.trim() !== "") {
+                    displayText = server.remarks;
+                } else {
+                    displayText = server.ip;
+                }
+                // 在显示文本后面添加IP地址信息
+                displayText += " (" + server.ip + ")";
+                ipSelect.append('<option value="' + server.ip + '">' + displayText + '</option>');
+            });
+            console.log("Added " + data.all_data.length + " servers to select");
+        } else {
+            ipSelect.append('<option value="" disabled>暂无可用的服务器</option>');
+            console.log("No server data available");
+        }
+    }
+
+    function caiJiShuJu(tp, model, ipValue) {
+      requestTwoModel(tp, model, ipValue, function(data){
+          onCollectSuccess(data);
+      });
+      paddingInfoStateIng()
+    }
+    function paddingInfoStateIng() {
+      $("#stateInfo").text("正在采集......")
+    }
+    function paddingInfoStateEnd() {
+      $("#stateInfo").text("采集完成")
+    }
+
+    function handleCollectSuccess(data) {
+      hasCollectedData = true;
+      lastCollectedDataStr = JSON.stringify(data); // 转成字符串
+      paddingInfoStateEnd();
+      // 保存数据到后端
+      var saveData = {
+        type: 'cpu',
+        host: data.host || data.ip || data.ipaddress || '',
+        info: data.info || data
+      };
+      
+      // 如果info字段不存在，将整个data作为info
+      if (!saveData.info) {
+        saveData.info = data;
+      }
+      
+      console.log("准备保存数据:", saveData);
+      
+      $.ajax({
+        url: "/api/save_collected_data/",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(saveData),
+        success: function(res) {
+          console.log("数据保存成功:", res);
+        },
+        error: function(xhr) {
+          console.error("数据保存失败:", xhr.responseText);
+        }
+      });
+    }
+
+    function onCollectSuccess(data) {
+        console.log("采集回调数据：", data);
+        handleCollectSuccess(data);
+        paddingReturnData(data); // 直接传对象
+    }
+
+    function renderCpuDataCard(data) {
+      let info = data.info ? data.info : data;
+      console.log("渲染 info 字段：", info);
+      const cpuFieldMap = {
+        cpu_percent: { label: "CPU使用率", icon: "🖥️" },
+        cpu_user: { label: "用户态占比", icon: "👤" },
+        cpu_system: { label: "系统态占比", icon: "⚙️" },
+        cpu_idle: { label: "空闲率", icon: "💤" },
+        cpu_iowait: { label: "IO等待率", icon: "⏳" },
+        host: { label: "主机", icon: "🖥️" },
+        time: { label: "采集时间", icon: "⏰" }
+      };
+      let html = '<div class="data-card" style="border:1px solid #eee; border-radius:8px; margin:8px 0; padding:10px; background:#fafbfc;">';
+      // 先渲染已知字段
+      for (let key in cpuFieldMap) {
+        if (info[key] !== undefined) {
+          html += `<div style="margin:4px 0;">
+            <span style="font-size:22px;">${cpuFieldMap[key].icon}</span>
+            <span style="margin-left:8px; color:#333;">${cpuFieldMap[key].label}：</span>
+            <span style="color:#007bff;">${info[key]}</span>
+          </div>`;
+        }
+      }
+      // 再渲染未定义字段
+      for (let key in info) {
+        if (!cpuFieldMap[key]) {
+          html += `<div style="margin:4px 0;">
+            <span style="margin-left:8px; color:#333;">${key}：</span>
+            <span style="color:#007bff;">${info[key]}</span>
+          </div>`;
+        }
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function paddingReturnData(dataObj) {
+      var contentTag = $("#dataDisplay");
+      if (!dataObj || typeof dataObj !== 'object') {
+        console.error("数据展示失败，dataObj不是对象", dataObj);
+        contentTag.html('<p style="color: red;">数据展示失败</p>');
+        return;
+      }
+      var html = renderCpuDataCard(dataObj);
+      var divTag = $("<div>").html(html);
+      contentTag.append(divTag);
+      if (contentTag.children().length >= 10) {
+        contentTag.children().first().remove();
+      }
+    }
+
+    function initialazeTwoIndex() {
+      var tp = "cpu"
+      var model = "get_ipadress"
+      var values = ""
+      requestTwoModel(tp, model, values)
+
+      $("#overBtn").css("background-color", "darkgray")
+    }
+
+    function paddingPortSelectTag(data) {
+        var selectTag = $("#portSelect")
+        selectTag.empty()
+        var portData = data.port
+        $(".port-selected").text(portData[0]);
+        $(".port-selected").attr("data-port", portData[0]);  // 存储实际端口号
+        for (var i = 0; i < portData.length; i++) {
+            var optionTag = $("<div>")
+            optionTag.attr("class", "port")
+            optionTag.text(portData[i])
+            optionTag.attr("data-port", portData[i])  // 存储实际端口号
+            selectTag.append(optionTag)
+        }
+    }
+
+    $(document).ready(function () {
+      var tp = "cpu"
+      var model = ""
+      var startBtn = $("#startBtn")
+      var overBtn = $("#overBtn")
+
+      // 初始化页面
+      initialazeTwoIndex()
+
+      // 加载服务器IP地址列表
+      loadServerIpList()
+
+      // 刷新IP地址列表按钮事件
+      $("#refreshIpBtn").on("click", function() {
+          loadServerIpList();
+      });
+
+      // IP地址选择变化事件
+      $("#ipSelect").on("change", function() {
+          var selectedIp = $(this).val();
+          if (selectedIp) {
+              console.log("Selected IP:", selectedIp);
+              // 可以在这里添加获取对应端口的逻辑
+              // 或者显示选择的IP地址相关信息
+          }
+      });
+
+      var caiJiState = ""
+      var state = true
+
+      startBtn.on("click", function () {
+        model = "start_caiji"
+        var ipValue = $("#ipSelect").val();
+        var portValue = $("#portInput").val() || "7788";
+
+        // 验证IP地址
+        if (!ipValue || ipValue === "") {
+          alert("请选择服务器IP地址！");
+          $("#ipSelect").focus();
+          return;
+        }
+
+        // 验证端口
+        if (!portValue || isNaN(parseInt(portValue))) {
+          alert("请输入有效端口！");
+          $("#portInput").focus();
+          return;
+        }
+
+        if (state) {
+          var values = JSON.stringify({ "ip": ipValue, "port": portValue })
+          requestTwoModel(tp, model, values, function(data){
+              onCollectSuccess(data);
+          });
+          paddingInfoStateIng()
+          caiJiState = setInterval(function () {
+            caiJiShuJu(tp, model, values);
+          }, 30000);
+          state = false
+
+          // 更新按钮状态
+          $("#startBtn").prop("disabled", true).text("采集中...");
+          $("#overBtn").prop("disabled", false);
+        }
+        else {
+          alert("正在采集...")
+        }
+
+      })
+
+      overBtn.on("click", function () {
+        clearInterval(caiJiState)
+        paddingInfoStateEnd()
+        state = true
+
+        // 更新按钮状态
+        $("#startBtn").prop("disabled", false).text("开始采集");
+        $("#overBtn").prop("disabled", true);
+      })
+
+      $(document).on("click", "#ipSelect .ip", function () {
+        var selectedText = $(this).text();
+        var selectedIp = $(this).attr("data-ip");  // 获取存储的实际IP地址
+        $(".ip-selected").text(selectedText);
+        $(".ip-selected").attr("data-ip", selectedIp);  // 更新选中元素的data-ip属性
+        $(".ip-items").hide();
+
+        model = "get_port"
+        var ipValue = JSON.stringify({
+          "ip": selectedIp  // 使用实际的IP地址
+        })
+        requestTwoModel(tp, model, ipValue)
+      });
+
+      $(document).on("click", "#portSelect .port", function () {
+        var selectedText = $(this).text();
+        var selectedPort = $(this).attr("data-port");  // 获取存储的实际端口号
+        $(".port-selected").text(selectedText);
+        $(".port-selected").attr("data-port", selectedPort);  // 更新选中元素的data-port属性
+        $(".port-items").hide();
+      })
+
+          // AI一键调优按钮点击事件
+        $("#aiOptimizeBtn").off("click").on("click", function () {
+        if (!hasCollectedData || !lastCollectedDataStr) {
+          alert("请先采集数据，再进行AI调优！");
+          return;
+        }
+        // 显示加载状态
+        $("#aiSuggestionText").val("AI调优分析中，请稍候...");
+        
+        $.ajax({
+          url: "/api/ai_optimize/", // 你需要在后端实现这个API
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({ collected_data: lastCollectedDataStr }),
+          success: function (res) {
+            if (res.success && res.strategies) {
+              var suggestionText = "AI调优建议：\n\n";
+
+              res.strategies.forEach(function(strategy, index) {
+                // 遍历策略对象的所有键，找到调优方案
+                Object.keys(strategy).forEach(function(planKey) {
+                  if (planKey.startsWith('调优方案')) {
+                    var plan = strategy[planKey];
+                    var strategyDesc = plan["策略"] || "";
+                    var strategyCmd = plan["可执行的指令"] || "";
+                    suggestionText += `${planKey}:\n`;
+                    suggestionText += `策略: ${strategyDesc}\n`;
+                    if (strategyCmd) {
+                      suggestionText += `指令: ${strategyCmd}\n`;
+                    }
+                    suggestionText += "\n";
+                  }
+                });
+                // 如果没有调优方案，但有策略字段，也显示
+                if (!Object.keys(strategy).some(key => key.startsWith('调优方案')) && strategy["策略"]) {
+                  var strategyDesc = strategy["策略"] || "";
+                  var strategyCmd = strategy["可执行的指令"] || "";
+                  suggestionText += `策略方案${index + 1}:\n`;
+                  suggestionText += `策略: ${strategyDesc}\n`;
+                  if (strategyCmd) {
+                    suggestionText += `指令: ${strategyCmd}\n`;
+                  }
+                  suggestionText += "\n";
+                }
+              });
+
+              $("#aiSuggestionText").val(suggestionText)
+            } else {
+              // 显示错误信息
+              $("#aiSuggestionText").val(res.result || "无AI建议");
+            }
+          },
+          error: function () {
+            $("#aiSuggestionText").val("AI调优失败，请稍后重试。");
+          }
+        });
+      });
+      // 设置IP选择框
+      setupDropdown("ip-selected", "ip-items");
+
+      // 设置端口选择框
+      setupDropdown("port-selected", "port-items");
+
+      // 发送自定义指令
+      $("#sendCustomCmdBtn").on("click", function(){
+        var ip = $("#ipSelect").val();
+        var port = $("#portInput").val() || "7788";
+        var cmd = $("#customCmdInput").val().trim();
+
+        if (!ip || ip === "") {
+          $("#cmdFeedback").text("请先选择服务器IP地址");
+          return;
+        }
+
+        if(!cmd){
+          $("#cmdFeedback").text("请输入自定义指令");
+          return;
+        }
+        $("#cmdFeedback").text("正在发送自定义指令...");
+        $.ajax({
+          url: "/api/return_cmd_four/",
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({ip: ip, port: port, cmdString: cmd, defaultCmdString: "0"}),
+          success: function(res){
+            $("#cmdFeedback").text("执行结果：\n" + res);
+          },
+          error: function(xhr){
+            $("#cmdFeedback").text("自定义指令执行失败: " + xhr.responseText);
+          }
+        });
+      });
+      // 发送默认指令
+      $("#sendDefaultCmdBtn").on("click", function(){
+        var ip = $("#ipSelect").val();
+        var port = $("#portInput").val() || "7788";
+        var cmdId = $("#defaultCmdSelect").val();
+
+        if (!ip || ip === "") {
+          $("#cmdFeedback").text("请先选择服务器IP地址");
+          return;
+        }
+
+        if(!cmdId){
+          $("#cmdFeedback").text("请选择默认指令");
+          return;
+        }
+        $("#cmdFeedback").text("正在发送默认指令...");
+        $.ajax({
+          url: "/api/return_cmd_four/",
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({ip: ip, port: port, cmdString: "0", defaultCmdString: cmdId}),
+          success: function(res){
+            $("#cmdFeedback").text("执行结果：\n" + res);
+          },
+          error: function(xhr){
+            $("#cmdFeedback").text("默认指令执行失败: " + xhr.responseText);
+          }
+        });
+      });
+    });
+
+  </script>
+  {%endblock%}

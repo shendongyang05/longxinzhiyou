@@ -1,0 +1,254 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+    *{
+        font-size: 20px;
+    }
+  #cmdInput {
+    color: black;
+    height: 28px;
+  }
+
+  #cmd {
+    width: 50vh !important;
+  }
+
+  ;
+
+
+  #cmdInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    background-color: rebeccapurple;
+  }
+
+  .inputBox {
+    margin-top: 5%;
+    position: relative;
+
+  }
+
+
+</style>
+{%endblock%}
+
+{%block content%}
+<h2>调优策略设置</h2>
+<div class="settingCmd">
+
+  <div class="caiJiPosition">
+    <span>IP地址选择：</span>
+    <div class="custom-select ip-select">
+      <div class="select-selected ip-selected">选择IP</div>
+      <div class="select-items ip-items" id="ipSelect">
+        <div>Option 1</div>
+        <div>Option 2</div>
+        <div>Option 3</div>
+      </div>
+    </div>
+
+    <span>选择端口:</span>
+    <div class="custom-select port-select">
+      <div class="select-selected port-selected">选择端口</div>
+      <div class="select-items port-items" id="portSelect">
+        <div>Option 1</div>
+        <div>Option 2</div>
+        <div>Option 3</div>
+      </div>
+    </div>
+    <br>
+    <div class="inputBox">
+<div class="inputBox">
+  <div>
+    <label for="cmd">
+      <h3>自定义/默认指令输入：</h3>
+    </label>
+    
+    <div class="input-group" style="display: inline-block; vertical-align:middle;">
+      <input type="text" id="cmd" class="form-control" placeholder="请输入指令..." style="vertical-align: middle;">
+      <div class="selectCmd" style="display:inline-block;">
+        <select id="commandOrStrategy" style="width: 300px;">
+          <option value="" selected disabled hidden>请选择指令或策略</option>
+          <optgroup label="默认指令">
+            <option value="cmd_1">查看防火墙</option>
+            <option value="cmd_2">开启防火墙</option>
+            <option value="cmd_3">关闭防火墙</option>
+            <option value="cmd_4">优化文件系统的读写性能</option>
+            <option value="cmd_5">关闭NTP同步服务器</option>
+            <option value="cmd_6">查看NTP同步服务器</option>
+            <option value="cmd_7">开启NTP同步服务器</option>
+            <option value="cmd_13">查看NTP</option>
+            <option value="cmd_14">设置NTP</option>
+            <option value="cmd_10">启用TCP SYN Cookie以防御SYN洪泛攻击</option>
+            <option value="cmd_11">数据库保护（备份数据库）</option>
+            <option value="cmd_12">数据库优化（添加缓存）</option>
+            <option value="cmd_15">解决su命令权限问题</option>
+            <option value="cmd_16">解决系统卡顿堵塞</option>
+            <option value="cmd_17">查看当前登录用户</option>
+            <option value="cmd_18">清理系统缓存</option>
+            <option value="cmd_19">查看磁盘使用情况</option>
+            <option value="cmd_20">重启Nginx服务</option>
+            <option value="cmd_21">检查系统内核日志</option>
+            <option value="cmd_22">查看系统负载</option>
+            <option value="cmd_23">查看内存使用情况</option>
+            <option value="cmd_24">查看CPU信息</option>
+            <option value="cmd_25">重启服务器</option>
+            <option value="cmd_26">重启MySQL服务</option>
+            <option value="cmd_27">检测网络连接状态</option>
+            <option value="cmd_28">查看端口占用情况</option>
+            <option value="cmd_29">终止占用端口的进程</option>
+            <option value="cmd_30">查看活跃连接数</option>
+            <option value="cmd_31">重启Docker服务</option>
+            <option value="cmd_32">查看内核日志</option>
+            <option value="cmd_33">检查CPU绑定情况</option>
+            <option value="cmd_34">查看运行进程</option>
+            <option value="cmd_35">导出当前系统状态</option>
+          </optgroup>
+          <optgroup label="场景化策略包">
+            <option value="strategy_db_speedup">加快数据库加载速度</option>
+            <option value="strategy_io_optimize">提升IO性能</option>
+            <option value="strategy_security_harden">增强系统安全性</option>
+            <option value="strategy_memory_release">释放内存</option>
+            <option value="strategy_service_restart">一键重启服务</option>
+            <option value="strategy_network_optimize">网络优化</option>
+            <option value="strategy_system_health_check">系统健康巡检</option>
+            <option value="strategy_resource_release">一键释放资源</option>
+            <option value="strategy_server_reboot">重启服务器</option>
+          </optgroup>
+        </select>
+        <button id="sendCommandOrStrategy" type="button" style="margin-left: 20px;">执行</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<br>
+
+    </div>
+    <br>
+    <br>
+    <br>
+    <h3>指令回馈</h3>
+    <div style="position: relative;height: 50%">
+      <pre id="infoReturn">
+  </pre>
+    </div>
+
+  </div>
+  {%endblock%}
+
+  {%block js%}
+  <script>
+
+    function initialazeTwoIndex() {
+      var tp = "disk"
+      var model = "get_ipadress"
+      var values = ""
+      requestTwoModel(tp, model, values)
+    }
+
+    $(document).ready(function () {
+      var tp = "disk"
+      initialazeTwoIndex()
+
+      // 新的统一下拉框和按钮逻辑
+      $("#sendCommandOrStrategy").on("click", function () {
+        var inputCmd = $("#cmd").val().trim();
+        var selected = $("#commandOrStrategy").val();
+        var ipValue = $(".ip-selected").text();
+        var portValue = $(".port-selected").text();
+
+        if (inputCmd) {
+          // 有自定义输入，自动补全前缀
+          var cmdToSend = inputCmd.startsWith("command:") ? inputCmd : "command:" + inputCmd;
+          var values = JSON.stringify({ "ip": ipValue, "port": portValue, "cmdString": cmdToSend, "defaultCmdString": "0" });
+          requestFourModel(values);
+          return;
+        }
+
+        if (!selected) {
+          alert("请选择一个指令或策略包，或在输入框输入自定义指令");
+          return;
+        }
+
+        if (selected.startsWith("cmd_")) {
+          // 默认指令
+          var defaultCmdString = selected.replace("cmd_", "");
+          var values = JSON.stringify({ "ip": ipValue, "port": portValue, "cmdString": "0", "defaultCmdString": defaultCmdString });
+          requestFourModel(values);
+        } else if (selected.startsWith("strategy_")) {
+          // 策略包
+          var strategy = selected.replace("strategy_", "");
+          var values = JSON.stringify({ "ip": ipValue, "port": portValue, "strategy": strategy });
+          $.ajax({
+            url: "/api/strategy/apply",
+            method: "POST",
+            data: values,
+            contentType: "application/json",
+            success: function (response) {
+              let html = "";
+              if (response.results) {
+                response.results.forEach(function(item){
+                  html += "<b>" + item.command + "</b><br><pre>" + item.result + "</pre><hr>";
+                });
+              } else {
+                html = JSON.stringify(response);
+              }
+              $("#infoReturn").html(html);
+            },
+            error: function () {
+              alert("请求失败");
+            }
+          });
+        }
+      });
+
+      $(document).on("click", "#ipSelect .ip", function () {
+        var selectedText = $(this).text();
+        var selectedIp = $(this).attr("data-ip");  // 获取存储的实际IP地址
+        $(".ip-selected").text(selectedText);
+        $(".ip-items").hide();
+
+        model = "get_port"
+        var ipValue = JSON.stringify({
+          "ip": selectedIp  // 使用实际的IP地址
+        })
+        requestTwoModel(tp, model, ipValue)
+      });
+
+      $(document).on("click", "#portSelect .port", function () {
+        var selectedText = $(this).text();
+        $(".port-selected").text(selectedText);
+        $(".port-items").hide();
+      })
+
+      // 设置IP选择框
+      setupDropdown("ip-selected", "ip-items");
+      // 设置端口选择框
+      setupDropdown("port-selected", "port-items");
+    })
+
+    function requestFourModel(values) {
+      var url = "/api/cmd/fourModel"
+      $.ajax({
+        url: url, // 替换为实际的服务器端处理程序的URL
+        method: "POST", // 使用POST方法发送数据
+        data: values, // 发送的数据对象
+        contentType: "application/json",
+        success: function (response) {
+          $("#infoReturn").html(response)
+        },
+        error: function (xhr, status, error) {
+          // 请求失败时执行的操作
+          alert("请求失败");
+        }
+      });
+    }
+
+  </script>
+  {%endblock%}

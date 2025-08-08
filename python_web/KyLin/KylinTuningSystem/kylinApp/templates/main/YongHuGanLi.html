@@ -1,0 +1,1244 @@
+{% extends "layout.html" %}
+{%load static%}
+{%block css%}
+<style>
+    * { color: white; 
+    /* font-size: 18px; */
+}
+    .contentBox {
+        position: relative;
+        height: 65vh;
+        overflow: auto;
+    }
+
+    .selectPage {
+        height: 10px;
+
+    }
+
+    .btn {
+        padding: 2px 6px;
+    }
+
+    #dropdownLiTag {
+        height: 120px !important;
+        overflow: auto;
+        background-color: bisque;
+        direction: rtl;
+    }
+
+    #dropdownLiTag li {
+        color: black;
+        padding: 5px;
+    }
+
+    #dropdownLiTag li:hover {
+        cursor: pointer;
+        background-color: rgb(197, 209, 219);
+    }
+
+
+
+    /* <reset-style> ============================ */
+    .button {
+        border: none;
+        float: right;
+        background: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        font-family: inherit;
+        border-radius: 10px;
+        margin: 0 10px;
+    }
+
+    /* <main-style> ============================ */
+    .menu__button {
+        min-width: 62px;
+        height: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 8px 16px;
+        background-color: #fff;
+        transition: background-color .4s;
+    }
+
+    .menu__button span {
+        color: #ffffff;
+        line-height: 1;
+        /* transition: color .4s; */
+    }
+
+    /* .menu__button:hover {
+        background: linear-gradient(90deg, #fff 50%, transparent 0) repeat-x,
+            linear-gradient(90deg, #fff 50%, transparent 0) repeat-x,
+            linear-gradient(0deg, #fff 50%, transparent 0) repeat-y,
+            linear-gradient(0deg, #fff 50%, transparent 0) repeat-y;
+        background-size: 6px 2px, 6px 2px, 2px 6px, 2px 6px;
+        background-position: 0 0, 0 100%, 0 0, 100% 0;
+        animation: linearGradientMove .4s infinite linear;
+    } */
+
+    .menu__button:hover span {
+        color: #fff;
+    }
+
+    @keyframes linearGradientMove {
+        100% {
+            background-position: 6px 0, -6px 100%, 0 -6px, 100% 6px;
+        }
+    }
+
+    input {
+        height: 20px;
+        border: 0;
+        text-indent: 1em;
+        margin-right: 10px;
+        border-radius: 10px;
+    }
+
+
+
+
+#reviseBtn span,#submitBtn span{
+    color: black;
+}
+
+/* 新增样式 - 按照图片风格 */
+.search-section {
+    background: white;
+    padding: 20px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.search-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-item label {
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.search-item .form-control {
+    width: 200px;
+    height: 32px;
+    padding: 4px 8px;
+    font-size: 14px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+}
+
+.action-section {
+    background: white;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.action-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+.info-bar {
+    background: #f0f9ff;
+    border: 1px solid #bae7ff;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1890ff;
+    font-size: 14px;
+}
+
+.info-right {
+    color: #999;
+    font-size: 14px;
+}
+
+.table-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+}
+
+.user-table {
+    margin: 0;
+    border: none;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.user-table th {
+    background: #fafafa;
+    color: #000;
+    font-weight: 500;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 14px;
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+.user-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #000;
+    font-size: 14px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* 操作按钮样式 */
+.action-buttons {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+
+.action-buttons .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: 50px;
+}
+
+/* 确保所有文字都是黑色 */
+.table-container, .table-container * {
+    color: #000 !important;
+}
+
+.status-online, .status-offline {
+    color: #000 !important;
+}
+
+.status-online .status-dot {
+    background: #52c41a;
+}
+
+.status-offline .status-dot {
+    background: #ff4d4f;
+}
+
+.table-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin: 0 auto;
+    display: block;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #000 !important;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.status-online .status-dot {
+    background: #52c41a;
+}
+
+.status-offline .status-dot {
+    background: #ff4d4f;
+}
+
+/* 确保状态列的内容正确显示 */
+.user-table td:nth-child(7) {
+    text-align: center !important;
+}
+
+.user-table td:nth-child(7) .status-indicator {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+}
+
+.user-table td:nth-child(7) .status-dot {
+    display: inline-block !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    margin-right: 4px !important;
+    margin-left: 0 !important;
+}
+
+/* 分页样式 */
+.pagination-container {
+    background: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.pagination-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-total {
+    color: #666;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #d9d9d9;
+    background: white;
+    color: #666;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+.pagination-btn:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+    border-color: #f0f0f0;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 4px;
+}
+
+.page-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #d9d9d9;
+    background: white;
+    color: #666;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+.page-btn.active {
+    background: #1890ff;
+    border-color: #1890ff;
+    color: white;
+}
+
+.page-size-select {
+    height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #666;
+    background: white;
+    cursor: pointer;
+    min-width: 80px;
+}
+
+.page-size-select:focus {
+    border-color: #1890ff;
+    outline: none;
+}
+
+.goto-text {
+    color: #666;
+    font-size: 14px;
+}
+
+.goto-input {
+    width: 50px;
+    height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+    color: #666;
+}
+
+.goto-input:focus {
+    border-color: #1890ff;
+    outline: none;
+}
+
+.pagination-container {
+    background: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination-info {
+    color: #666;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 4px;
+}
+
+.page-number {
+    padding: 6px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    color: #333;
+    cursor: pointer;
+    font-size: 14px;
+    background: white;
+    transition: all 0.3s;
+}
+
+.page-number:hover {
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+.page-number.active {
+    background: #1890ff;
+    border-color: #1890ff;
+    color: white;
+}
+
+.page-size-select {
+    width: 100px;
+    height: 32px;
+    font-size: 14px;
+}
+
+.goto-input {
+    width: 60px;
+    height: 32px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* 弹窗样式 */
+.modal {
+    display: none !important;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show {
+    display: block !important;
+}
+
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 10px;
+    max-width: 500px;
+    margin: 30px auto;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    outline: 0;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+}
+
+.modal-header .close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-header .close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 24px;
+    flex: 1 1 auto;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid #e8e8e8;
+    gap: 12px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.required {
+    color: #ff4d4f;
+}
+
+.form-group .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    background: #fff;
+    transition: border-color 0.3s ease;
+}
+
+.form-group .form-control:focus {
+    border-color: #1890ff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.btn-default {
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    color: #333;
+}
+
+.btn-default:hover {
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+</style>
+{%endblock%}
+
+{%block content%}
+<!-- 搜索区域 -->
+<div class="search-section">
+    <div class="search-left">
+        <div class="search-item">
+            <label>用户名称</label>
+            <input id="userNameSearch" type="text" placeholder="请输入用户名" class="form-control">
+        </div>
+        <div class="search-item">
+            <label>手机号码</label>
+            <input id="phoneSearch" type="text" placeholder="请输入手机号码" class="form-control">
+        </div>
+        <button id="selectUserModel" class="btn btn-primary">
+            <i class="el-icon-search"></i> 查询
+        </button>
+        <button id="resetSearch" class="btn btn-default">
+            重置
+        </button>
+    </div>
+</div>
+
+<!-- 操作按钮区域 -->
+<div class="action-section">
+    <div class="action-left">
+        <button id="createBtn" class="btn btn-primary">
+            <i class="el-icon-plus"></i> 新增用户
+        </button>
+        <button id="batchDeleteBtn" class="btn btn-danger" disabled>
+            <i class="el-icon-delete"></i> 批量删除
+        </button>
+        <div class="dropdown-container">
+            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+                更多操作 <i class="el-icon-arrow-down"></i>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a href="#" id="exportSelected"><i class="el-icon-download"></i> 导出所选数据</a></li>
+                <li><a href="#" id="exportAll"><i class="el-icon-download"></i> 导出全部数据</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 提示栏 -->
+<div class="info-bar">
+    <div class="info-left">
+        <i class="el-icon-info"></i>
+        <span id="selectionInfo">已选择 0 项</span>
+        <a href="#" id="clearSelection" style="display: none;">是否全部清空</a>
+    </div>
+    <div class="info-right">
+        <span>当前选择的用户将进行批量操作</span>
+    </div>
+</div>
+
+<!-- 用户弹窗 -->
+<div class="modal fade" id="userModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modalTitle">新增用户</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <div class="form-group">
+                        <label for="modalUsername">用户名 <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="modalUsername" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalPassword">密码 <span class="required">*</span></label>
+                        <input type="password" class="form-control" id="modalPassword" placeholder="请输入密码" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalEmail">邮箱</label>
+                        <input type="email" class="form-control" id="modalEmail" placeholder="请输入邮箱">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalGender">性别</label>
+                        <select class="form-control" id="modalGender">
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalUserType">用户类型</label>
+                        <select class="form-control" id="modalUserType">
+                            <option value="普通用户">普通用户</option>
+                            <option value="管理员">管理员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalStatus">状态</label>
+                        <select class="form-control" id="modalStatus">
+                            <option value="正常使用">正常使用</option>
+                            <option value="禁用">禁用</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- 表格区域 -->
+    <div class="table-container">
+        <table class="table table-bordered user-table">
+            <thead>
+                <tr>
+                    <th width="50">
+                        <input type="checkbox" id="selectAll" class="table-checkbox">
+                    </th>
+                    <th width="120">用户名</th>
+                    <th width="120">密码</th>
+                    <th width="180">邮箱</th>
+                    <th width="60">性别</th>
+                    <th width="100">用户类型</th>
+                    <th width="80">状态</th>
+                    <th width="160">创建时间</th>
+                    <th width="140">操作</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyContent">
+                <!-- 动态加载 -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 分页区域 -->
+    <div class="pagination-container">
+        <div class="pagination-wrapper">
+            <span class="pagination-total">共 <span id="totalCount">3</span> 条</span>
+            <div class="pagination-controls">
+                <button class="pagination-btn" id="prevPage" disabled>&lt;</button>
+                <span class="page-numbers" id="pageNumbers">
+                    <button class="page-btn active">1</button>
+                </span>
+                <button class="pagination-btn" id="nextPage">&gt;</button>
+                <select class="page-size-select" id="pageSizeSelect">
+                    <option value="10">10 条/页</option>
+                    <option value="20">20 条/页</option>
+                    <option value="50">50 条/页</option>
+                </select>
+                <span class="goto-text">跳至</span>
+                <input type="number" class="goto-input" id="gotoPage" min="1" value="1">
+                <span class="goto-text">页</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{%endblock%}
+
+{%block js%}
+    <script>   // 初始化
+    // 全局变量
+    var selectedUsers = []; // 存储选中的用户
+    var currentPage = 1;
+    var pageSize = 10;
+    var totalCount = 0;
+
+    // 更新选中用户信息 - 全局函数
+    function updateSelectedUsers() {
+        selectedUsers = [];
+        $(".row-checkbox:checked").each(function() {
+            selectedUsers.push($(this).val());
+        });
+
+        $("#selectionInfo").text("已选择 " + selectedUsers.length + " 项");
+        $("#batchDeleteBtn").prop("disabled", selectedUsers.length === 0);
+
+        if (selectedUsers.length > 0) {
+            $("#clearSelection").show();
+        } else {
+            $("#clearSelection").hide();
+        }
+    }
+
+    function initialaze() {
+        value = JSON.stringify({
+                "userName": ""
+            })
+        requestUserModel("select", value)
+    }
+
+    $(document).ready(function () {
+        var name = "JianKongFuWuQi";
+        var type = "";
+        var values = "";
+        var creatDataTag = $("#createData")
+        var reviseTag = $("#reviseBtn")
+        var submitTag = $("#submitBtn")
+        // 变量已在全局定义
+
+        var oldData = ""
+        var newData = ""
+        //初始化页面数据
+        initialaze()
+
+        // 全选功能
+        $("#selectAll").on("change", function() {
+            var isChecked = $(this).prop("checked");
+            $(".row-checkbox").prop("checked", isChecked);
+            updateSelectedUsers();
+        });
+
+        // 行选择功能
+        $(document).on("change", ".row-checkbox", function() {
+            updateSelectedUsers();
+            var totalRows = $(".row-checkbox").length;
+            var checkedRows = $(".row-checkbox:checked").length;
+            $("#selectAll").prop("checked", totalRows > 0 && checkedRows === totalRows);
+        });
+
+        // updateSelectedUsers 函数已在全局定义
+
+        // 清空选择
+        $("#clearSelection").on("click", function(e) {
+            e.preventDefault();
+            $(".row-checkbox, #selectAll").prop("checked", false);
+            updateSelectedUsers();
+        });
+
+        // 批量删除
+        $("#batchDeleteBtn").on("click", function() {
+            if (selectedUsers.length === 0) {
+                alert("请选择要删除的用户");
+                return;
+            }
+
+            if (confirm("确认要删除选中的 " + selectedUsers.length + " 个用户吗？删除后将无法恢复！")) {
+                // 这里添加批量删除的API调用
+                console.log("批量删除用户:", selectedUsers);
+                // TODO: 实现批量删除API
+            }
+        });
+
+        // 导出功能
+        $("#exportSelected").on("click", function(e) {
+            e.preventDefault();
+            if (selectedUsers.length === 0) {
+                alert("请选择要导出的用户");
+                return;
+            }
+            console.log("导出选中用户:", selectedUsers);
+            // TODO: 实现导出功能
+        });
+
+        $("#exportAll").on("click", function(e) {
+            e.preventDefault();
+            console.log("导出全部用户");
+            // TODO: 实现导出全部功能
+        });
+
+        // 重置搜索
+        $("#resetSearch").on("click", function() {
+            $("#userNameSearch").val("");
+            $("#phoneSearch").val("");
+            initialaze();
+        });
+
+        // 旧的提交和修改逻辑已被弹窗替代
+
+
+
+        // 新增用户按钮
+        $("#createBtn").on("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("Create button clicked"); // 调试信息
+            openUserModal('create');
+        });
+
+        // 编辑用户按钮
+        $(document).on("click", ".revise", function (e) {
+            e.preventDefault();
+            console.log("Edit button clicked"); // 调试信息
+
+            var row = $(this).closest("tr");
+            var username = row.find("td:nth-child(2)").text();
+            var email = row.find("td:nth-child(4)").text();
+            var gender = row.find("td:nth-child(5)").text();
+            var userType = row.find("td:nth-child(6)").text();
+            var status = row.find("td:nth-child(7)").text().trim();
+
+            console.log("Edit data:", {username, email, gender, userType, status}); // 调试信息
+
+            openUserModal('edit', {
+                username: username,
+                email: email,
+                gender: gender,
+                userType: userType,
+                status: status
+            });
+        });
+
+        // 保存用户按钮
+        $("#saveUserBtn").on("click", function() {
+            saveUser();
+        });
+
+        // 弹窗关闭事件
+        $(document).on("click", ".close, [data-dismiss='modal']", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("Close button clicked");
+            closeUserModal();
+        });
+
+        // 点击弹窗外部关闭
+        $(document).on("click", "#userModal", function(e) {
+            if (e.target === this) {
+                console.log("Clicked outside modal content");
+                closeUserModal();
+            }
+        });
+
+        // 阻止弹窗内容区域的点击事件冒泡
+        $(document).on("click", ".modal-content", function(e) {
+            e.stopPropagation();
+        });
+
+        //绑定查询事件
+        $("#selectUserModel").on("click", function () {
+            type = "select";
+            var value = $("#userNameSearch").val()
+            if (value.trim() === "") {
+                alert("请输入用户名")
+                return;
+            }
+            userNameValue = JSON.stringify({
+                "userName": value
+            })
+
+            requestUserModel(type, userNameValue)
+        })
+
+        // 使用事件委托给删除按钮添加点击事件
+        $(document).on("click", ".del", function () {
+            var row = $(this).closest("tr");
+            var username = row.find("td:nth-child(2)").text();
+
+            var confirmMessage = "确认要删除以下用户吗？\n\n";
+            confirmMessage += "用户名: " + username + "\n";
+            confirmMessage += "\n删除后将无法恢复！";
+
+            var bool = confirm(confirmMessage);
+            if (bool) {
+                var type = "delete"
+                var values = JSON.stringify({ "username": username })
+                requestUserModel(type, values)
+            }
+        });
+
+        // 禁用/启用用户功能 - 点击状态区域切换
+        $(document).on("click", ".toggle-status", function () {
+            var row = $(this).closest("tr");
+            var username = row.data("username");
+            var isEnabled = row.data("enabled");
+            var action = isEnabled ? "禁用" : "启用";
+
+            var confirmMessage = `确认要${action}用户 "${username}" 吗？`;
+
+            if (confirm(confirmMessage)) {
+                // 更新UI
+                var newEnabled = !isEnabled;
+                row.data("enabled", newEnabled);
+
+                var statusIndicator = $(this);
+
+                if (newEnabled) {
+                    statusIndicator.removeClass("status-offline").addClass("status-online");
+                    statusIndicator.html('<span class="status-dot"></span>启用');
+                } else {
+                    statusIndicator.removeClass("status-online").addClass("status-offline");
+                    statusIndicator.html('<span class="status-dot"></span>禁用');
+                }
+
+                // 这里可以添加API调用来更新后端状态
+                console.log(`用户 ${username} 已${action}`);
+            }
+        });
+        // 旧的编辑和工具函数已被弹窗功能替代
+
+
+    });
+
+    // 用户管理API请求函数
+    function requestUserModel(action, data) {
+        var url = "/api/userManager/" + action;
+        $.ajax({
+            url: url,
+            method: "POST",
+            data: data,
+            contentType: "application/json",
+            success: function(response) {
+                if (action === "select") {
+                    renderUserTable(response.data || []);
+                } else {
+                    if (response.message === "success") {
+                        alert("操作成功");
+                        initialaze(); // 重新加载数据
+                    } else {
+                        alert(response.message || "操作失败");
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                alert("请求失败: " + error);
+            }
+        });
+    }
+
+    // 渲染用户表格
+    function renderUserTable(users) {
+        var tbody = $("#tbodyContent");
+        tbody.empty();
+
+        if (users.length === 0) {
+            tbody.append('<tr><td colspan="9" style="text-align: center; color: #999;">暂无数据</td></tr>');
+            return;
+        }
+
+        users.forEach(function(user, index) {
+            var isEnabled = Math.random() > 0.3; // 70%概率为启用状态
+            var statusClass = isEnabled ? 'status-online' : 'status-offline';
+            var statusText = isEnabled ? '启用' : '禁用';
+            var genderText = Math.random() > 0.5 ? '男' : '女';
+            var userType = Math.random() > 0.5 ? '管理员' : '普通用户';
+            var email = user.username + '@example.com';
+            var createTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+            var row = `
+                <tr data-username="${user.username}" data-enabled="${isEnabled}">
+                    <td>
+                        <input type="checkbox" class="table-checkbox row-checkbox" value="${user.username}">
+                    </td>
+                    <td>${user.username}</td>
+                    <td>${user.password}</td>
+                    <td>${email}</td>
+                    <td>${genderText}</td>
+                    <td>${userType}</td>
+                    <td>
+                        <span class="status-indicator ${statusClass} toggle-status" style="cursor: pointer;" title="点击切换状态">
+                            <span class="status-dot"></span>
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td>${createTime}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary btn-sm revise" title="编辑">
+                                编辑
+                            </button>
+                            <button class="btn btn-danger btn-sm del" title="删除">
+                                删除
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+
+        // 更新总数
+        $("#totalCount").text(users.length);
+        updateSelectedUsers();
+    }
+
+
+
+    // 生成分页
+    function generatePagination(currentPage, totalPages) {
+        var pageNumbers = $("#pageNumbers");
+        pageNumbers.empty();
+
+        for (var i = 1; i <= Math.min(totalPages, 10); i++) {
+            var pageBtn = $('<button class="page-number">' + i + '</button>');
+            if (i === currentPage) {
+                pageBtn.addClass('active');
+            }
+            pageNumbers.append(pageBtn);
+        }
+    }
+
+    // 打开用户弹窗
+    function openUserModal(mode, userData) {
+        console.log("Opening modal in mode:", mode); // 调试信息
+
+        var modal = $("#userModal");
+        var title = $("#modalTitle");
+        var saveBtn = $("#saveUserBtn");
+
+        // 检查元素是否存在
+        console.log("Modal element found:", modal.length > 0);
+        console.log("Title element found:", title.length > 0);
+        console.log("Save button found:", saveBtn.length > 0);
+
+        // 清空表单
+        var form = $("#userForm")[0];
+        if (form) {
+            form.reset();
+        }
+
+        if (mode === 'create') {
+            title.text("新增用户");
+            saveBtn.text("保存").data("mode", "create");
+            $("#modalUsername").prop("readonly", false);
+        } else if (mode === 'edit') {
+            title.text("编辑用户");
+            saveBtn.text("更新").data("mode", "edit");
+            $("#modalUsername").prop("readonly", true);
+
+            // 填充数据
+            if (userData) {
+                $("#modalUsername").val(userData.username);
+                $("#modalEmail").val(userData.email);
+                $("#modalGender").val(userData.gender);
+                $("#modalUserType").val(userData.userType);
+                $("#modalStatus").val(userData.status.replace(/启用|禁用/, function(match) {
+                    return match === '启用' ? '正常使用' : '禁用';
+                }));
+            }
+        }
+
+        // 显示弹窗 - 使用延迟避免立即关闭
+        setTimeout(function() {
+            modal.removeClass("fade").addClass("show").css({
+                "display": "block",
+                "opacity": "1"
+            });
+
+            console.log("Modal display style:", modal.css("display"));
+            console.log("Modal visibility:", modal.is(":visible"));
+        }, 10);
+    }
+
+    // 关闭用户弹窗
+    function closeUserModal() {
+        var modal = $("#userModal");
+        modal.removeClass("show").css({
+            "display": "none",
+            "opacity": "0"
+        });
+
+        // 清空表单
+        var form = $("#userForm")[0];
+        if (form) {
+            form.reset();
+        }
+
+        console.log("Modal closed"); // 调试信息
+    }
+
+    // 保存用户
+    function saveUser() {
+        var mode = $("#saveUserBtn").data("mode");
+        var username = $("#modalUsername").val().trim();
+        var password = $("#modalPassword").val().trim();
+        var email = $("#modalEmail").val().trim();
+        var gender = $("#modalGender").val();
+        var userType = $("#modalUserType").val();
+        var status = $("#modalStatus").val();
+
+        // 验证必填字段
+        if (!username) {
+            alert("请输入用户名");
+            $("#modalUsername").focus();
+            return;
+        }
+
+        if (mode === 'create' && !password) {
+            alert("请输入密码");
+            $("#modalPassword").focus();
+            return;
+        }
+
+        var data = {
+            username: username,
+            email: email,
+            gender: gender,
+            userType: userType,
+            status: status
+        };
+
+        if (mode === 'create') {
+            data.password = password;
+            requestUserModel("create", JSON.stringify(data));
+        } else if (mode === 'edit') {
+            // 编辑模式，如果输入了新密码才更新密码
+            if (password) {
+                data.password = password;
+            }
+
+            var updateData = {
+                old: JSON.stringify({username: username}),
+                new: JSON.stringify(data)
+            };
+            requestUserModel("update", JSON.stringify(updateData));
+        }
+
+        closeUserModal();
+    }
+
+    </script>
+
+{%endblock%}

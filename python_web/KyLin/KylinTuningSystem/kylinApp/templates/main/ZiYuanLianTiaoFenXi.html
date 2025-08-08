@@ -1,0 +1,383 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block css %}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #000;
+            margin: 0;
+            padding: 0;
+            background-color: #1e1e2f;
+            font-size: 20px !important;
+            /* 深色背景 */
+        }
+
+        #main {
+            width: 800px;
+            height: 580px;
+            margin: 20px auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+        }
+
+        .select-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+            background-color: #444 !important;
+            color: #000 !important;
+            font-size: 16px;
+        }
+        
+        /* 确保下拉框选项文字也是黑色 */
+        select option {
+            background-color: #444 !important;
+            color: #000 !important;
+        }
+        
+        /* 针对特定下拉框的样式 */
+        #ipSelect, #portSelect, #pidSelect {
+            background-color: #444 !important;
+            color: #000 !important;
+        }
+        
+        #ipSelect option, #portSelect option, #pidSelect option {
+            background-color: #444 !important;
+            color: #000 !important;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+      <!-- <h2>资源链条</h2>
+    <iframe id="myIframe" width="100%" height="800px" src="http://10.21.17.188:3000/d/rYdddlPWk/node-exporter-full?from=2024-10-25T10:03:52.429Z&to=2024-10-26T10:03:52.429Z&timezone=browser&var-datasource=fe1uaxn9m2ku8b&var-job=linux&var-node=localhost&var-diskdevices=%5Ba-z%5D%2B%7Cnvme%5B0-9%5D%2Bn%5B0-9%5D%2B%7Cmmcblk%5B0-9%5D%2B&refresh=1m&theme=light" frameborder="0"></iframe>
+    <br>-->
+    <h2 style="color: #000;">资源链条分析</h2>
+
+    <div class="col-xs-10" id="main"></div>
+    <div class="col-xs-2 clearfix">
+
+
+        <div class="select-container list-group">
+            <select id="ipSelect" onchange="paddingPort()">
+                <option value="1234">IP: 3333333331234</option>
+                <option value="533333333333333678">PID: 56333333378</option>
+                <option value="91011">PID: 91011</option>
+                <!-- 在这里添加其他PID选项 -->
+            </select>
+        </div>
+
+        <div class="select-container list-group">
+            <select id="portSelect">
+                <option value="1234">PORT: 1234</option>
+                <option value="5678">PID: 5678</option>
+                <option value="91011">PID: 91011</option>
+                <!-- 在这里添加其他PID选项 -->
+            </select>
+        </div>
+
+        <div class="select-container list-group">
+            <select id="pidSelect" onchange="updateChart()">
+                <option value="1234">PID: 1234</option>
+                <option value="5678">PID: 5678</option>
+                <option value="91011">PID: 91011</option>
+                <!-- 在这里添加其他PID选项 -->
+            </select>
+
+        </div>
+
+    </div>
+    <br>
+ 
+{% endblock %}
+
+{% block js %}
+
+    <script>
+        // PID对应的数据
+        let processData = {};
+
+        $(document).ready(function () {
+            console.log("页面加载完成，开始初始化...");
+            paddingIp();
+        });
+
+        let isRunning = false;
+        let intervalId;
+
+        function startInterval() {
+            if (!isRunning) {
+                isRunning = true;
+                intervalId = setInterval(() => {
+                    let ip = $("#ipSelect").val();
+                    let port = $("#portSelect").val();
+                    requestNewPidData(ip, port);
+                }, 5000);
+            }
+        }
+
+        function stopInterval() {
+            if (isRunning) {
+                clearInterval(intervalId);
+                isRunning = false;
+            }
+
+        }
+
+        // 初始化时启动定时器
+        // startInterval();
+
+
+        // 请求新的 PID 数据
+        function requestNewPidData(ip, port) {
+            // 参数验证
+            if (!ip || !port) {
+                console.error("IP或端口参数为空");
+                stopInterval();
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/realtimeUpdatePidData',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    ip: ip,
+                    port: port
+                },
+                success: function (rep) {
+                    if (rep.message === "success" && rep.data) {
+                        // 更新全局的 processData
+                        processData = rep.data;
+
+                        // 刷新下拉列表
+                        const $pidSelect = $('#pidSelect');
+                        $pidSelect.empty();
+                        for (const pid in processData) {
+                            $pidSelect.append(`<option value="${pid}">PID: ${pid}</option>`);
+                        }
+
+                        // 选中第一个 PID 并更新图表
+                        if ($pidSelect.children().length > 0) {
+                            $pidSelect.val(Object.keys(processData)[0]);  // 选中第一个 PID
+                            updateChart();
+                        }
+                    } else {
+                        console.error("API返回错误:", rep.error || "未知错误");
+                        stopInterval();
+                    }
+                },
+                error: function (xhr, type, errorThrown) {
+                    console.error("请求失败:", errorThrown);
+                    console.error("状态码:", xhr.status);
+                    console.error("响应文本:", xhr.responseText);
+                    stopInterval();
+                }
+            });
+        }
+
+        async function requestIpAndPort(tp, name, value = {}) {
+            try {
+                const response = await $.ajax({
+                    url: `/api/${tp}/${name}/twoModel`,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: value,
+                    // 指定请求内容类型
+                    contentType: 'application/json'
+                });
+                return response;
+            } catch (error) {
+                alert("请求超时");
+                return null;
+            }
+        }
+
+
+        async function paddingIp() {
+            console.log("开始获取IP地址列表...");
+            let res = await requestIpAndPort("b2", "get_ipadress");
+            console.log("Data received in paddingIp:", res); // 检查 res 的数据
+
+            // 检查 res 是否有效
+            if (!res) {
+                console.warn("Received undefined or null data");
+                return;
+            }
+
+            // 获取 ipSelect 元素
+            const $ipSelect = $('#ipSelect');
+
+            // 清空已有选项
+            $ipSelect.empty();
+            console.log("开始填充IP选项...");
+            
+            // 处理返回的IP数据格式 {"麒麟服务器1": "192.168.46.50", "欧拉服务器": "192.168.46.101"}
+            for (const displayName in res) {
+                const ipAddress = res[displayName];
+                console.log(`处理IP: ${displayName} -> ${ipAddress}`);
+                $ipSelect.append(`<option value="${ipAddress}">${displayName}: ${ipAddress}</option>`);
+            }
+
+            // 选中第一个 IP
+            if ($ipSelect.children().length > 0) {
+                const firstIp = Object.values(res)[0];
+                console.log("选中第一个IP:", firstIp);
+                $ipSelect.val(firstIp);  // 选中第一个 IP
+            }
+            console.log("开始获取端口列表...");
+            paddingPort();
+        }
+
+
+        async function paddingPort() {
+            const selectedIp = $("#ipSelect").val();
+            console.log("获取端口列表，选中的IP:", selectedIp);
+            
+            let value = JSON.stringify({
+                ip: selectedIp
+            });
+            console.log("发送的请求数据:", value);
+            
+            let res = await requestIpAndPort("b2", "get_port", value);
+            console.log("端口数据响应:", res);
+            
+            // 检查 res 是否有效
+            if (!res) {
+                console.warn("Received undefined or null data");
+                return;
+            }
+            
+            // 获取 portSelect 元素
+            const $portSelect = $('#portSelect');
+            // 清空已有选项
+            $portSelect.empty();
+
+            // 处理返回的端口数据格式 {"port_0": 7788}
+            const ports = Object.values(res);
+            console.log("提取的端口列表:", ports);
+            
+            // 创建端口选项
+            for (let i = 0; i < ports.length; i++) {
+                const port = ports[i];
+                $portSelect.append(`<option value="${port}">PORT: ${port}</option>`);
+            }
+
+            // 选中第一个 PORT
+            if ($portSelect.children().length > 0) {
+                const firstPort = ports[0];
+                console.log("选中第一个端口:", firstPort);
+                $portSelect.val(firstPort);  // 选中第一个 PORT
+                // 只有在成功获取端口后才启动定时器
+                console.log("启动定时器...");
+                startInterval();
+            } else {
+                console.warn("没有可用的端口");
+            }
+        }
+
+        // 转换数据格式以适配树状图
+        function convertToTreeData(pid) {
+            const data = processData[pid];
+            return {
+                name: `PID: ${pid}`,
+                children: Object.entries(data).map(([key, value]) => ({
+                    name: `${key}: ${value}`
+                }))
+            };
+        }
+
+        // 初始化 ECharts 实例
+        const myChart = echarts.init(document.getElementById('main'));
+
+        // 配置树状图选项
+        const option = {
+            title: {
+                text: 'Process Tree Diagram',
+                left: 'center',
+                textStyle: {
+                    color: '#000',
+                    fontSize: 22,
+                    fontWeight: 'bold',
+                },
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderColor: '#ffcc00',
+                borderWidth: 1,
+                textStyle: {
+                    color: '#000',
+                },
+            },
+            series: [{
+                type: 'tree',
+                data: [], // 初始设置为空，数据加载成功后更新
+                top: '5%',
+                left: '5%',
+                bottom: '5%',
+                right: '10%',
+                symbolSize: [12, 12],
+                initialTreeDepth: 2,
+                lineStyle: {
+                    width: 2,
+                    color: 'rgba(0, 0, 0, 0.7)',
+                    curveness: 0.4,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)',
+                    shadowBlur: 10,
+                },
+                label: {
+                    show: true,
+                    position: 'inside',
+                    color: '#000',
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderRadius: 6,
+                    padding: [4, 6],
+                },
+                emphasis: {
+                    focus: 'descendant',
+                    label: {
+                        color: '#000',
+                    },
+                    lineStyle: {
+                        width: 3,
+                        color: '#000',
+                    },
+                },
+                leaves: {
+                    label: {
+                        position: 'inside',
+                        color: '#000',
+                    }
+                },
+                layout: 'orthogonal',
+                expandAndCollapse: true,
+            }],
+        };
+
+        // 使用配置项初始化图表
+        myChart.setOption(option);
+
+        // 更新图表数据的函数
+        function updateChart() {
+            const selectedPID = $('#pidSelect').val();
+            const newData = convertToTreeData(selectedPID);
+
+            // 更新图表数据
+            myChart.setOption({
+                series: [{
+                    data: [newData]
+                }]
+            });
+        }
+    </script>
+
+{% endblock %}

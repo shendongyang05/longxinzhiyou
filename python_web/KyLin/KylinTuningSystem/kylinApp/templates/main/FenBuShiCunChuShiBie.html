@@ -1,0 +1,147 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    /* margin: 20px; */
+  }
+
+  .section {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  .section h2 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+  }
+
+  .key {
+    font-weight: bold;
+  }
+
+  .larger {
+    font-size: 1.5em;
+  }
+
+  .active {
+    color: green;
+  }
+
+  pre {
+    font-family: Consolas, monospace;
+  }
+
+  .header {
+    font-weight: bold;
+  }
+</style>
+{%endblock%}
+
+{%block content%}
+<h2>分布式存储Ceph识别</h2>
+
+
+<div class="caijiBox" style="height: auto;">
+  <h3>集群状态</h3>
+  <pre id="cephInfo"></pre>
+  <h3>OSD状态</h3>
+  <pre id="osdInfo"></pre>
+  <h3>Monitor状态</h3>
+  <pre id="monitorInfo"></pre>
+  <div style="margin-top: 40px;">
+    <span>IP地址选择：</span>
+    <div class="custom-select ip-select">
+
+
+      <div class="select-selected ip-selected">选择IP</div>
+      <div class="select-items ip-items" id="ipSelect">
+        <div>Option 1</div>
+        <div>Option 2</div>
+        <div>Option 3</div>
+      </div>
+    </div>
+
+    <span>选择端口:</span>
+    <div class="custom-select port-select">
+      <div class="select-selected port-selected">选择端口</div>
+      <div class="select-items port-items" id="portSelect">
+        <div>Option 1</div>
+        <div>Option 2</div>
+        <div>Option 3</div>
+      </div>
+    </div>
+    <button id="sentBtn">开始识别</button>
+  </div>
+</div>
+{%endblock%}
+
+{%block js%}
+<script>
+  function initialazeTwoIndex() {
+    var tp = "disk"
+    var model = "get_ipadress"
+    var values = ""
+    
+    requestTwoModel(tp, model, values)
+  }
+  $(document).ready(function () {
+
+    initialazeTwoIndex()
+  })
+  $("#sentBtn").click(function () {
+    var values = {
+      type: "ceph_info",
+      db: "",
+      db_type: "",
+      ip: $(".ip-selected").text(),
+      port: $(".port-selected").text()
+    }
+    requestSixModel(values)
+  })
+
+  $(".ip-selected").click(function () {
+    $(".ip-items").toggle();
+  });
+
+  $(document).click(function (event) {
+    if (!$(event.target).closest('.ip-select').length) {
+      $(".ip-items").hide();
+    }
+  });
+
+  $(".port-selected").click(function () {
+    $(".port-items").toggle();
+  });
+
+
+  $(document).on("click", "#ipSelect .ip", function () {
+
+    var selectedText = $(this).text();
+    $(".ip-selected").text(selectedText);
+    $(".ip-items").hide();
+
+    model = "get_port"
+    var ipValue = JSON.stringify({
+      "ip": selectedText
+    })
+    requestTwoModel("b2", model, ipValue)
+  });
+  $(document).on("click", "#portSelect .port", function () {
+    var selectedText = $(this).text();
+    $(".port-selected").text(selectedText);
+    $(".port-items").hide();
+  })
+  $(document).click(function (event) {
+    if (!$(event.target).closest('.port-select').length) {
+      $(".port-items").hide();
+    }
+  });
+</script>
+{%endblock%}
