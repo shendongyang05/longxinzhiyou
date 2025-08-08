@@ -1,0 +1,8 @@
+# Root .gitignore
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
+venv/
+.venv/
+python_web/KyLin/KylinTuningSystem/venv/
