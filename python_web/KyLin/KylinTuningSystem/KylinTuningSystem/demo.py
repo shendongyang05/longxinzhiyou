@@ -2,136 +2,97 @@ import numpy as np
 import tensorflow as tf
 import random
 from collections import deque
+import time
 
-class DeepRLScheduler:
-    def __init__(self, machines_count, max_tasks, state_dim, action_dim):
-        self.machines_count = machines_count  # 机器数量
-        self.max_tasks = max_tasks  # 最大任务数
-        self.state_dim = state_dim  # 状态空间维度
-        self.action_dim = action_dim  # 动作空间维度
+class SimpleDRLScheduler:
+    def __init__(self, machines_count, max_tasks):
+        self.machines_count = machines_count
+        self.max_tasks = max_tasks
+        self.state_dim = machines_count * 2 + max_tasks * 3
+        self.action_dim = machines_count * max_tasks
         
-        # 经验回放缓冲区
-        self.memory = deque(maxlen=10000)
+        # 简化的神经网络
+        self.actor = self._build_simple_actor()
+        self.critic = self._build_simple_critic()
         
-        # 创建Actor和Critic网络
-        self.actor = self._build_actor()
-        self.critic = self._build_critic()
+        # 经验回放
+        self.memory = deque(maxlen=1000)
+        self.batch_size = 32
+        self.gamma = 0.99
         
-        # 目标网络
-        self.target_actor = self._build_actor()
-        self.target_critic = self._build_critic()
-        
-        # 初始化目标网络权重
-        self.target_actor.set_weights(self.actor.get_weights())
-        self.target_critic.set_weights(self.critic.get_weights())
-        
-        # 超参数
-        self.gamma = 0.99  # 折扣因子
-        self.tau = 0.001   # 软更新参数
-        self.batch_size = 64
-        
-    def _build_actor(self):
-        """构建Actor网络，用于生成动作"""
-        inputs = tf.keras.layers.Input(shape=(self.state_dim,))
-        x = tf.keras.layers.Dense(256, activation='relu')(inputs)
-        x = tf.keras.layers.Dense(128, activation='relu')(x)
-        outputs = tf.keras.layers.Dense(self.action_dim, activation='softmax')(x)
-        model = tf.keras.Model(inputs=inputs, outputs=outputs)
-        model.compile(optimizer=tf.keras.optimizers.Adam(0.001))
+    def _build_simple_actor(self):
+        model = tf.keras.Sequential([
+            tf.keras.layers.Dense(64, activation='relu', input_shape=(self.state_dim,)),
+            tf.keras.layers.Dense(32, activation='relu'),
+            tf.keras.layers.Dense(self.action_dim, activation='softmax')
+        ])
+        model.compile(optimizer='adam')
         return model
     
-    def _build_critic(self):
-        """构建Critic网络，用于评估动作价值"""
+    def _build_simple_critic(self):
         state_input = tf.keras.layers.Input(shape=(self.state_dim,))
         action_input = tf.keras.layers.Input(shape=(self.action_dim,))
         
         x = tf.keras.layers.Concatenate()([state_input, action_input])
-        x = tf.keras.layers.Dense(256, activation='relu')(x)
-        x = tf.keras.layers.Dense(128, activation='relu')(x)
-        outputs = tf.keras.layers.Dense(1)(x)
+        x = tf.keras.layers.Dense(64, activation='relu')(x)
+        x = tf.keras.layers.Dense(32, activation='relu')(x)
+        output = tf.keras.layers.Dense(1)(x)
         
-        model = tf.keras.Model(inputs=[state_input, action_input], outputs=outputs)
-        model.compile(optimizer=tf.keras.optimizers.Adam(0.002), loss='mse')
+        model = tf.keras.Model(inputs=[state_input, action_input], outputs=output)
+        model.compile(optimizer='adam', loss='mse')
         return model
     
     def get_state(self, machines, waiting_tasks):
-        """构造系统当前状态
-        包括：机器运行状态、等待任务状态、积压队列状态等
-        """
         state = []
         
-        # 添加机器状态信息
+        # 机器状态
         for machine in machines:
-            # 归一化的CPU利用率
             state.append(machine.cpu_usage / 100.0)
-            # 归一化的内存利用率
             state.append(machine.memory_usage / 100.0)
         
-        # 添加等待任务信息
+        # 任务状态
         for task in waiting_tasks:
-            # 归一化的任务CPU需求
             state.append(task.cpu_demand / 100.0)
-            # 归一化的任务内存需求
             state.append(task.memory_demand / 100.0)
-            # 归一化的任务预计执行时间
             state.append(task.estimated_duration / 3600.0)
         
-        # 如果等待任务不足，用0填充
+        # 填充
         padding = self.max_tasks - len(waiting_tasks)
         state.extend([0] * (padding * 3))
         
         return np.array(state)
     
     def select_action(self, state):
-        """根据当前状态选择动作"""
-        action_probs = self.actor.predict(np.array([state]))[0]
+        action_probs = self.actor.predict(np.array([state]), verbose=0)[0]
         return np.argmax(action_probs)
     
-    def calculate_reward(self, completed_tasks, current_time):
-        """计算奖励函数
-        r = -∑(t/d_j)，其中t为两次调度间隔，d_j为任务j的实际执行时间
-        """
-        total_weighted_turnaround = 0
-        
-        for task in completed_tasks:
-            # 计算任务的带权周转时间
-            turnaround_time = task.completion_time - task.arrival_time
-            weighted_turnaround = turnaround_time / task.execution_time
-            total_weighted_turnaround += weighted_turnaround
-        
-        # 负值作为奖励，因为我们要最小化带权周转时间
-        reward = -total_weighted_turnaround
-        return reward
-    
     def remember(self, state, action, reward, next_state, done):
-        """存储经验到回放缓冲区"""
         self.memory.append((state, action, reward, next_state, done))
     
     def replay(self):
-        """从经验回放缓冲区中采样并训练网络"""
         if len(self.memory) < self.batch_size:
             return
         
-        # 随机采样
         minibatch = random.sample(self.memory, self.batch_size)
         
-        states = np.array([experience[0] for experience in minibatch])
-        actions = np.array([experience[1] for experience in minibatch])
-        rewards = np.array([experience[2] for experience in minibatch])
-        next_states = np.array([experience[3] for experience in minibatch])
-        dones = np.array([experience[4] for experience in minibatch])
+        states = np.array([exp[0] for exp in minibatch])
+        actions = np.array([exp[1] for exp in minibatch])
+        rewards = np.array([exp[2] for exp in minibatch])
+        next_states = np.array([exp[3] for exp in minibatch])
+        dones = np.array([exp[4] for exp in minibatch])
         
-        # 将动作转换为one-hot编码
+        # 转换为one-hot
         actions_one_hot = tf.one_hot(actions, self.action_dim)
         
-        # 更新Critic
-        target_actions = self.target_actor.predict(next_states)
-        target_q_values = self.target_critic.predict([next_states, target_actions])
-        
+        # 训练critic
+        target_actions = self.actor.predict(next_states, verbose=0)
+        target_q_values = self.critic.predict([next_states, target_actions], verbose=0)
         y = rewards + self.gamma * target_q_values * (1 - dones)
-        self.critic.fit([tf.convert_to_tensor(states, dtype=tf.float32), actions_one_hot], y, verbose=0)
         
-        # 更新Actor
+        self.critic.fit([tf.convert_to_tensor(states, dtype=tf.float32), actions_one_hot], 
+                       y, verbose=0, batch_size=self.batch_size)
+        
+        # 训练actor
         with tf.GradientTape() as tape:
             actions_pred = self.actor(tf.convert_to_tensor(states, dtype=tf.float32))
             critic_value = self.critic([tf.convert_to_tensor(states, dtype=tf.float32), actions_pred])
@@ -139,26 +100,6 @@ class DeepRLScheduler:
         
         actor_gradients = tape.gradient(actor_loss, self.actor.trainable_variables)
         self.actor.optimizer.apply_gradients(zip(actor_gradients, self.actor.trainable_variables))
-        
-        # 软更新目标网络
-        self._update_target_networks()
-    
-    def _update_target_networks(self):
-        """软更新目标网络"""
-        actor_weights = self.actor.get_weights()
-        target_actor_weights = self.target_actor.get_weights()
-        critic_weights = self.critic.get_weights()
-        target_critic_weights = self.target_critic.get_weights()
-        
-        for i in range(len(actor_weights)):
-            target_actor_weights[i] = self.tau * actor_weights[i] + (1 - self.tau) * target_actor_weights[i]
-        
-        for i in range(len(critic_weights)):
-            target_critic_weights[i] = self.tau * critic_weights[i] + (1 - self.tau) * target_critic_weights[i]
-        
-        self.target_actor.set_weights(target_actor_weights)
-        self.target_critic.set_weights(target_critic_weights)
-
 
 class Task:
     def __init__(self, task_id, arrival_time, cpu_demand, memory_demand, estimated_duration):
@@ -167,10 +108,9 @@ class Task:
         self.cpu_demand = cpu_demand
         self.memory_demand = memory_demand
         self.estimated_duration = estimated_duration
-        self.execution_time = None  # 实际执行时间，调度后确定
-        self.completion_time = None  # 完成时间
-        self.assigned_machine = None  # 分配的机器
-
+        self.execution_time = None
+        self.completion_time = None
+        self.assigned_machine = None
 
 class Machine:
     def __init__(self, machine_id, cpu_capacity, memory_capacity):
@@ -182,25 +122,21 @@ class Machine:
         self.running_tasks = []
     
     def can_accommodate(self, task):
-        """检查机器是否能容纳任务"""
         return (self.cpu_usage + task.cpu_demand <= self.cpu_capacity and
                 self.memory_usage + task.memory_demand <= self.memory_capacity)
     
     def assign_task(self, task, current_time):
-        """分配任务到机器"""
         if self.can_accommodate(task):
             self.running_tasks.append(task)
             self.cpu_usage += task.cpu_demand
             self.memory_usage += task.memory_demand
             task.assigned_machine = self
-            # 设置实际执行时间（可以加入一些随机性模拟实际环境）
             task.execution_time = task.estimated_duration * (0.9 + 0.2 * random.random())
             task.completion_time = current_time + task.execution_time
             return True
         return False
     
     def update(self, current_time):
-        """更新机器状态，移除已完成的任务"""
         completed_tasks = []
         remaining_tasks = []
         
@@ -215,8 +151,7 @@ class Machine:
         self.running_tasks = remaining_tasks
         return completed_tasks
 
-
-class Simulator:
+class SimpleSimulator:
     def __init__(self, num_machines, num_tasks):
         self.current_time = 0
         self.machines = [Machine(i, 100, 100) for i in range(num_machines)]
@@ -225,25 +160,26 @@ class Simulator:
         
         # 创建任务
         for i in range(num_tasks):
-            arrival_time = i * 10  # 简化：每10个时间单位到达一个任务
-            cpu_demand = random.randint(10, 50)
-            memory_demand = random.randint(10, 50)
-            estimated_duration = random.randint(20, 200)
+            arrival_time = i * 5  # 更密集的任务到达
+            cpu_demand = random.randint(10, 40)
+            memory_demand = random.randint(10, 40)
+            estimated_duration = random.randint(10, 100)
             task = Task(i, arrival_time, cpu_demand, memory_demand, estimated_duration)
             self.waiting_tasks.append(task)
         
         # 初始化调度器
-        state_dim = num_machines * 2 + num_tasks * 3  # 机器状态 + 任务状态
-        action_dim = num_machines * num_tasks  # 简化：每个动作对应将一个任务分配到一个机器
-        self.scheduler = DeepRLScheduler(num_machines, num_tasks, state_dim, action_dim)
+        self.scheduler = SimpleDRLScheduler(num_machines, num_tasks)
     
     def run_fcfs(self):
-        """运行先来先服务(FCFS)算法进行对比"""
+        """运行FCFS算法"""
         self.current_time = 0
         self.completed_tasks = []
-        
-        # 复制等待任务队列
         waiting_tasks = deque(self.waiting_tasks)
+        
+        for machine in self.machines:
+            machine.cpu_usage = 0
+            machine.memory_usage = 0
+            machine.running_tasks = []
         
         while waiting_tasks or any(machine.running_tasks for machine in self.machines):
             # 更新机器状态
@@ -263,24 +199,18 @@ class Simulator:
                         assigned = True
                         break
                 
-                # 如果无法分配，放回队列头部
                 if not assigned:
                     waiting_tasks.appendleft(task)
                     break
             
-            # 时间前进
             self.current_time += 1
         
-        # 计算评价指标
-        avg_weighted_turnaround = self._calculate_avg_weighted_turnaround()
-        makespan = self._calculate_makespan()
-        
-        return avg_weighted_turnaround, makespan
+        return self._calculate_metrics()
     
-    def run_drl(self, episodes=100):
-        """运行深度强化学习调度算法"""
-        best_avg_weighted_turnaround = float('inf')
-        best_makespan = float('inf')
+    def run_drl(self, episodes=10):
+        """运行DRL算法"""
+        best_metrics = None
+        best_score = float('inf')
         
         for episode in range(episodes):
             # 重置环境
@@ -297,7 +227,7 @@ class Simulator:
             episode_reward = 0
             
             while not done:
-                # 获取当前状态
+                # 获取状态
                 state = self.scheduler.get_state(self.machines, list(waiting_tasks))
                 
                 # 选择动作
@@ -313,12 +243,10 @@ class Simulator:
                         machine = self.machines[machine_idx]
                         
                         if task.arrival_time <= self.current_time and machine.can_accommodate(task):
-                            # 从等待队列中移除任务
                             waiting_tasks.remove(task)
-                            # 分配任务到机器
                             machine.assign_task(task, self.current_time)
                 
-                # 更新所有机器状态
+                # 更新机器状态
                 newly_completed = []
                 for machine in self.machines:
                     completed = machine.update(self.current_time)
@@ -326,7 +254,7 @@ class Simulator:
                     self.completed_tasks.extend(completed)
                 
                 # 计算奖励
-                reward = self.scheduler.calculate_reward(newly_completed, self.current_time)
+                reward = -len(newly_completed) * 10  # 简单的奖励函数
                 episode_reward += reward
                 
                 # 时间前进
@@ -345,27 +273,24 @@ class Simulator:
                 # 训练网络
                 self.scheduler.replay()
             
-            # 计算评价指标
-            avg_weighted_turnaround = self._calculate_avg_weighted_turnaround()
-            makespan = self._calculate_makespan()
+            # 计算指标
+            metrics = self._calculate_metrics()
+            score = metrics['avg_weighted_turnaround'] + metrics['makespan'] / 1000
             
-            # 更新最佳结果
-            if avg_weighted_turnaround < best_avg_weighted_turnaround:
-                best_avg_weighted_turnaround = avg_weighted_turnaround
+            if score < best_score:
+                best_score = score
+                best_metrics = metrics
             
-            if makespan < best_makespan:
-                best_makespan = makespan
-            
-            # 显示训练进度
-            if (episode + 1) % 10 == 0:
+            # 显示进度
+            if (episode + 1) % 5 == 0:
                 print(f"E{episode+1:2d}", end=" ", flush=True)
         
-        return best_avg_weighted_turnaround, best_makespan
+        return best_metrics
     
-    def _calculate_avg_weighted_turnaround(self):
-        """计算平均带权周转时间"""
+    def _calculate_metrics(self):
+        """计算性能指标"""
         if not self.completed_tasks:
-            return 0
+            return {'avg_weighted_turnaround': 0, 'makespan': 0}
         
         total_weighted_turnaround = 0
         for task in self.completed_tasks:
@@ -373,52 +298,53 @@ class Simulator:
             weighted_turnaround = turnaround_time / task.execution_time
             total_weighted_turnaround += weighted_turnaround
         
-        return total_weighted_turnaround / len(self.completed_tasks)
-    
-    def _calculate_makespan(self):
-        """计算完工时间"""
-        if not self.completed_tasks:
-            return 0
+        avg_weighted_turnaround = total_weighted_turnaround / len(self.completed_tasks)
+        makespan = max(task.completion_time for task in self.completed_tasks)
         
-        return max(task.completion_time for task in self.completed_tasks)
+        return {
+            'avg_weighted_turnaround': avg_weighted_turnaround,
+            'makespan': makespan
+        }
 
-
-# 使用示例
-if __name__ == "__main__":
+def main():
     print("=" * 60)
-    print("🚀 深度强化学习任务调度系统性能对比")
+    print("🚀 深度强化学习任务调度系统 - 快速演示版")
     print("=" * 60)
     
-    # 创建模拟环境：10台机器，100个任务
     print("📊 模拟环境配置:")
-    print("   - 机器数量: 10台")
-    print("   - 任务数量: 100个")
-    print("   - 训练轮数: 20轮")
+    print("   - 机器数量: 5台")
+    print("   - 任务数量: 50个")
+    print("   - 训练轮数: 10轮")
     print()
     
-    sim = Simulator(10, 100)
+    # 创建模拟器
+    sim = SimpleSimulator(5, 50)
     
     print("🔄 正在运行FCFS（先来先服务）算法...")
-    fcfs_wt, fcfs_makespan = sim.run_fcfs()
-    print("✅ FCFS算法完成")
+    start_time = time.time()
+    fcfs_metrics = sim.run_fcfs()
+    fcfs_time = time.time() - start_time
+    print(f"✅ FCFS算法完成 (耗时: {fcfs_time:.2f}秒)")
     print()
     
     print("🧠 正在训练深度强化学习调度器...")
     print("   训练进度: ", end="", flush=True)
-    drl_wt, drl_makespan = sim.run_drl(episodes=20)
-    print("\n✅ 深度强化学习训练完成")
+    start_time = time.time()
+    drl_metrics = sim.run_drl(episodes=10)
+    drl_time = time.time() - start_time
+    print(f"\n✅ 深度强化学习训练完成 (耗时: {drl_time:.2f}秒)")
     print()
     
     # 计算改进百分比
-    wt_improvement = (fcfs_wt - drl_wt) / fcfs_wt * 100
-    makespan_improvement = (fcfs_makespan - drl_makespan) / fcfs_makespan * 100
+    wt_improvement = (fcfs_metrics['avg_weighted_turnaround'] - drl_metrics['avg_weighted_turnaround']) / fcfs_metrics['avg_weighted_turnaround'] * 100
+    makespan_improvement = (fcfs_metrics['makespan'] - drl_metrics['makespan']) / fcfs_metrics['makespan'] * 100
     
     print("📈 性能对比结果:")
     print("=" * 60)
     print(f"{'指标':<20} {'FCFS':<15} {'DRL':<15} {'改进':<10}")
     print("-" * 60)
-    print(f"{'平均带权周转时间':<20} {fcfs_wt:<15.2f} {drl_wt:<15.2f} {wt_improvement:>+.2f}%")
-    print(f"{'完工时间':<20} {fcfs_makespan:<15.2f} {drl_makespan:<15.2f} {makespan_improvement:>+.2f}%")
+    print(f"{'平均带权周转时间':<20} {fcfs_metrics['avg_weighted_turnaround']:<15.2f} {drl_metrics['avg_weighted_turnaround']:<15.2f} {wt_improvement:>+.2f}%")
+    print(f"{'完工时间':<20} {fcfs_metrics['makespan']:<15.2f} {drl_metrics['makespan']:<15.2f} {makespan_improvement:>+.2f}%")
     print("=" * 60)
     
     print("\n🎯 效率提升总结:")
@@ -440,4 +366,11 @@ if __name__ == "__main__":
     else:
         print("⚠️  需要进一步优化训练参数")
     
+    print(f"\n⏱️  执行时间对比:")
+    print(f"   FCFS: {fcfs_time:.2f}秒")
+    print(f"   DRL: {drl_time:.2f}秒")
+    
     print("\n" + "=" * 60)
+
+if __name__ == "__main__":
+    main() 

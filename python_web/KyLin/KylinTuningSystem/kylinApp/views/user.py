@@ -17,11 +17,18 @@ def login_index(request):
         # 表单验证正确（格式,类型）
         user = request.POST.get("username")
         pwd = request.POST.get("password")
+        
+        # 密码验证
+        if not pwd or len(pwd) < 6:
+            error_message = "密码长度不能少于6位"
+            return render(request, "user/login.html", context={"message": error_message})
+        
         encrypt_pwd = encrypt.encrypt_md5(pwd)
+        
         # 查询条件
         conditions = {
             "username": user,
-            "password": pwd
+            "password": encrypt_pwd
         }
         info = UserModels.objects.filter(**conditions).first()
         if not info:
@@ -29,11 +36,11 @@ def login_index(request):
             return render(request, "user/login.html", context={"message": error_message})
 
         # 成功
-        request.session["info"] = {"user": user, "pad": pwd}
+        request.session["info"] = {"user": user, "password": encrypt_pwd}
         request.session.set_expiry(60 * 60 * 24 * 7)
         return redirect("/index/usermanager")
 
-    return render(request,"user/login.html")
+    return render(request, "user/login.html")
 
 
 def get_user_info(request):

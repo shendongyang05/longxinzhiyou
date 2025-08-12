@@ -17,7 +17,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from kylinApp.views import view,user,api
+from kylinApp.views import view, user, api
+from kylinApp.views import ai_api
 
 urlpatterns = [
     # 配置管理
@@ -51,8 +52,9 @@ urlpatterns = [
     path('index/test_polling', view.test_polling),
     path('index/debug_polling', view.debug_polling),
 
-    path('api/doubao_chat/', api.doubao_chat),
+    # path('api/doubao_chat/', api.doubao_chat),
     path('index/test_doubao', view.test_doubao),
+    
 
     # 调优可视化
     path('index/zhanshiguanjianshuju', view.zhanshiguanjianshuju),
@@ -84,10 +86,10 @@ urlpatterns = [
     # 火焰图
     path('no_cache_image/<str:image_name>/',api.NoCacheImageView.as_view(), name='no_cache_image'),
 
-    # AI一键调优接口
-    path('api/ai_optimize/', api.ai_optimize_api),
-    # 执行AI策略接口
-    path('api/execute_ai_strategy/', api.execute_ai_strategy),
+    # AI一键调优接口 - 使用新的ai_api模块
+    path('api/ai_optimize/', ai_api.ai_optimize_api),
+    # 执行AI策略接口 - 使用新的ai_api模块
+    path('api/execute_ai_strategy/', ai_api.execute_ai_strategy),
     
     # 后台采集任务管理接口
     path('api/background_collection/', api.background_collection_api),
@@ -96,7 +98,16 @@ urlpatterns = [
     # 获取最新采集数据接口（简化版）
     path('api/get_latest_data_simple/', api.get_latest_data),
     # 保存采集数据接口
-    path('api/save_collected_data/', api.save_collected_data_api),
+    path('api/save_collection_data/', api.save_collected_data_api),
+    
+    # 日志记录相关路由
+    path('index/rizhijilu', view.rizhijilu),
+    path('api/upload_log/', api.upload_log),
+    path('api/get_logs/', api.get_logs),
+    path('api/view_log/<int:log_id>/', api.view_log),
+    path('api/download_log/<int:log_id>/', api.download_log),
+    path('api/delete_log/<int:log_id>/', api.delete_log),
+    path('api/create_direct_log/', api.create_direct_log),
 
     # 用户登录
     path('login/', user.login_index),

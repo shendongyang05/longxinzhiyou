@@ -974,16 +974,20 @@
         <div class="sidebar" :class="{ collapsed: isCollapsed }">
             <!-- 侧边栏头部 -->
             <div class="sidebar-header">
-                <span v-if="!isCollapsed">麒麟调优系统</span>
+                <span v-if="!isCollapsed">龙芯智优</span>
                 <span v-else>麒麟</span>
             </div>
             
             <!-- Element UI 菜单 -->
             <el-menu
-                default-active="1"
+                ref="menu"
+                :default-active="activeMenuIndex"
                 class="el-menu-vertical"
                 :collapse="isCollapsed"
-                :collapse-transition="false">
+                :collapse-transition="false"
+                @open="handleOpen"
+                @close="handleClose"
+                unique-opened>
 
                 <!-- 用户管理 -->
                 <el-submenu index="1">
@@ -1005,9 +1009,7 @@
                     <el-menu-item index="2-1" @click="navigateTo('/index/')">
                         服务器信息管理
                     </el-menu-item>
-                    <el-menu-item index="2-2" @click="navigateTo('/index/jiankongshujukuxinxiguanli')">
-                        数据库信息管理
-                    </el-menu-item>
+
                     <el-menu-item index="2-3" @click="navigateTo('/index/fuwuxinxiguanli')">
                         中间件信息管理
                     </el-menu-item>
@@ -1074,7 +1076,7 @@
                     <el-menu-item index="5-2" @click="navigateTo('/index/zhanshiguanjianshuju')">
                         关键数据展示
                     </el-menu-item>
-                
+
                 </el-submenu>
 
                 <!-- 数据统计及分析 -->
@@ -1091,13 +1093,24 @@
                     </el-menu-item>
                 </el-submenu>
                 
+                <!-- 日志记录 -->
+                <el-submenu index="7">
+                    <template slot="title">
+                        <i class="el-icon-document"></i>
+                        <span>日志记录</span>
+                    </template>
+                    <el-menu-item index="7-1" @click="navigateTo('/index/rizhijilu')">
+                        日志上传管理
+                    </el-menu-item>
+                </el-submenu>
+                
                 <!-- 亲和性自动调整 -->
-                <el-submenu index="6">
+                <el-submenu index="8">
                     <template slot="title">
                         <i class="el-icon-setting"></i>
                         <span>亲和性自动调整</span>
                     </template>
-                    <el-menu-item index="6-1" @click="navigateTo('/index/qinhexintiaozheng')">
+                    <el-menu-item index="8-1" @click="navigateTo('/index/qinhexintiaozheng')">
                         自动迁移进程
                     </el-menu-item>
                 </el-submenu>
@@ -2530,6 +2543,7 @@
                 currentPage: 'home',
                 currentPageTitle: '用户管理',
                 breadcrumbPath: ['首页', '系统管理', '用户管理'],
+                activeMenuIndex: '1-1',
                 currentUser: {
                     name: '',
                     avatar: ''
@@ -2555,7 +2569,124 @@
                     this.isCollapsed = !this.isCollapsed;
                 },
                 navigateTo(url) {
+                    // 保存当前URL，以便在新页面加载后可以判断是否真的发生了导航
+                    localStorage.setItem('lastUrl', window.location.pathname);
+                    localStorage.setItem('targetUrl', url);
+                    
+                    // 保存当前激活的菜单项，以便在新页面加载后恢复
+                    // 信息管理
+                    if (url.includes('jiankongshujukuxinxiguanli')) {
+                        localStorage.setItem('activeMenuIndex', '2-2');
+                        localStorage.setItem('openSubmenu', '2');
+                    } else if (url.includes('fuwuxinxiguanli')) {
+                        localStorage.setItem('activeMenuIndex', '2-3');
+                        localStorage.setItem('openSubmenu', '2');
+                    } else if (url === '/index/') {
+                        localStorage.setItem('activeMenuIndex', '2-1');
+                        localStorage.setItem('openSubmenu', '2');
+                    } else if (url.includes('usermanager')) {
+                        localStorage.setItem('activeMenuIndex', '1-1');
+                        localStorage.setItem('openSubmenu', '1');
+                    } 
+                    // 数据采集
+                    else if (url.includes('caijicpuxinnengzhibiao')) {
+                        localStorage.setItem('activeMenuIndex', '3-1');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('caijineicunxinnengzhibiao')) {
+                        localStorage.setItem('activeMenuIndex', '3-2');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('caijicipanxinnengzhibiao')) {
+                        localStorage.setItem('activeMenuIndex', '3-3');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('caijiwangluoxinnengzhibiao')) {
+                        localStorage.setItem('activeMenuIndex', '3-4');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('caijiqitaxinxi')) {
+                        localStorage.setItem('activeMenuIndex', '3-5');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('yijiancaiji')) {
+                        localStorage.setItem('activeMenuIndex', '3-6');
+                        localStorage.setItem('openSubmenu', '3');
+                    } 
+                    // 采集数据分析
+                    else if (url.includes('cpuxinnengzhibiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-1');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('neicunxinnengzhibiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-2');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('cipanxinnengzhibiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-3');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('wangluoxinnengzhibiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-4');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('ziyuanliantiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-5');
+                        localStorage.setItem('openSubmenu', '4');
+                    } 
+                    // 调优可视化
+                    else if (url.includes('datadashboard')) {
+                        localStorage.setItem('activeMenuIndex', '5-4');
+                        localStorage.setItem('openSubmenu', '5');
+                    } else if (url.includes('zhanshiguanjianshuju')) {
+                        localStorage.setItem('activeMenuIndex', '5-2');
+                        localStorage.setItem('openSubmenu', '5');
+                    } 
+                    // 数据统计及分析
+                    else if (url.includes('iozhanshujutonglifenxi')) {
+                        localStorage.setItem('activeMenuIndex', '6-1');
+                        localStorage.setItem('openSubmenu', '6');
+                    } else if (url.includes('cpushujutongjifenxi')) {
+                        localStorage.setItem('activeMenuIndex', '6-2');
+                        localStorage.setItem('openSubmenu', '6');
+                    } 
+                    // 日志记录
+                    else if (url.includes('rizhijilu')) {
+                        localStorage.setItem('activeMenuIndex', '7-1');
+                        localStorage.setItem('openSubmenu', '7');
+                    } 
+                    // 亲和性自动调整
+                    else if (url.includes('qinhexintiaozheng')) {
+                        localStorage.setItem('activeMenuIndex', '8-1');
+                        localStorage.setItem('openSubmenu', '8');
+                    } 
+                    // 设置调优策略（放在调优可视化下）
+                    else if (url.includes('shezhitiaoyoucelue')) {
+                        localStorage.setItem('activeMenuIndex', '5-3');
+                        localStorage.setItem('openSubmenu', '5');
+                    }
+                    
                     window.location.href = url;
+                },
+                
+                // 处理菜单打开事件
+                handleOpen(key, keyPath) {
+                    console.log('菜单打开:', key, keyPath);
+                    localStorage.setItem('openSubmenu', key);
+                    
+                    // 当一个菜单打开时，确保其他菜单都关闭
+                    const allSubmenus = document.querySelectorAll('.el-submenu');
+                    allSubmenus.forEach(submenu => {
+                        const index = submenu.getAttribute('index');
+                        if (index !== key) {
+                            const submenuInstance = submenu.__vue__;
+                            if (submenuInstance && submenuInstance.opened) {
+                                // 使用Element UI的方法关闭子菜单
+                                this.$refs.menu.close(index);
+                            }
+                        }
+                    });
+                },
+                
+                // 处理菜单关闭事件
+                handleClose(key, keyPath) {
+                    console.log('菜单关闭:', key, keyPath);
+                    // 如果关闭的是当前活动菜单的父菜单，则不保存关闭状态
+                    const activeParent = this.activeMenuIndex.split('-')[0];
+                    if (key !== activeParent) {
+                        localStorage.removeItem('openSubmenu');
+                    }
                 },
                 toggleUserDropdown() {
                     this.showUserDropdown = !this.showUserDropdown;
@@ -2572,6 +2703,99 @@
                         }
                     }
                 },
+                // 恢复菜单状态
+                restoreMenuState() {
+                    // 根据当前URL更新页面信息和面包屑
+                    const path = window.location.pathname;
+                    
+                    // 检查是否从localStorage恢复状态
+                    const savedMenuIndex = localStorage.getItem('activeMenuIndex');
+                    const savedSubmenu = localStorage.getItem('openSubmenu');
+                    const targetUrl = localStorage.getItem('targetUrl');
+                    
+                    // 如果当前URL与目标URL匹配，则使用保存的菜单状态
+                    if (targetUrl && path === targetUrl) {
+                        if (savedMenuIndex) {
+                            this.activeMenuIndex = savedMenuIndex;
+                        }
+                        
+                        // 根据保存的菜单索引设置页面标题和面包屑
+                        this.setPageInfoByMenuIndex(this.activeMenuIndex);
+                        
+                        // 清除localStorage中的临时导航数据
+                        localStorage.removeItem('targetUrl');
+                        return;
+                    }
+                    
+                    // 如果没有从localStorage恢复，则根据URL设置菜单状态
+                    this.updatePageInfo();
+                },
+                
+                // 根据菜单索引设置页面信息
+                setPageInfoByMenuIndex(index) {
+                    switch(index) {
+                        case '1-1':
+                            this.currentPageTitle = '用户管理';
+                            this.currentPage = 'system';
+                            this.breadcrumbPath = ['首页', '系统管理', '用户管理'];
+                            break;
+                        case '2-1':
+                            this.currentPageTitle = '服务器信息管理';
+                            this.currentPage = 'system';
+                            this.breadcrumbPath = ['首页', '信息管理', '服务器信息管理'];
+                            break;
+                        case '2-2':
+                            this.currentPageTitle = '监控数据库信息管理';
+                            this.currentPage = 'system';
+                            this.breadcrumbPath = ['首页', '信息管理', '监控数据库信息管理'];
+                            break;
+                        case '2-3':
+                            this.currentPageTitle = '中间件信息管理';
+                            this.currentPage = 'system';
+                            this.breadcrumbPath = ['首页', '信息管理', '中间件信息管理'];
+                            break;
+                        // 其他菜单项...
+                    }
+                },
+                
+                // 打开活动子菜单
+                openActiveSubmenu() {
+                    // 获取菜单组件
+                    const menu = this.$refs.menu;
+                    if (!menu) return;
+                    
+                    // 从activeMenuIndex中提取父菜单索引
+                    const parentIndex = this.activeMenuIndex.split('-')[0];
+                    
+                    // 使用Vue的nextTick，确保DOM已更新
+                    this.$nextTick(() => {
+                        // 先关闭所有子菜单
+                        const allSubmenus = document.querySelectorAll('.el-submenu');
+                        allSubmenus.forEach(submenu => {
+                            const index = submenu.getAttribute('index');
+                            const submenuInstance = submenu.__vue__;
+                            if (submenuInstance && submenuInstance.opened && index !== parentIndex) {
+                                this.$refs.menu.close(index);
+                            }
+                        });
+                        
+                        // 打开当前活动菜单项的父菜单
+                        const activeSubmenu = document.querySelector(`.el-submenu[index="${parentIndex}"]`);
+                        if (activeSubmenu) {
+                            const submenuInstance = activeSubmenu.__vue__;
+                            if (submenuInstance && !submenuInstance.opened) {
+                                this.$refs.menu.open(parentIndex);
+                            }
+                        }
+                        
+                        // 设置活动菜单项
+                        const menuItem = document.querySelector(`.el-menu-item[index="${this.activeMenuIndex}"]`);
+                        if (menuItem) {
+                            menuItem.classList.add('is-active');
+                        }
+                    });
+                },
+                
                 updatePageInfo() {
                     // 根据当前URL更新页面信息和面包屑
                     const path = window.location.pathname;
@@ -2579,59 +2803,122 @@
                         this.currentPageTitle = '用户管理';
                         this.currentPage = 'system';
                         this.breadcrumbPath = ['首页', '系统管理', '用户管理'];
-                    } else if (path.includes('caijicpuxinnengzhibiao')) {
-                        this.currentPageTitle = 'CPU性能指标采集';
-                        this.currentPage = 'monitor';
-                        this.breadcrumbPath = ['首页', '数据采集', 'CPU性能指标采集'];
+                        this.activeMenuIndex = '1-1';
                     } else if (path.includes('jiankongshujukuxinxiguanli')) {
                         this.currentPageTitle = '监控数据库信息管理';
                         this.currentPage = 'system';
                         this.breadcrumbPath = ['首页', '信息管理', '监控数据库信息管理'];
+                        this.activeMenuIndex = '2-2';
+                    } else if (path.includes('fuwuxinxiguanli')) {
+                        this.currentPageTitle = '中间件信息管理';
+                        this.currentPage = 'system';
+                        this.breadcrumbPath = ['首页', '信息管理', '中间件信息管理'];
+                        this.activeMenuIndex = '2-3';
+                    } else if (path.includes('caijicpuxinnengzhibiao')) {
+                        this.currentPageTitle = 'CPU性能指标采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', 'CPU性能指标采集'];
+                        this.activeMenuIndex = '3-1';
                     } else if (path.includes('caijineicunxinnengzhibiao')) {
                         this.currentPageTitle = '内存性能指标采集';
                         this.currentPage = 'monitor';
                         this.breadcrumbPath = ['首页', '数据采集', '内存性能指标采集'];
-                    } else if (path.includes('caijiioxinnengzhibiao')) {
-                        this.currentPageTitle = 'IO性能指标采集';
+                        this.activeMenuIndex = '3-2';
+                    } else if (path.includes('caijicipanxinnengzhibiao')) {
+                        this.currentPageTitle = '磁盘性能指标采集';
                         this.currentPage = 'monitor';
-                        this.breadcrumbPath = ['首页', '数据采集', 'IO性能指标采集'];
+                        this.breadcrumbPath = ['首页', '数据采集', '磁盘性能指标采集'];
+                        this.activeMenuIndex = '3-3';
+                    } else if (path.includes('caijiwangluoxinnengzhibiao')) {
+                        this.currentPageTitle = '网络性能指标采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', '网络性能指标采集'];
+                        this.activeMenuIndex = '3-4';
+                    } else if (path.includes('caijiqitaxinxi')) {
+                        this.currentPageTitle = '软硬件信息采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', '软硬件信息采集'];
+                        this.activeMenuIndex = '3-5';
+                    } else if (path.includes('yijiancaiji')) {
+                        this.currentPageTitle = '数据轮询采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', '数据轮询采集'];
+                        this.activeMenuIndex = '3-6';
                     } else if (path.includes('cpuxinnengzhibiaofenxi')) {
                         this.currentPageTitle = 'CPU性能指标分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '采集数据分析', 'CPU性能指标分析'];
+                        this.activeMenuIndex = '4-1';
                     } else if (path.includes('neicunxinnengzhibiaofenxi')) {
                         this.currentPageTitle = '内存性能指标分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '采集数据分析', '内存性能指标分析'];
-                    } else if (path.includes('ioxinnengzhibiaofenxi')) {
-                        this.currentPageTitle = 'IO性能指标分析';
+                        this.activeMenuIndex = '4-2';
+                    } else if (path.includes('cipanxinnengzhibiaofenxi')) {
+                        this.currentPageTitle = '磁盘性能指标分析';
                         this.currentPage = 'analysis';
-                        this.breadcrumbPath = ['首页', '采集数据分析', 'IO性能指标分析'];
-                    } else if (path.includes('shezhitiaoyoucelue')) {
-                        this.currentPageTitle = '设置调优策略';
-                        this.currentPage = 'optimize';
-                        this.breadcrumbPath = ['首页', '调优可视化', '设置调优策略'];
+                        this.breadcrumbPath = ['首页', '采集数据分析', '磁盘性能指标分析'];
+                        this.activeMenuIndex = '4-3';
+                    } else if (path.includes('wangluoxinnengzhibiaofenxi')) {
+                        this.currentPageTitle = '网络性能指标分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '网络性能指标分析'];
+                        this.activeMenuIndex = '4-4';
+                    } else if (path.includes('ziyuanliantiaofenxi')) {
+                        this.currentPageTitle = '资源链条分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '资源链条分析'];
+                        this.activeMenuIndex = '4-5';
+                    } else if (path.includes('datadashboard')) {
+                        this.currentPageTitle = '大屏监控';
+                        this.currentPage = 'visualization';
+                        this.breadcrumbPath = ['首页', '调优可视化', '大屏监控'];
+                        this.activeMenuIndex = '5-4';
+                    } else if (path.includes('zhanshiguanjianshuju')) {
+                        this.currentPageTitle = '关键数据展示';
+                        this.currentPage = 'visualization';
+                        this.breadcrumbPath = ['首页', '调优可视化', '关键数据展示'];
+                        this.activeMenuIndex = '5-2';
                     } else if (path.includes('iozhanshujutonglifenxi')) {
                         this.currentPageTitle = 'IO栈数据统计及分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '数据统计及分析', 'IO栈数据统计及分析'];
+                        this.activeMenuIndex = '6-1';
                     } else if (path.includes('cpushujutongjifenxi')) {
                         this.currentPageTitle = 'CPU数据统计及分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '数据统计及分析', 'CPU数据统计及分析'];
+                        this.activeMenuIndex = '6-2';
+                    } else if (path.includes('rizhijilu')) {
+                        this.currentPageTitle = '日志上传管理';
+                        this.currentPage = 'log';
+                        this.breadcrumbPath = ['首页', '日志记录', '日志上传管理'];
+                        this.activeMenuIndex = '7-1';
                     } else if (path.includes('qinhexintiaozheng')) {
                         this.currentPageTitle = '自动迁移进程';
                         this.currentPage = 'optimize';
                         this.breadcrumbPath = ['首页', '亲和性自动调整', '自动迁移进程'];
+                        this.activeMenuIndex = '8-1';
+                    } else if (path.includes('shezhitiaoyoucelue')) {
+                        this.currentPageTitle = 'AI一键调优';
+                        this.currentPage = 'visualization';
+                        this.breadcrumbPath = ['首页', '调优可视化', 'AI一键调优'];
+                        this.activeMenuIndex = '5-3';
                     } else if (path === '/index/' || path === '/') {
-                        this.currentPageTitle = '首页';
-                        this.currentPage = 'home';
-                        this.breadcrumbPath = ['首页'];
+                        this.currentPageTitle = '服务器信息管理';
+                        this.currentPage = 'system';
+                        this.breadcrumbPath = ['首页', '信息管理', '服务器信息管理'];
+                        this.activeMenuIndex = '2-1';
                     } else {
                         this.currentPageTitle = '系统管理';
                         this.currentPage = 'system';
                         this.breadcrumbPath = ['首页', '系统管理'];
+                        this.activeMenuIndex = '1-1';
                     }
+                    
+                    // 保存当前激活的菜单项到localStorage
+                    localStorage.setItem('activeMenuIndex', this.activeMenuIndex);
+                    localStorage.setItem('openSubmenu', this.activeMenuIndex.split('-')[0]);
                 },
 
                 goToProfile() {
@@ -2744,8 +3031,6 @@
                 // 将monitorManager挂载到window对象，使其全局可用
                 window.monitorManager = monitorManager;
                 
-
-                
                 // 请求音频播放权限
                 this.requestAudioPermission();
                 
@@ -2758,8 +3043,23 @@
                 
                 // 获取用户信息
                 this.getUserInfo();
-                // 更新页面信息
-                this.updatePageInfo();
+                
+                // 从URL和localStorage恢复菜单状态
+                this.restoreMenuState();
+                
+                // 不再自动打开子菜单
+                this.$nextTick(() => {
+                    // 只设置活动菜单项，不自动展开
+                    this.openActiveSubmenu();
+                });
+            },
+            
+            // 新增生命周期钩子，确保在更新后打开菜单
+            updated() {
+                // 只设置活动菜单项，不自动展开
+                this.$nextTick(() => {
+                    this.openActiveSubmenu();
+                });
             }
         });
 
@@ -2771,7 +3071,7 @@
             }
         }
         
-        // 在document ready中初始化AI小助手
+        // 在document ready中初始化
         $(document).ready(function() {
             console.log('Document ready, 检查依赖...');
             console.log('jQuery状态:', typeof $);
@@ -2789,6 +3089,16 @@
             } else {
                 console.error('jQuery或aiAssistant未定义');
             }
+            
+            // 确保菜单状态正确
+            setTimeout(function() {
+                // 获取Vue实例
+                const app = document.getElementById('app').__vue__;
+                if (app && app.openActiveSubmenu) {
+                    console.log('手动触发菜单状态更新');
+                    app.openActiveSubmenu();
+                }
+            }, 100);
         });
 
 

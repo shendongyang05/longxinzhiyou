@@ -837,6 +837,9 @@ label {
 
     // 初始化数据
     renderDatabaseTable();
+    
+    // 初始化页面数据
+    initialaze();
 
     // 新增数据库按钮
     $("#createBtn").on("click", function (e) {
@@ -875,6 +878,37 @@ label {
             status: status,
             remarks: remarks
         });
+    });
+
+    // 删除数据库按钮
+    $(document).on("click", ".del", function (e) {
+        e.preventDefault();
+        console.log("Delete button clicked");
+
+        var row = $(this).closest("tr");
+        var ip = row.find("td:nth-child(2)").text();
+        var port = row.find("td:nth-child(3)").text();
+        var database = row.find("td:nth-child(4)").text();
+        var dbType = row.find("td:nth-child(5)").text();
+        var user = row.find("td:nth-child(6)").text();
+        var remarks = row.find("td:nth-child(10)").text();
+        
+        // 构建确认消息
+        var confirmMessage = "确认要删除以下数据库信息吗？\n\n";
+        confirmMessage += "IP地址: " + ip + "\n";
+        confirmMessage += "端口: " + port + "\n";
+        confirmMessage += "数据库: " + database + "\n";
+        confirmMessage += "数据库类型: " + dbType + "\n";
+        confirmMessage += "用户名: " + user + "\n";
+        if (remarks && remarks.trim() !== "") {
+            confirmMessage += "备注: " + remarks + "\n";
+        }
+        confirmMessage += "\n删除后将无法恢复！";
+        
+        if (confirm(confirmMessage)) {
+            var deleteData = { "ip": ip, "port": port };
+            requestOneModel(name, "del", JSON.stringify(deleteData));
+        }
     });
 
     // 保存数据库按钮
@@ -931,179 +965,90 @@ label {
         }
     });
 
-    var oldData = ""
-    var newData = ""
-    //初始化页面数据
-    initialaze()
-
-    reviseTag.on("click", function () {
-      var type = "update"
-      newData = get_value();
-      values = JSON.stringify({ "old": oldData, "new": newData })
-      if (values) {
-        requestOneModel(name, type, values)
-        creatDataTag.css("display", "none")
-      }
-    })
-    // 为按钮绑定提交点击事件
-    submitTag.on("click", function () {
-      // 获取输入框的值
-      type = "create";
-      values = get_value();
-      if (values) {
-        requestOneModel(name, type, values)
-        creatDataTag.css("display", "none")
-      }
-
-    });
-
-    //显示新增页面
-    $("#createBtn").on("click", function () {
-      submitTag.css("display", "block")
-      reviseTag.css("display", "none")
-      creatDataTag.css("display", "block")
-    })
-
-    //绑定查询事件
+    // 查询功能
     $("#selectOneModel").on("click", function () {
-      type = "select";
-      var value = $("#ipadress").val()
-      if (value.trim() === "") {
-        alert("请输入IP地址")
+      var ipValue = $("#ipadress").val().trim();
+      var dbNameValue = $("#dbNameSearch").val().trim();
+      
+      if (!ipValue && !dbNameValue) {
+        alert("请输入IP地址或数据库名称");
         return;
       }
-      ipValue = JSON.stringify({
-        "ip": $("#ipadress").val()
-      })
-
-      requestOneModel(name, type, ipValue)
-    })
-
-    //绑定选择页码
-    $(".choose").on("click", function () {
-      $("#dropdownLiTag").children().on("click", function () {
-        type = "select";
-        indexs = getNumber($(this).text())
-        numberRange = indexs[0] + "-" + indexs[1]
-        requestOneModel(name, type, "{}", numberRange)
-      })
-    })
-
-    // 使用事件委托给删除按钮添加点击事件
-    $(document).on("click", ".del", function () {
-      // 获取包含删除按钮的行元素
-      var row = $(this).closest("tr");
-      // 获取相应的值
-      var ip = row.find("td:nth-child(2)").text();
-      var port = row.find("td:nth-child(3)").text();
-      var database = row.find("td:nth-child(4)").text();
-      var dbType = row.find("td:nth-child(5)").text();
-      var user = row.find("td:nth-child(6)").text();
-      var remarks = row.find("td:nth-child(9)").text();
       
-      // 构建确认消息
-      var confirmMessage = "确认要删除以下数据库信息吗？\n\n";
-      confirmMessage += "IP地址: " + ip + "\n";
-      confirmMessage += "端口: " + port + "\n";
-      confirmMessage += "数据库: " + database + "\n";
-      confirmMessage += "数据库类型: " + dbType + "\n";
-      confirmMessage += "用户名: " + user + "\n";
-      if (remarks && remarks.trim() !== "") {
-        confirmMessage += "备注: " + remarks + "\n";
-      }
-      confirmMessage += "\n删除后将无法恢复！";
+      var searchData = {};
+      if (ipValue) searchData.ip = ipValue;
+      if (dbNameValue) searchData.database = dbNameValue;
       
-      var bool = confirm(confirmMessage);
-      if (bool) {
-        var type = "del"
-        var values = JSON.stringify({ "ip": ip, "port": port })
-        requestOneModel(name, type, values)
-      }
-    });
-    $(document).on("click", ".revise", function () {
-      reviseTag.css("display", "block")
-      submitTag.css("display", "none")
-      creatDataTag.css("display", "block")
-      var row = $(this).closest("tr");
-      var ipValue = row.find("td:nth-child(2)").text();
-      var portValue = row.find("td:nth-child(3)").text();
-      var dbValue = row.find("td:nth-child(4)").text();
-      var dbTypeValue = row.find("td:nth-child(5)").text();
-      var userValue = row.find("td:nth-child(6)").text();
-      var passwordValue = row.find("td:nth-child(7)").text();
-      var dbCodeValue = row.find("td:nth-child(8)").text();
-      var remarksValue = row.find("td:nth-child(9)").text();
-      oldData = JSON.stringify({
-        ip: ipValue,
-        port: portValue,
-        database: dbValue,
-        type: dbTypeValue,
-        user: userValue,
-        password: passwordValue,
-        code: dbCodeValue,
-        remarks: remarksValue,
-      });
-      set_value(ipValue, portValue, dbValue, dbTypeValue, userValue, passwordValue, dbCodeValue, remarksValue)
+      requestOneModel(name, "select", JSON.stringify(searchData));
     });
 
-    $(document).on("click", "#closeImg", function () {
-      submitTag.css("display", "none")
-      creatDataTag.css("display", "none")
-      creatDataTag.css("display", "none")
-      set_value("", "", "", "", "", "", "", "")
-    })
+    // 重置搜索
+    $("#resetSearch").on("click", function () {
+      $("#ipadress").val("");
+      $("#dbNameSearch").val("");
+      requestOneModel(name, "select", "{}");
+    });
 
+    // 全选功能
+    $("#selectAll").on("change", function () {
+      var isChecked = $(this).prop("checked");
+      $(".database-checkbox").prop("checked", isChecked);
+      updateSelectionInfo();
+    });
 
+    // 单个选择框变化
+    $(document).on("change", ".database-checkbox", function () {
+      updateSelectionInfo();
+    });
 
-
-    // tool
-    function set_value(ip, port, db, dbTy, user, psd, dbcode, remarks) {
-      var ipValue = $("#ip").val(ip);
-      var portValue = $("#port").val(port);
-      var dbValue = $("#db").val(db);
-      var dbTypeValue = $("#dbType").val(dbTy);
-      var userValue = $("#user").val(user);
-      var passwordValue = $("#password").val(psd);
-      var dbCodeValue = $("#dbCode").val(dbcode);
-      var remarksValue = $("#remarks").val(remarks);
-    }
-    function get_value() {
-      var ipValue = $("#ip").val();
-      var portValue = $("#port").val();
-      var dbValue = $("#db").val();
-      var dbTypeValue = $("#dbType").val();
-      var userValue = $("#user").val();
-      var passwordValue = $("#password").val();
-      var dbCodeValue = $("#dbCode").val();
-      var remarksValue = $("#remarks").val();
-      if (
-        ipValue === '' ||
-        portValue === '' ||
-        dbValue === '' ||
-        dbTypeValue === '' ||
-        userValue === '' ||
-        passwordValue === '' ||
-        dbCodeValue === ''
-      ) {
-        // 弹窗提示有空输入框
-        alert('请输入完整信息');
-        return null;
+    // 批量删除
+    $("#batchDeleteBtn").on("click", function () {
+      var selectedRows = $(".database-checkbox:checked");
+      if (selectedRows.length === 0) {
+        alert("请选择要删除的数据库");
+        return;
       }
-      // 创建一个对象并设置键值对
-      var data = {
-        ip: ipValue,
-        port: portValue,
-        database: dbValue,
-        type: dbTypeValue,
-        user: userValue,
-        password: passwordValue,
-        code: dbCodeValue,
-        remarks: remarksValue,
-      };
+      
+      if (confirm("确认要删除选中的 " + selectedRows.length + " 个数据库吗？")) {
+        var deleteData = [];
+        selectedRows.each(function () {
+          var row = $(this).closest("tr");
+          deleteData.push({
+            ip: row.find("td:nth-child(2)").text(),
+            port: row.find("td:nth-child(3)").text()
+          });
+        });
+        
+        requestOneModel(name, "batch_delete", JSON.stringify(deleteData));
+      }
+    });
 
-      // 将对象转换为 JSON 字符串并返回
-      return JSON.stringify(data);
+    // 更新选择信息
+    function updateSelectionInfo() {
+      var selectedCount = $(".database-checkbox:checked").length;
+      $("#selectionInfo").text("已选择 " + selectedCount + " 项");
+      
+      if (selectedCount > 0) {
+        $("#batchDeleteBtn").prop("disabled", false);
+        $("#clearSelection").show();
+      } else {
+        $("#batchDeleteBtn").prop("disabled", true);
+        $("#clearSelection").hide();
+      }
     }
+
+    // 清空选择
+    $("#clearSelection").on("click", function (e) {
+      e.preventDefault();
+      $(".database-checkbox").prop("checked", false);
+      $("#selectAll").prop("checked", false);
+      updateSelectionInfo();
+    });
+
+
+
+
+
 
 
   });

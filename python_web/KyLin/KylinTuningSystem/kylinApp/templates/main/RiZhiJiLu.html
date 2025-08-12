@@ -1,0 +1,946 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+    .log-upload-container {
+        padding: 20px;
+        background: #f5f5f5;
+        min-height: 100vh;
+        color: #333;
+    }
+
+    .log-upload-title {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    .log-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+
+    .log-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-label {
+        font-size: 18px;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-input {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+
+    .form-textarea {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        min-height: 150px;
+        resize: vertical;
+    }
+
+    .file-upload-area {
+        border: 2px dashed #ccc;
+        padding: 30px;
+        text-align: center;
+        border-radius: 8px;
+        background: #f9f9f9;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .file-upload-area:hover {
+        border-color: #667eea;
+        background: #f0f2ff;
+    }
+
+    .file-upload-area.dragover {
+        border-color: #667eea;
+        background: #f0f2ff;
+    }
+
+    .file-upload-icon {
+        font-size: 48px;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+
+    .file-upload-text {
+        font-size: 18px;
+        color: #666;
+    }
+
+    .file-upload-input {
+        display: none;
+    }
+
+    .file-list {
+        margin-top: 20px;
+    }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px;
+        background: #f0f2ff;
+        border-radius: 4px;
+        margin-bottom: 8px;
+    }
+
+    .file-name {
+        font-size: 16px;
+        color: #333;
+    }
+
+    .file-remove {
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 18px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a71d9, #6a43a5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .btn-primary:disabled {
+        background: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .log-history-section {
+        margin-top: 40px;
+    }
+
+    .log-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .log-table th, .log-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .log-table th {
+        background: #f2f2f2;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .log-table tr:hover {
+        background: #f9f9f9;
+    }
+
+    .log-action {
+        display: flex;
+        gap: 10px;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+    }
+
+    .view-btn {
+        background: #007bff;
+        color: white;
+    }
+
+    .download-btn {
+        background: #28a745;
+        color: white;
+    }
+
+    .delete-btn {
+        background: #dc3545;
+        color: white;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .log-preview-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        width: 80%;
+        max-width: 800px;
+        max-height: 80vh;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .modal-close {
+        font-size: 24px;
+        color: #6c757d;
+        cursor: pointer;
+        background: none;
+        border: none;
+    }
+
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        max-height: calc(80vh - 120px);
+    }
+
+    .log-content {
+        font-family: monospace;
+        white-space: pre-wrap;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        overflow-x: auto;
+    }
+
+    .modal-footer {
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .info-message {
+        margin-top: 20px;
+        padding: 15px;
+        background: #cce5ff;
+        color: #004085;
+        border-radius: 4px;
+        border-left: 5px solid #004085;
+    }
+    
+    .binary-file-message {
+        text-align: center;
+        padding: 20px;
+        background: #f0f2ff;
+        border-radius: 8px;
+        border: 1px dashed #667eea;
+    }
+
+    .binary-file-icon {
+        font-size: 48px;
+        color: #667eea;
+        margin-bottom: 15px;
+    }
+    
+    .log-mode-selector {
+        margin-bottom: 25px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .log-mode-selector .form-label {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+    
+    .log-mode-selector .form-input {
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        background: #fff;
+        transition: all 0.3s;
+        cursor: pointer;
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .log-mode-selector .form-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-transition {
+        transition: all 0.3s ease;
+        opacity: 1;
+    }
+</style>
+{%endblock%}
+
+{%block content%}
+<div class="log-upload-container">
+    <h1 class="log-upload-title">日志记录管理</h1>
+    
+    <div class="log-section">
+        <h2>上传新日志</h2>
+        
+        <!-- 日志记录方式选择 -->
+        <div class="form-group log-mode-selector">
+            <label class="form-label">日志记录方式</label>
+            <select class="form-input" id="logModeSelect">
+                <option value="upload">上传日志文件</option>
+                <option value="direct">直接输入日志</option>
+            </select>
+        </div>
+        
+        <!-- 文件上传表单 -->
+        <form class="log-form form-transition" id="logUploadForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">日志标题</label>
+                <input type="text" class="form-input" id="logTitle" placeholder="请输入日志标题" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">日志描述</label>
+                <textarea class="form-textarea" id="logDescription" placeholder="请输入日志描述（可选）"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">日志类型</label>
+                <select class="form-input" id="logType">
+                    <option value="system">系统日志</option>
+                    <option value="application">应用日志</option>
+                    <option value="security">安全日志</option>
+                    <option value="performance">性能日志</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">上传日志文件</label>
+                <div class="file-upload-area" id="fileDropArea">
+                    <i class="el-icon-upload file-upload-icon"></i>
+                    <p class="file-upload-text">拖拽文件到此处或点击上传</p>
+                    <input type="file" class="file-upload-input" id="fileUpload" multiple>
+                </div>
+                <div class="file-list" id="fileList"></div>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary" id="submitBtn">上传日志</button>
+            </div>
+        </form>
+        
+        <!-- 直接记录日志表单 -->
+        <form class="log-form form-transition" id="directLogForm" style="display: none;">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">日志标题</label>
+                <input type="text" class="form-input" id="directLogTitle" placeholder="请输入日志标题" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">日志类型</label>
+                <select class="form-input" id="directLogType">
+                    <option value="system">系统日志</option>
+                    <option value="application">应用日志</option>
+                    <option value="security">安全日志</option>
+                    <option value="performance">性能日志</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">日志内容</label>
+                <textarea class="form-textarea" id="directLogContent" placeholder="请输入日志内容" style="min-height: 250px;" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary" id="directSubmitBtn">保存日志</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- 删除原来的直接记录日志区域 -->
+    
+    <div class="log-history-section log-section">
+        <h2>历史日志记录</h2>
+        <table class="log-table">
+            <thead>
+                <tr>
+                    <th>标题</th>
+                    <th>类型</th>
+                    <th>上传时间</th>
+                    <th>大小</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="logHistoryTable">
+                <!-- 日志记录将通过JavaScript动态加载 -->
+            </tbody>
+        </table>
+        <div class="info-message" id="noLogsMessage" style="display: none;">
+            暂无日志记录，请上传新的日志文件。
+        </div>
+    </div>
+</div>
+
+<!-- 日志预览模态框 -->
+<div class="log-preview-modal" id="logPreviewModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">日志预览</h3>
+            <button class="modal-close" id="modalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="log-content" id="logContent"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" id="downloadLogBtn">下载日志</button>
+        </div>
+    </div>
+</div>
+{%endblock%}
+
+{%block js%}
+<script>
+    $(document).ready(function() {
+        // 获取CSRF令牌
+        function getCsrfToken() {
+            return $('input[name=csrfmiddlewaretoken]').val();
+        }
+        
+        // 文件上传区域交互
+        const fileDropArea = document.getElementById('fileDropArea');
+        const fileUpload = document.getElementById('fileUpload');
+        const fileList = document.getElementById('fileList');
+        const logUploadForm = document.getElementById('logUploadForm');
+        const logModeSelect = document.getElementById('logModeSelect');
+        const directLogForm = document.getElementById('directLogForm');
+        const logPreviewModal = document.getElementById('logPreviewModal');
+        const modalClose = document.getElementById('modalClose');
+        const logContent = document.getElementById('logContent');
+        const modalTitle = document.getElementById('modalTitle');
+        const downloadLogBtn = document.getElementById('downloadLogBtn');
+        const noLogsMessage = document.getElementById('noLogsMessage');
+        const directLogTitle = document.getElementById('directLogTitle');
+        const directLogType = document.getElementById('directLogType');
+        const directLogContent = document.getElementById('directLogContent');
+        const directSubmitBtn = document.getElementById('directSubmitBtn');
+        
+        // 存储已选择的文件
+        let selectedFiles = [];
+        
+        // 切换日志记录方式
+        logModeSelect.addEventListener('change', function() {
+            if (this.value === 'upload') {
+                // 淡入淡出效果
+                directLogForm.style.opacity = '0';
+                setTimeout(() => {
+                    directLogForm.style.display = 'none';
+                    logUploadForm.style.display = 'block';
+                    setTimeout(() => {
+                        logUploadForm.style.opacity = '1';
+                    }, 50);
+                }, 300);
+                
+                // 重置表单
+                logUploadForm.reset();
+                fileList.innerHTML = '';
+                selectedFiles = [];
+            } else {
+                // 淡入淡出效果
+                logUploadForm.style.opacity = '0';
+                setTimeout(() => {
+                    logUploadForm.style.display = 'none';
+                    directLogForm.style.display = 'block';
+                    setTimeout(() => {
+                        directLogForm.style.opacity = '1';
+                    }, 50);
+                }, 300);
+                
+                // 重置表单
+                directLogForm.reset();
+            }
+        });
+
+        // 点击上传区域触发文件选择
+        fileDropArea.addEventListener('click', () => {
+            fileUpload.click();
+        });
+        
+        // 处理拖拽事件
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, () => {
+                fileDropArea.classList.add('dragover');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, () => {
+                fileDropArea.classList.remove('dragover');
+            }, false);
+        });
+        
+        // 处理文件拖放
+        fileDropArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        });
+        
+        // 处理文件选择
+        fileUpload.addEventListener('change', () => {
+            handleFiles(fileUpload.files);
+        });
+        
+        // 处理选择的文件
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                selectedFiles.push(file);
+                displayFile(file);
+            }
+            
+            // 清空文件输入，允许选择相同的文件
+            fileUpload.value = '';
+        }
+        
+        // 显示已选择的文件
+        function displayFile(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            const fileName = document.createElement('span');
+            fileName.className = 'file-name';
+            fileName.textContent = `${file.name} (${formatFileSize(file.size)})`;
+            
+            const removeButton = document.createElement('span');
+            removeButton.className = 'file-remove';
+            removeButton.innerHTML = '&times;';
+            removeButton.addEventListener('click', () => {
+                const index = selectedFiles.indexOf(file);
+                if (index !== -1) {
+                    selectedFiles.splice(index, 1);
+                }
+                fileList.removeChild(fileItem);
+            });
+            
+            fileItem.appendChild(fileName);
+            fileItem.appendChild(removeButton);
+            fileList.appendChild(fileItem);
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 处理表单提交
+        logUploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const logTitle = document.getElementById('logTitle').value;
+            const logDescription = document.getElementById('logDescription').value;
+            const logType = document.getElementById('logType').value;
+            
+            if (!logTitle) {
+                alert('请输入日志标题');
+                return;
+            }
+            
+            if (selectedFiles.length === 0) {
+                alert('请选择至少一个日志文件');
+                return;
+            }
+            
+            // 创建FormData对象
+            const formData = new FormData();
+            formData.append('title', logTitle);
+            formData.append('description', logDescription);
+            formData.append('type', logType);
+            
+            // 添加所有选择的文件
+            selectedFiles.forEach((file, index) => {
+                formData.append(`log_file_${index}`, file);
+            });
+            
+            // 禁用提交按钮，防止重复提交
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '上传中...';
+            
+            // 发送AJAX请求
+            $.ajax({
+                url: '/api/upload_log/',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    alert('日志上传成功');
+                    // 重置表单
+                    logUploadForm.reset();
+                    fileList.innerHTML = '';
+                    selectedFiles = [];
+                    
+                    // 重新加载日志列表
+                    loadLogHistory();
+                },
+                error: function(xhr) {
+                    alert('日志上传失败: ' + (xhr.responseJSON?.message || '未知错误'));
+                },
+                complete: function() {
+                    // 恢复提交按钮状态
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '上传日志';
+                }
+            });
+        });
+
+        // 处理直接记录日志的表单提交
+        directLogForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const title = directLogTitle.value;
+            const type = directLogType.value;
+            const content = directLogContent.value;
+
+            if (!title) {
+                alert('请输入日志标题');
+                return;
+            }
+
+            if (!content) {
+                alert('请输入日志内容');
+                return;
+            }
+
+            // 禁用提交按钮，防止重复提交
+            directSubmitBtn.disabled = true;
+            directSubmitBtn.textContent = '保存中...';
+
+            // 发送AJAX请求
+            $.ajax({
+                url: '/api/create_direct_log/', // 假设的API端点
+                type: 'POST',
+                data: {
+                    title: title,
+                    type: type,
+                    content: content,
+                    csrfmiddlewaretoken: getCsrfToken()
+                },
+                success: function(response) {
+                    alert('日志保存成功');
+                    // 重置表单
+                    directLogForm.reset();
+                    
+                    // 重新加载日志列表
+                    loadLogHistory();
+                },
+                error: function(xhr) {
+                    alert('日志保存失败: ' + (xhr.responseJSON?.message || '未知错误'));
+                },
+                complete: function() {
+                    // 恢复提交按钮状态
+                    directSubmitBtn.disabled = false;
+                    directSubmitBtn.textContent = '保存日志';
+                }
+            });
+        });
+        
+        // 加载历史日志记录
+        function loadLogHistory() {
+            $.ajax({
+                url: '/api/get_logs/',
+                type: 'GET',
+                success: function(response) {
+                    const logHistoryTable = document.getElementById('logHistoryTable');
+                    logHistoryTable.innerHTML = '';
+                    
+                    if (response.logs && response.logs.length > 0) {
+                        noLogsMessage.style.display = 'none';
+                        
+                        response.logs.forEach(log => {
+                            const row = document.createElement('tr');
+                            
+                            // 标题
+                            const titleCell = document.createElement('td');
+                            titleCell.textContent = log.title;
+                            row.appendChild(titleCell);
+                            
+                            // 类型
+                            const typeCell = document.createElement('td');
+                            typeCell.textContent = getLogTypeName(log.type);
+                            row.appendChild(typeCell);
+                            
+                            // 上传时间
+                            const timeCell = document.createElement('td');
+                            timeCell.textContent = formatDate(log.created_at);
+                            row.appendChild(timeCell);
+                            
+                            // 大小
+                            const sizeCell = document.createElement('td');
+                            sizeCell.textContent = formatFileSize(log.size);
+                            row.appendChild(sizeCell);
+                            
+                            // 状态
+                            const statusCell = document.createElement('td');
+                            const statusBadge = document.createElement('span');
+                            statusBadge.className = `status-badge status-${log.status}`;
+                            statusBadge.textContent = getStatusName(log.status);
+                            statusCell.appendChild(statusBadge);
+                            row.appendChild(statusCell);
+                            
+                            // 操作
+                            const actionCell = document.createElement('td');
+                            actionCell.className = 'log-action';
+                            
+                            // 查看按钮
+                            const viewBtn = document.createElement('button');
+                            viewBtn.className = 'action-btn view-btn';
+                            viewBtn.textContent = '查看';
+                            viewBtn.addEventListener('click', () => {
+                                viewLogContent(log.id, log.title);
+                            });
+                            actionCell.appendChild(viewBtn);
+                            
+                            // 下载按钮
+                            const downloadBtn = document.createElement('button');
+                            downloadBtn.className = 'action-btn download-btn';
+                            downloadBtn.textContent = '下载';
+                            downloadBtn.addEventListener('click', () => {
+                                window.location.href = `/api/download_log/${log.id}/`;
+                            });
+                            actionCell.appendChild(downloadBtn);
+                            
+                            // 删除按钮
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.className = 'action-btn delete-btn';
+                            deleteBtn.textContent = '删除';
+                            deleteBtn.addEventListener('click', () => {
+                                if (confirm('确定要删除这条日志记录吗？')) {
+                                    deleteLog(log.id);
+                                }
+                            });
+                            actionCell.appendChild(deleteBtn);
+                            
+                            row.appendChild(actionCell);
+                            logHistoryTable.appendChild(row);
+                        });
+                    } else {
+                        noLogsMessage.style.display = 'block';
+                    }
+                },
+                error: function() {
+                    alert('加载日志记录失败');
+                }
+            });
+        }
+        
+        // 查看日志内容
+        function viewLogContent(logId, title) {
+            $.ajax({
+                url: `/api/view_log/${logId}/`,
+                type: 'GET',
+                success: function(response) {
+                    modalTitle.textContent = title;
+                    
+                    // 处理二进制文件
+                    if (response.is_binary) {
+                        // 显示二进制文件提示信息
+                        logContent.innerHTML = `
+                            <div class="binary-file-message">
+                                <div class="binary-file-icon">
+                                    <i class="el-icon-document"></i>
+                                </div>
+                                <h3>${response.message}</h3>
+                                <p>文件类型: ${response.file_type || '未知'}</p>
+                                <button class="btn btn-primary" onclick="window.location.href='/api/download_log/${logId}/'">
+                                    <i class="el-icon-download"></i> 下载文件
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        // 显示文本文件内容
+                        logContent.textContent = response.content;
+                    }
+                    
+                    logPreviewModal.style.display = 'flex';
+                    
+                    // 设置下载按钮的数据
+                    downloadLogBtn.setAttribute('data-log-id', logId);
+                },
+                error: function() {
+                    alert('获取日志内容失败');
+                }
+            });
+        }
+        
+        // 删除日志
+        function deleteLog(logId) {
+            $.ajax({
+                url: `/api/delete_log/${logId}/`,
+                type: 'DELETE',
+                success: function() {
+                    alert('日志删除成功');
+                    loadLogHistory();
+                },
+                error: function() {
+                    alert('日志删除失败');
+                }
+            });
+        }
+        
+        // 关闭模态框
+        modalClose.addEventListener('click', () => {
+            logPreviewModal.style.display = 'none';
+        });
+        
+        // 点击模态框外部关闭
+        window.addEventListener('click', (e) => {
+            if (e.target === logPreviewModal) {
+                logPreviewModal.style.display = 'none';
+            }
+        });
+        
+        // 下载日志
+        downloadLogBtn.addEventListener('click', () => {
+            const logId = downloadLogBtn.getAttribute('data-log-id');
+            if (logId) {
+                window.location.href = `/api/download_log/${logId}/`;
+            }
+        });
+        
+        // 获取日志类型名称
+        function getLogTypeName(type) {
+            const typeMap = {
+                'system': '系统日志',
+                'application': '应用日志',
+                'security': '安全日志',
+                'performance': '性能日志',
+                'other': '其他'
+            };
+            return typeMap[type] || type;
+        }
+        
+        // 获取状态名称
+        function getStatusName(status) {
+            const statusMap = {
+                'success': '成功',
+                'pending': '处理中',
+                'error': '失败'
+            };
+            return statusMap[status] || status;
+        }
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+        
+        // 初始加载日志历史
+        loadLogHistory();
+    });
+</script>
+{%endblock%} 

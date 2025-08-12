@@ -735,54 +735,9 @@
           url: "/api/ai_optimize/", // 你需要在后端实现这个API
           type: "POST",
           contentType: "application/json",
-          data: JSON.stringify({ collected_data: lastCollectedDataStr }),
+          data: JSON.stringify({ question: lastCollectedDataStr, stream: true }),
           success: function (res) {
-            var suggestionText = "";
-            
-            if (res.success && res.strategies) {
-              // 格式化AI建议
-              res.strategies.forEach(function(strategy, index) {
-                suggestionText += `=== 调优方案 ${index + 1} ===\n`;
-                
-                // 遍历策略对象的所有键，找到调优方案
-                Object.keys(strategy).forEach(function(planKey) {
-                  if (planKey.startsWith('调优方案')) {
-                    var plan = strategy[planKey];
-                    var strategyName = planKey;
-                    var strategyDesc = plan["策略"] || "";
-                    var strategyCmd = plan["可执行的指令"] || "";
-                    
-                    suggestionText += `方案名称: ${strategyName}\n`;
-                    suggestionText += `策略描述: ${strategyDesc}\n`;
-                    if (strategyCmd) {
-                      suggestionText += `可执行指令: ${strategyCmd}\n`;
-                    }
-                    suggestionText += "\n";
-                  }
-                });
-                
-                // 如果没有调优方案，但有策略字段，也显示
-                if (!Object.keys(strategy).some(key => key.startsWith('调优方案')) && strategy["策略"]) {
-                  var strategyName = "策略方案" + (index + 1);
-                  var strategyDesc = strategy["策略"] || "";
-                  var strategyCmd = strategy["可执行的指令"] || "";
-                  
-                  suggestionText += `方案名称: ${strategyName}\n`;
-                  suggestionText += `策略描述: ${strategyDesc}\n`;
-                  if (strategyCmd) {
-                    suggestionText += `可执行指令: ${strategyCmd}\n`;
-                  }
-                  suggestionText += "\n";
-                }
-              });
-              
-              if (suggestionText === "") {
-                suggestionText = "AI分析完成，但未找到合适的调优方案。";
-              }
-            } else {
-              suggestionText = res.result || "无AI建议";
-            }
-            
+            var suggestionText = res && res.answer ? res.answer : (res && res.result) || "无AI建议";
             $("#aiSuggestionText").val(suggestionText);
           },
           error: function () {

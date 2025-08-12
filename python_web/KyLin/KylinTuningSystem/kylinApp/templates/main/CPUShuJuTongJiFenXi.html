@@ -701,32 +701,45 @@
 
     // 初始化自定义下拉框功能
     function initCustomSelects() {
+      console.log("初始化自定义下拉框...");
+      
       // IP选择框点击事件
       $(".ip-selected").on("click", function(e) {
-        e.stopPropagation()
-        closeAllSelect(this)
-        $(".ip-items").toggle()
-        $(this).toggleClass("select-arrow-active")
-      })
+        e.stopPropagation();
+        
+        // 关闭其他下拉框
+        $(".port-items").hide();
+        $(".port-selected").removeClass("select-arrow-active");
+        
+        // 切换当前下拉框
+        $(".ip-items").toggle();
+        $(this).toggleClass("select-arrow-active");
+        
+        console.log("IP选择框点击，下拉框显示状态:", $(".ip-items").is(":visible"));
+      });
 
       // 端口选择框点击事件
       $(".port-selected").on("click", function(e) {
-        e.stopPropagation()
-        closeAllSelect(this)
-        $(".port-items").toggle()
-        $(this).toggleClass("select-arrow-active")
-      })
+        e.stopPropagation();
+        
+        // 关闭其他下拉框
+        $(".ip-items").hide();
+        $(".ip-selected").removeClass("select-arrow-active");
+        
+        // 切换当前下拉框
+        $(".port-items").toggle();
+        $(this).toggleClass("select-arrow-active");
+        
+        console.log("端口选择框点击，下拉框显示状态:", $(".port-items").is(":visible"));
+      });
 
       // 点击其他地方关闭下拉框
-      $(document).on("click", function() {
-        closeAllSelect()
-      })
-    }
-
-    // 关闭所有下拉框
-    function closeAllSelect(elmnt) {
-      $(".ip-items, .port-items").hide()
-      $(".ip-selected, .port-selected").removeClass("select-arrow-active")
+      $(document).on("click", function(e) {
+        if (!$(e.target).closest('.custom-select').length) {
+          $(".ip-items, .port-items").hide();
+          $(".ip-selected, .port-selected").removeClass("select-arrow-active");
+        }
+      });
     }
 
     // 加载服务器IP地址列表
@@ -758,46 +771,50 @@
 
     // 填充IP选择下拉框
     function populateIpSelect(data) {
-      var ipItems = $("#ipSelect")
-      ipItems.empty()
+      console.log("填充IP下拉框，数据:", data);
+      var ipItems = $("#ipSelect");
+      ipItems.empty();
 
       if (data && data.all_data && data.all_data.length > 0) {
         data.all_data.forEach(function(server) {
-          var displayText = server.ip
+          var displayText = server.ip;
           if (server.remarks && server.remarks.trim() !== "") {
-            displayText += " (" + server.remarks + ")"
+            displayText += " (" + server.remarks + ")";
           }
-          ipItems.append('<div class="ip-option" data-ip="' + server.ip + '" data-port="' + server.port + '">' + displayText + '</div>')
-        })
-        console.log("Added " + data.all_data.length + " IP addresses to select")
+          ipItems.append('<div class="ip-option" data-ip="' + server.ip + '" data-port="' + server.port + '">' + displayText + '</div>');
+        });
+        console.log("添加了 " + data.all_data.length + " 个IP地址选项");
       } else {
-        ipItems.append('<div>暂无可用的服务器IP地址</div>')
-        console.log("No server data available")
+        ipItems.append('<div class="empty">暂无可用的服务器IP地址</div>');
+        console.log("没有可用的服务器数据");
       }
 
       // 绑定IP选择事件
       ipItems.find(".ip-option").on("click", function(e) {
-        var selectedText = $(this).text()
-        var selectedIp = $(this).data("ip")
-        var selectedPort = $(this).data("port")
+        e.stopPropagation(); // 阻止事件冒泡
+        var selectedText = $(this).text();
+        var selectedIp = $(this).data("ip");
+        var selectedPort = $(this).data("port");
+
+        console.log("选择IP:", selectedIp, "端口:", selectedPort);
 
         // 更新选中的文本
-        $(".ip-selected").text(selectedText).removeClass("select-arrow-active")
-
+        $(".ip-selected").text(selectedText);
+        
         // 隐藏下拉列表
-        $(".ip-items").hide()
+        $(".ip-items").hide();
+        $(".ip-selected").removeClass("select-arrow-active");
 
         // 加载对应的端口
-        loadPortsForIp(selectedIp, selectedPort)
-
-        console.log("Selected IP:", selectedIp)
-      })
+        loadPortsForIp(selectedIp, selectedPort);
+      });
     }
 
     // 为指定IP加载端口列表
     function loadPortsForIp(ip, defaultPort) {
-      var portItems = $("#portSelect")
-      portItems.empty()
+      console.log("加载IP的端口列表:", ip, "默认端口:", defaultPort);
+      var portItems = $("#portSelect");
+      portItems.empty();
 
       // 常用端口列表
       var commonPorts = [
@@ -808,35 +825,35 @@
         {port: "3306", name: "MySQL"},
         {port: "6379", name: "Redis"},
         {port: "8080", name: "Web服务"}
-      ]
+      ];
 
       // 如果有默认端口，优先显示
       if (defaultPort) {
-        portItems.append('<div class="port-option" data-port="' + defaultPort + '">' + defaultPort + ' (推荐)</div>')
+        portItems.append('<div class="port-option" data-port="' + defaultPort + '">' + defaultPort + ' (推荐)</div>');
       }
 
       // 添加常用端口
       commonPorts.forEach(function(portInfo) {
         if (!defaultPort || portInfo.port !== defaultPort) {
-          portItems.append('<div class="port-option" data-port="' + portInfo.port + '">' + portInfo.port + ' (' + portInfo.name + ')</div>')
+          portItems.append('<div class="port-option" data-port="' + portInfo.port + '">' + portInfo.port + ' (' + portInfo.name + ')</div>');
         }
-      })
+      });
 
       // 绑定端口选择事件
       portItems.find(".port-option").on("click", function(e) {
-        var selectedText = $(this).text()
-        var selectedPort = $(this).data("port")
+        e.stopPropagation(); // 阻止事件冒泡
+        var selectedText = $(this).text();
+        var selectedPort = $(this).data("port");
+
+        console.log("选择端口:", selectedPort);
 
         // 更新选中的文本
-        $(".port-selected").text(selectedText).removeClass("select-arrow-active")
-
+        $(".port-selected").text(selectedText);
+        
         // 隐藏下拉列表
-        $(".port-items").hide()
-
-        console.log("Selected Port:", selectedPort)
-      })
-
-      console.log("Loaded ports for IP:", ip)
+        $(".port-items").hide();
+        $(".port-selected").removeClass("select-arrow-active");
+      });
     }
   })
 

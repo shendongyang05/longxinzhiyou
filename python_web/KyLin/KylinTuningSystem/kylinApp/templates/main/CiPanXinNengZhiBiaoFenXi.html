@@ -613,17 +613,12 @@
     // 加载服务器IP地址列表
     loadServerIpList()
 
-    var name = "cipuanxinnengzhibiao"
-    var numberRange = "1-50"
-
-    // 设置默认日期
-    var today = new Date().toISOString().split('T')[0]
-    $("#startDate").val(today)
-    $("#endDate").val(today)
-
+    // 获取表单数据
+    var ipValue = $("#ipSelect").val()
     var sTime = $("#startDate").val()
     var eTime = $("#endDate").val()
-    var ipvalue = "no"
+    var numberRange = "1-1000"
+    var name = "cipanxinnengzhibiao"
 
     //页面初始数值为今天的日期，范围1-50
     requestThreeModel(name, sTime, eTime, numberRange, ipvalue)

@@ -11,18 +11,13 @@ import uuid
 import logging
 import requests
 import traceback
-import re
-from datetime import datetime, timezone
+import datetime
+from datetime import timezone
 
 # 配置日志
 logger = logging.getLogger(__name__)
 
-# 用于SSE客户端的导入
-try:
-    from sseclient import SSEClient
-except ImportError:
-    print("警告: sseclient-py 未安装，无法使用流式对话")
-    SSEClient = None
+
 
 # Django相关导入
 from ..models import *
@@ -34,216 +29,20 @@ from django.forms.models import model_to_dict
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import HttpResponse, JsonResponse
 from ..utils import encrypt
-from kylinApp.util import dict_to_custom_str, get_info_to_ai
+from kylinApp.util import dict_to_custom_str
 from ..utils.background_tasks import task_manager
-from ..config import DOUBAO_API_URL, DOUBAO_API_KEY, ARK_API_URL, ARK_API_KEY
+from django.conf import settings
+from kylinApp.models import (
+    UserModels, MonitoringServerInformation, DataBaseInformationManagement,
+    ServerManagement, CPUPerformanceMetrics, MemoryPerformanceMetrics,
+    DiskPerformanceMetrics, NetworkPerformanceMetrics, AdditionalInformation,
+    LogRecord
+)
 
-# ========= 配置区 =========
-BOT_ID = "7525399030261284916"
-ACCESS_TOKEN = "pat_H9dxbfanHsWDv6Fw7hofhfkwe2Sdy6YVuJBnrLSxIY0lAC7DZjPklsQypLsXn5Su"
-BASE_URL = "https://api.coze.cn"
-# =========================
 
-HEADERS = {
-    "Authorization": f"Bearer {ACCESS_TOKEN}",
-    "Content-Type": "application/json"
-}
 
-# 直接在api.py中实现AI相关函数
-def create_conversation(user_id: str) -> str:
-    """创建会话并返回 conversation_id"""
-    url = f"{BASE_URL}/v1/conversation/create"
-    body = {
-        "bot_id": BOT_ID,
-        "user_id": user_id,
-        "auto_save_history": True
-    }
-    resp = requests.post(url, headers=HEADERS, json=body, timeout=10)
-    resp.raise_for_status()
-    data = resp.json()
-    if data.get("code") != 0:
-        raise RuntimeError(data)
-    return data["data"]["id"]
 
-def chat_stream(conversation_id: str, user_id: str, query: str, capture_result=True):
-    """流式对话：逐字打印 AI 回答"""
-    url = f"{BASE_URL}/v3/chat?conversation_id={conversation_id}"
-    body = {
-        "bot_id": BOT_ID,
-        "user_id": user_id,
-        "additional_messages": [
-            {"role": "user", "content": query, "content_type": "text"}
-        ],
-        "stream": True,
-        "auto_save_history": True
-    }
-    response = requests.post(url, headers=HEADERS, json=body, stream=True)
-    if not SSEClient:
-        raise ImportError("sseclient-py 未安装，无法使用流式对话")
-        
-    client = SSEClient(response)
-    
-    if capture_result:
-        full_result = ""
-        print("接收AI回答: ", end="", flush=True)
-        for event in client.events():
-            if event.event == "conversation.message.delta":
-                data = json.loads(event.data)
-                content = data.get("content", "")
-                print(content, end="", flush=True)
-                full_result += content
-        print()  # 换行
-        return full_result
-    else:
-        print("接收AI回答: ", end="", flush=True)
-        for event in client.events():
-            if event.event == "conversation.message.delta":
-                data = json.loads(event.data)
-                print(data.get("content", ""), end="", flush=True)
-        print()  # 换行
-        return None
 
-def chat_sync(conversation_id: str, user_id: str, query: str) -> str:
-    """非流式对话：直接返回完整回答"""
-    url = f"{BASE_URL}/v3/chat?conversation_id={conversation_id}"
-    body = {
-        "bot_id": BOT_ID,
-        "user_id": user_id,
-        "additional_messages": [
-            {"role": "user", "content": query, "content_type": "text"}
-        ],
-        "stream": False,
-        "auto_save_history": True
-    }
-    resp = requests.post(url, headers=HEADERS, json=body, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-    print(f"API响应: {data}")  # 调试信息
-    
-    if data.get("code") != 0:
-        raise RuntimeError(data)
-    
-    # 检查是否是异步响应（现在直接使用流式调用，不需要这个检查）
-    # if "data" in data and data["data"].get("status") == "in_progress":
-    #     print("检测到异步响应，开始轮询等待结果...")
-    #     return _wait_for_async_result(conversation_id, user_id, query)
-    
-    # 检查不同的响应格式
-    if "data" in data:
-        if "messages" in data["data"] and data["data"]["messages"]:
-            return data["data"]["messages"][-1]["content"]
-        elif "content" in data["data"]:
-            return data["data"]["content"]
-        elif "message" in data["data"]:
-            return data["data"]["message"]
-        else:
-            # 如果data中没有预期的字段，尝试直接返回data
-            return str(data["data"])
-    elif "content" in data:
-        return data["content"]
-    elif "message" in data:
-        return data["message"]
-    else:
-        # 如果都没有，返回整个响应
-        return str(data)
-
-def _wait_for_async_result(conversation_id: str, user_id: str, query: str) -> str:
-    """等待异步结果 - 使用流式调用避免会话冲突"""
-    try:
-        print("使用流式调用获取异步结果...")
-        return chat_stream(conversation_id, user_id, query, capture_result=True)
-    except Exception as e:
-        print(f"流式调用失败: {e}")
-        # 如果流式调用失败，尝试创建新会话
-        try:
-            print("尝试创建新会话...")
-            new_user_id = str(uuid.uuid4())
-            new_conversation_id = create_conversation(new_user_id)
-            return chat_sync(new_conversation_id, new_user_id, query)
-        except Exception as e2:
-            print(f"创建新会话也失败: {e2}")
-            return '{"分析": "系统当前负载较低，无需进行优化。", "建议": "建议观察系统状态", "命令": "command:echo \'系统状态良好，无需优化\'", "预期效果": "确认系统状态良好"}'
-
-# 直接在api.py中实现AI优化推理函数
-def direct_ai_optimize_infer():
-    """使用简化的工作流调用实现AI优化推理"""
-    try:
-        print("开始AI推理流程...")
-        
-        # 获取系统数据
-        system_data = get_info_to_ai()
-        print("系统数据获取成功")
-            
-        # 构造查询 - 明确要求分析系统数据并给出优化建议
-        query = f"""请基于以下系统监控数据进行分析并给出优化建议：
-
-系统监控数据：
-{json.dumps(system_data, ensure_ascii=False, indent=2)}
-
-请分析：
-1. CPU使用率：当前{system_data.get('cpu_percent', 'N/A')}%，是否正常？
-2. 内存使用率：当前{system_data.get('mem_percent', 'N/A')}%，是否正常？
-3. 磁盘使用率：当前{system_data.get('disk_percent', 'N/A')}%，是否正常？
-4. 网络流量：发送{system_data.get('net_sent', 'N/A')}，接收{system_data.get('net_recv', 'N/A')}，是否异常？
-
-请给出：
-- 系统状态分析
-- 具体优化建议
-- 可执行的优化命令
-- 预期优化效果
-
-请以JSON格式返回，包含：分析、建议、命令、预期效果四个字段。"""
-
-        print("生成用户ID...")
-        user_id = str(uuid.uuid4())
-        print(f"用户ID: {user_id}")
-        
-        try:
-            print("创建会话...")
-            conversation_id = create_conversation(user_id)
-            print(f"会话ID: {conversation_id}")
-            
-            print("开始调用工作流...")
-            print(f"使用的Bot ID: {BOT_ID}")
-            print(f"查询内容: {query}")
-            # 直接使用流式调用获取工作流结果
-            result = chat_stream(conversation_id, user_id, query, capture_result=True)
-            print(f"工作流返回结果长度: {len(result) if result else 0}")
-            
-            # 如果结果为空，返回默认值
-            if not result or len(result) < 50:
-                print("返回默认回答")
-                return json.dumps({
-                    "分析": "系统当前负载偏高，但尚可接受。",
-                    "建议": "建议暂不进行自动优化，观察负载趋势。",
-                    "命令": "command:echo '系统状态良好，无需优化'",
-                    "预期效果": "系统负载稳定，无需干预"
-                }, ensure_ascii=False)
-            
-            return result
-                
-        except Exception as e:
-            print(f"API调用失败: {e}")
-            traceback.print_exc()
-            return json.dumps({
-                "分析": "系统当前负载偏高，但尚可接受。",
-                "建议": "建议暂不进行自动优化，观察负载趋势。",
-                "命令": "command:echo '系统状态良好，无需优化'",
-                "预期效果": "系统负载稳定，无需干预"
-            }, ensure_ascii=False)
-            
-    except Exception as e:
-        print(f"AI推理全局异常: {e}")
-        traceback.print_exc()
-        return json.dumps({
-            "分析": "系统当前负载偏高，但尚可接受。",
-            "建议": "建议暂不进行自动优化，观察负载趋势。",
-            "命令": "command:echo '系统状态良好，无需优化'",
-            "预期效果": "系统负载稳定，无需干预"
-        }, ensure_ascii=False)
-
-# 使用直接实现的AI优化推理函数
-ai_optimize_infer = direct_ai_optimize_infer
 
 # 策略包接口（场景化）
 STRATEGY_PACKS = {
@@ -678,7 +477,7 @@ def return_data_model_three(request, name, start_time, end_time, number_range, i
         records = select_data(CPUPerformanceMetrics, condition)
     elif name == "neicunxinnengzhibiao":
         records = select_data(MemoryPerformanceMetrics, condition)
-    elif name == "cipuanxinnengzhibiao":
+    elif name == "cipanxinnengzhibiao":
         records = select_data(DiskPerformanceMetrics, condition)
     elif name == "wangluoxinnengzhibiao":
         records = select_data(NetworkPerformanceMetrics, condition)
@@ -999,182 +798,9 @@ def pid_info(request):
         data = select_client.send_command("set_cpu_affinity", ip,int(port), changeCpuId, currPid)
         return JsonResponse({"message": "success"}, status=200)
 
-@csrf_exempt
-def ai_optimize_api(request):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Only POST allowed'}, status=405)
-    
-    try:
-        print("准备调用AI推理")
-        result = direct_ai_optimize_infer()
-        print("AI推理结果：", result)
-        
-        # 解析AI返回的策略方案
-        strategies = []
-        try:
-            # 尝试直接解析为JSON
-            try:
-                parsed_result = json.loads(result)
-                if isinstance(parsed_result, list):
-                    strategies = parsed_result
-                elif isinstance(parsed_result, dict):
-                    strategies = [parsed_result]
-            except Exception:
-                # 如果不是有效JSON，尝试提取JSON部分
-                json_match = re.search(r'\{[\s\S]*\}', result)
-                if json_match:
-                    possible_json = json_match.group(0)
-                    try:
-                        parsed_result = json.loads(possible_json)
-                        if isinstance(parsed_result, dict):
-                            strategies = [parsed_result]
-                    except:
-                        pass
-                
-                # 如果无法解析，作为普通文本处理
-                if not strategies:
-                    strategies = [{"策略": result, "可执行的指令": "请手动执行相关优化操作"}]
-        except Exception as e:
-            print(f"AI策略解析异常: {e}")
-            strategies = [{"策略": result, "可执行的指令": "请手动执行相关优化操作"}]
-        
-        # 转换数据格式以匹配前端期望
-        formatted_strategies = []
-        for i, strategy in enumerate(strategies):
-            if isinstance(strategy, dict):
-                # 检查是否已经是前端期望的格式
-                if any(key.startswith('调优方案') for key in strategy.keys()):
-                    formatted_strategies.append(strategy)
-                else:
-                    # 转换为前端期望的格式
-                    formatted_strategy = {
-                        f"调优方案{i+1}": {
-                            "策略": strategy.get("分析", "") + "\n" + strategy.get("建议", ""),
-                            "可执行的指令": strategy.get("命令", strategy.get("可执行的指令", ""))
-                        }
-                    }
-                    formatted_strategies.append(formatted_strategy)
-            else:
-                # 如果不是字典，创建默认格式
-                formatted_strategies.append({
-                    f"调优方案{i+1}": {
-                        "策略": str(strategy),
-                        "可执行的指令": "请手动执行相关优化操作"
-                    }
-                })
-        
-        return JsonResponse({
-            'success': True,
-            'strategies': formatted_strategies,
-            'raw_result': result
-        })
-    except Exception as e:
-        import traceback
-        print("AI推理异常：", e)
-        traceback.print_exc()
-        return JsonResponse({
-            'success': False,
-            'result': f'AI推理失败: {str(e)}'
-        }, status=500)
 
-@csrf_exempt
-def execute_ai_strategy(request):
-    """执行AI策略命令"""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Only POST allowed'}, status=405)
-    
-    try:
-        data = json.loads(request.body.decode("utf8"))
-        print(f"接收到的数据: {data}")  # 添加调试信息
-        
-        ip = data.get("ip")
-        port = data.get("port")
-        strategy = data.get("strategy")
-        
-        print(f"解析的参数 - IP: {ip}, Port: {port}, Strategy: {strategy}")  # 添加调试信息
-        
-        if not ip or not port or not strategy:
-            error_msg = f"缺少必要参数 - IP: {ip}, Port: {port}, Strategy: {strategy}"
-            print(error_msg)  # 添加调试信息
-            return JsonResponse({'error': error_msg}, status=400)
-        
-        # 检查IP地址是否有效
-        if ip in ["选择IP", "选择端口", ""] or not ip:
-            error_msg = f"无效的IP地址: {ip}"
-            print(error_msg)  # 添加调试信息
-            return JsonResponse({'error': error_msg}, status=400)
-        
-        # 检查端口是否有效
-        try:
-            port_int = int(port)
-            if port_int <= 0 or port_int > 65535:
-                error_msg = f"无效的端口号: {port}"
-                print(error_msg)  # 添加调试信息
-                return JsonResponse({'error': error_msg}, status=400)
-        except (ValueError, TypeError):
-            error_msg = f"端口号格式错误: {port}"
-            print(error_msg)  # 添加调试信息
-            return JsonResponse({'error': error_msg}, status=400)
-        
-        # 从策略中提取命令
-        command = ""
-        if isinstance(strategy, dict):
-            # 处理调优方案格式：{"调优方案一": {"策略": "...", "可执行的指令": "..."}}
-            if any(key.startswith("调优方案") for key in strategy.keys()):
-                # 找到调优方案键
-                plan_key = next((key for key in strategy.keys() if key.startswith("调优方案")), None)
-                if plan_key and isinstance(strategy[plan_key], dict):
-                    plan = strategy[plan_key]
-                    if "可执行的指令" in plan:
-                        command = plan["可执行的指令"]
-                    elif "command" in plan:
-                        command = plan["command"]
-            # 处理直接格式：{"策略": "...", "可执行的指令": "..."}
-            elif "可执行的指令" in strategy:
-                command = strategy["可执行的指令"]
-            elif "command" in strategy:
-                command = strategy["command"]
-        
-        print(f"提取的命令: {command}")  # 添加调试信息
-        
-        if not command:
-            error_msg = "策略中没有找到可执行的命令"
-            print(error_msg)  # 添加调试信息
-            return JsonResponse({'error': error_msg}, status=400)
-        
-        # 执行命令
-        try:
-            print(f"准备执行命令: {command} 在 {ip}:{port_int}")  # 添加调试信息
-            result = select_client.send_command(command, ip, port_int)
-            print(f"命令执行结果: {result}")  # 添加调试信息
-            return JsonResponse({
-                'success': True,
-                'result': result,
-                'command': command
-            })
-        except Exception as e:
-            error_msg = f'命令执行失败: {str(e)}'
-            print(error_msg)  # 添加调试信息
-            return JsonResponse({
-                'success': False,
-                'error': error_msg,
-                'command': command
-            })
-            
-    except json.JSONDecodeError as e:
-        error_msg = f'JSON解析失败: {str(e)}'
-        print(error_msg)  # 添加调试信息
-        return JsonResponse({
-            'success': False,
-            'error': error_msg
-        }, status=400)
-    except Exception as e:
-        error_msg = f'请求处理失败: {str(e)}'
-        print(error_msg)  # 添加调试信息
-        return JsonResponse({
-            'success': False,
-            'error': error_msg
-        }, status=500)
+
+
 
 @csrf_exempt
 def background_collection_api(request):
@@ -1684,87 +1310,285 @@ def save_collected_data_api(request):
             'message': f'数据保存失败: {str(e)}'
         }, status=500)
 
-# 豆包API集成
 @csrf_exempt
-def doubao_chat(request):
+def upload_log(request):
     """
-    豆包API聊天接口 (现在使用ARK API)
+    上传日志文件（文件本体存入数据库）
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': '只支持POST请求'}, status=405)
+    
+    try:
+        title = request.POST.get('title')
+        description = request.POST.get('description', '')
+        log_type = request.POST.get('type', 'system')
+        
+        if not title:
+            return JsonResponse({'status': 'error', 'message': '日志标题不能为空'}, status=400)
+        
+        files = []
+        for key in request.FILES:
+            log_file = request.FILES[key]
+            original_name = log_file.name
+            size = log_file.size
+            # 读取全部字节到内存（日志通常不大；若需要可改为分块累积）
+            file_bytes = b''.join(chunk for chunk in log_file.chunks())
+            
+            log_record = LogRecord(
+                title=title,
+                description=description,
+                type=log_type,
+                original_name=original_name,
+                file_blob=file_bytes,
+                size=size,
+                status='success'
+            )
+            log_record.save()
+            
+            files.append({
+                'id': log_record.id,
+                'name': original_name,
+                'size': size
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': '日志上传成功',
+            'files': files
+        })
+    except Exception as e:
+        logging.error(f"日志上传失败: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'日志上传失败: {str(e)}'}, status=500)
+
+@csrf_exempt
+def get_logs(request):
+    """
+    获取所有日志记录
     """
     try:
-        if request.method != 'POST':
-            return JsonResponse({
-                'success': False,
-                'error': '只支持POST请求'
-            }, status=405)
+        logs = LogRecord.objects.all()
+        log_list = []
         
-        data = json.loads(request.body.decode('utf-8'))
-        user_message = data.get('message', '')
-        system_context = data.get('system_context', '')
-        
-        if not user_message:
-            return JsonResponse({
-                'success': False,
-                'error': '缺少用户消息'
-            }, status=400)
-        
-        # ARK API配置
-        if ARK_API_KEY == 'pat_H9dxbfanHsWDv6Fw7hofhfkwe2Sdy6YVuJBnrLSxIY0lAC7DZjPklsQypLsXn5Su':
-            return JsonResponse({
-                'success': False,
-                'error': '请先配置ARK API密钥'
-            }, status=500)
-        
-        # 构建请求数据
-        payload = {
-            "model": "bot-20250702164711-8jhhd",  # ARK模型名称
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": f"{system_context}\n\n用户消息：{user_message}"}
-                    ]
-                }
-            ]
-        }
-        
-        headers = {
-            "Authorization": f"Bearer {ARK_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        # 调用ARK API
-        response = requests.post(ARK_API_URL, json=payload, headers=headers, timeout=30)
-        
-        if response.status_code == 200:
-            result = response.json()
-            ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-            
-            return JsonResponse({
-                'success': True,
-                'response': ai_response
+        for log in logs:
+            log_list.append({
+                'id': log.id,
+                'title': log.title,
+                'description': log.description,
+                'type': log.type,
+                'size': log.size,
+                'status': log.status,
+                'created_at': log.created_at.isoformat(),
+                'updated_at': log.updated_at.isoformat()
             })
-        else:
-            logger.error(f"ARK API调用失败: {response.status_code} - {response.text}")
-            return JsonResponse({
-                'success': False,
-                'error': f'ARK API调用失败: {response.status_code}'
-            }, status=500)
-            
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON解析失败: {e}")
+        
         return JsonResponse({
-            'success': False,
-            'error': f'JSON解析失败: {str(e)}'
-        }, status=400)
-    except requests.exceptions.RequestException as e:
-        logger.error(f"网络请求失败: {e}")
-        return JsonResponse({
-            'success': False,
-            'error': f'网络请求失败: {str(e)}'
-        }, status=500)
+            'status': 'success',
+            'logs': log_list
+        })
     except Exception as e:
-        logger.error(f"ARK API处理失败: {e}")
+        logging.error(f"获取日志记录失败: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'获取日志记录失败: {str(e)}'}, status=500)
+
+@csrf_exempt
+def view_log(request, log_id):
+    """
+    查看日志内容（优先从数据库读取）
+    """
+    try:
+        log = LogRecord.objects.get(id=log_id)
+        # 如果数据库里有文件内容，按文本尝试解码
+        if log.file_blob:
+            try:
+                content = log.file_blob.decode('utf-8')
+            except UnicodeDecodeError:
+                try:
+                    content = log.file_blob.decode('gbk')
+                except UnicodeDecodeError:
+                    return JsonResponse({
+                        'status': 'success',
+                        'is_binary': True,
+                        'message': '此文件可能是二进制格式或使用了不支持的编码，无法直接显示内容。请使用下载功能后在本地查看。',
+                        'log': {
+                            'id': log.id,
+                            'title': log.title,
+                            'type': log.type,
+                            'created_at': log.created_at.isoformat()
+                        }
+                    })
+            return JsonResponse({
+                'status': 'success',
+                'is_binary': False,
+                'content': content,
+                'log': {
+                    'id': log.id,
+                    'title': log.title,
+                    'type': log.type,
+                    'created_at': log.created_at.isoformat()
+                }
+            })
+        
+        # 兼容旧数据：走文件路径
+        file_name = os.path.basename(log.file_path or '')
+        file_ext = os.path.splitext(file_name)[1].lower()
+        binary_formats = ['.doc', '.docx', '.pdf', '.xls', '.xlsx', '.ppt', '.pptx', '.zip', '.rar', '.tar', '.gz', '.7z', '.exe', '.dll']
+        if file_ext in binary_formats:
+            return JsonResponse({
+                'status': 'success',
+                'is_binary': True,
+                'message': f'这是一个{file_ext}格式的二进制文件，无法直接显示内容。请使用下载功能后在本地查看。',
+                'file_type': file_ext,
+                'log': {
+                    'id': log.id,
+                    'title': log.title,
+                    'type': log.type,
+                    'created_at': log.created_at.isoformat()
+                }
+            })
+        try:
+            with open(log.file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            try:
+                with open(log.file_path, 'r', encoding='gbk') as f:
+                    content = f.read()
+            except UnicodeDecodeError:
+                return JsonResponse({
+                    'status': 'success',
+                    'is_binary': True,
+                    'message': '此文件可能是二进制格式或使用了不支持的编码，无法直接显示内容。请使用下载功能后在本地查看。',
+                    'log': {
+                        'id': log.id,
+                        'title': log.title,
+                        'type': log.type,
+                        'created_at': log.created_at.isoformat()
+                    }
+                })
         return JsonResponse({
-            'success': False,
-            'error': f'服务器内部错误: {str(e)}'
-        }, status=500)
+            'status': 'success',
+            'is_binary': False,
+            'content': content,
+            'log': {
+                'id': log.id,
+                'title': log.title,
+                'type': log.type,
+                'created_at': log.created_at.isoformat()
+            }
+        })
+    except LogRecord.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': '日志记录不存在'}, status=404)
+    except Exception as e:
+        logging.error(f"查看日志内容失败: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'查看日志内容失败: {str(e)}'}, status=500)
+
+@csrf_exempt
+def download_log(request, log_id):
+    """
+    下载日志文件（优先从数据库读取）
+    """
+    try:
+        log = LogRecord.objects.get(id=log_id)
+        filename = log.original_name or (os.path.basename(log.file_path) if log.file_path else f'log_{log.id}.log')
+        if log.file_blob:
+            response = HttpResponse(bytes(log.file_blob), content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        # 兼容旧数据：走文件路径
+        if not log.file_path or not os.path.exists(log.file_path):
+            return JsonResponse({'status': 'error', 'message': '日志文件不存在'}, status=404)
+        with open(log.file_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except LogRecord.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': '日志记录不存在'}, status=404)
+    except Exception as e:
+        logging.error(f"下载日志文件失败: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'下载日志文件失败: {str(e)}'}, status=500)
+
+@csrf_exempt
+def delete_log(request, log_id):
+    """
+    删除日志记录
+    """
+    if request.method != 'DELETE':
+        return JsonResponse({'status': 'error', 'message': '只支持DELETE请求'}, status=405)
+    
+    try:
+        log = LogRecord.objects.get(id=log_id)
+        
+        # 删除文件
+        if os.path.exists(log.file_path):
+            os.remove(log.file_path)
+        
+        # 删除记录
+        log.delete()
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': '日志记录删除成功'
+        })
+    except LogRecord.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': '日志记录不存在'}, status=404)
+    except Exception as e:
+        logging.error(f"删除日志记录失败: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'删除日志记录失败: {str(e)}'}, status=500)
+
+@csrf_exempt
+def create_direct_log(request):
+    """
+    直接在网页上创建日志
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': '只支持POST请求'}, status=405)
+    
+    try:
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        log_type = request.POST.get('type', 'system')
+        
+        if not title:
+            return JsonResponse({'status': 'error', 'message': '日志标题不能为空'}, status=400)
+        
+        if not content:
+            return JsonResponse({'status': 'error', 'message': '日志内容不能为空'}, status=400)
+        
+        # 确保日志存储目录存在
+        log_dir = os.path.join(settings.BASE_DIR, 'uploads', 'logs')
+        os.makedirs(log_dir, exist_ok=True)
+        
+        # 生成唯一文件名
+        file_name = f"{uuid.uuid4()}_direct_{title}.txt"
+        file_path = os.path.join(log_dir, file_name)
+        
+        # 将内容写入文件
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        # 获取文件大小
+        file_size = os.path.getsize(file_path)
+        
+        # 创建日志记录
+        log_record = LogRecord(
+            title=title,
+            description=f"直接记录的日志 - {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            type=log_type,
+            file_path=file_path,
+            size=file_size,
+            status='success'
+        )
+        log_record.save()
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': '日志记录成功',
+            'log': {
+                'id': log_record.id,
+                'title': log_record.title,
+                'type': log_record.type,
+                'size': log_record.size
+            }
+        })
+    except Exception as e:
+        logging.error(f"直接记录日志失败: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'直接记录日志失败: {str(e)}'}, status=500)
+

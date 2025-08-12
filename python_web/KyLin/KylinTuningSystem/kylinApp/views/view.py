@@ -192,3 +192,8 @@ def test_polling(request):
 def debug_polling(request):
     # 轮询调试页面
     return render(request, "main/debug_polling.html")
+
+
+def rizhijilu(request):
+    # 日志记录页面
+    return render(request, "main/RiZhiJiLu.html")
