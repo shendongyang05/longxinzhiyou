@@ -1,0 +1,456 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+    *{
+        font-size: 20px;
+    }
+  #cmdInput {
+    color: black;
+    height: 28px;
+  }
+
+  #cmd {
+    width: 50vh !important;
+  }
+
+  ;
+
+
+  #cmdInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    background-color: rebeccapurple;
+  }
+
+  .inputBox {
+    margin-top: 5%;
+    position: relative;
+
+  }
+
+  /* AI调优建议样式 */
+  .ai-suggestion-container {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+
+  .ai-suggestion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .ai-suggestion-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .ai-suggestion-refresh {
+    padding: 8px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .ai-suggestion-refresh:hover {
+    background-color: #0069d9;
+  }
+
+  .ai-suggestion-content {
+    padding: 15px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    white-space: pre-wrap;
+  }
+
+  .ai-suggestion-execute {
+    margin-top: 10px;
+    padding: 8px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .ai-suggestion-execute:hover {
+    background-color: #218838;
+  }
+
+  .ai-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+  }
+
+  .ai-loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 2s linear infinite;
+    margin-right: 10px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+{%endblock%}
+
+{%block content%}
+<h2>调优策略设置</h2>
+<div class="settingCmd">
+
+  <div class="caiJiPosition">
+    <span>IP地址选择：</span>
+    <div class="custom-select ip-select">
+      <div class="select-selected ip-selected">选择IP</div>
+      <div class="select-items ip-items" id="ipSelect">
+        <div>Option 1</div>
+        <div>Option 2</div>
+        <div>Option 3</div>
+      </div>
+    </div>
+
+    <span>选择端口:</span>
+    <div class="custom-select port-select">
+      <div class="select-selected port-selected">选择端口</div>
+      <div class="select-items port-items" id="portSelect">
+        <div>Option 1</div>
+        <div>Option 2</div>
+        <div>Option 3</div>
+      </div>
+    </div>
+    <br>
+    <div class="inputBox">
+<div class="inputBox">
+  <div>
+    <label for="cmd">
+      <h3>自定义/默认指令输入：</h3>
+    </label>
+    
+    <div class="input-group" style="display: inline-block; vertical-align:middle;">
+      <input type="text" id="cmd" class="form-control" placeholder="请输入指令..." style="vertical-align: middle;">
+      <div class="selectCmd" style="display:inline-block;">
+        <select id="commandOrStrategy" style="width: 300px;">
+          <option value="" selected disabled hidden>请选择指令或策略</option>
+          <optgroup label="默认指令">
+            <option value="cmd_1">查看防火墙</option>
+            <option value="cmd_2">开启防火墙</option>
+            <option value="cmd_3">关闭防火墙</option>
+            <option value="cmd_4">优化文件系统的读写性能</option>
+            <option value="cmd_5">关闭NTP同步服务器</option>
+            <option value="cmd_6">查看NTP同步服务器</option>
+            <option value="cmd_7">开启NTP同步服务器</option>
+            <option value="cmd_13">查看NTP</option>
+            <option value="cmd_14">设置NTP</option>
+            <option value="cmd_10">启用TCP SYN Cookie以防御SYN洪泛攻击</option>
+            <option value="cmd_11">数据库保护（备份数据库）</option>
+            <option value="cmd_12">数据库优化（添加缓存）</option>
+            <option value="cmd_15">解决su命令权限问题</option>
+            <option value="cmd_16">解决系统卡顿堵塞</option>
+            <option value="cmd_17">查看当前登录用户</option>
+            <option value="cmd_18">清理系统缓存</option>
+            <option value="cmd_19">查看磁盘使用情况</option>
+            <option value="cmd_20">重启Nginx服务</option>
+            <option value="cmd_21">检查系统内核日志</option>
+            <option value="cmd_22">查看系统负载</option>
+            <option value="cmd_23">查看内存使用情况</option>
+            <option value="cmd_24">查看CPU信息</option>
+            <option value="cmd_25">重启服务器</option>
+            <option value="cmd_26">重启MySQL服务</option>
+            <option value="cmd_27">检测网络连接状态</option>
+            <option value="cmd_28">查看端口占用情况</option>
+            <option value="cmd_29">终止占用端口的进程</option>
+            <option value="cmd_30">查看活跃连接数</option>
+            <option value="cmd_31">重启Docker服务</option>
+            <option value="cmd_32">查看内核日志</option>
+            <option value="cmd_33">检查CPU绑定情况</option>
+            <option value="cmd_34">查看运行进程</option>
+            <option value="cmd_35">导出当前系统状态</option>
+          </optgroup>
+          <optgroup label="场景化策略包">
+            <option value="strategy_db_speedup">加快数据库加载速度</option>
+            <option value="strategy_io_optimize">提升IO性能</option>
+            <option value="strategy_security_harden">增强系统安全性</option>
+            <option value="strategy_memory_release">释放内存</option>
+            <option value="strategy_service_restart">一键重启服务</option>
+            <option value="strategy_network_optimize">网络优化</option>
+            <option value="strategy_system_health_check">系统健康巡检</option>
+            <option value="strategy_resource_release">一键释放资源</option>
+            <option value="strategy_server_reboot">重启服务器</option>
+          </optgroup>
+        </select>
+        <button id="sendCommandOrStrategy" type="button" style="margin-left: 20px;">执行</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<br>
+
+<!-- AI调优建议部分 -->
+<div class="ai-suggestion-container">
+  <div class="ai-suggestion-header">
+    <div class="ai-suggestion-title">AI调优建议</div>
+    <button id="refreshAiSuggestion" class="ai-suggestion-refresh">刷新建议</button>
+  </div>
+  <div id="aiSuggestionContent" class="ai-suggestion-content">
+    AI调优建议：
+  </div>
+  <button id="executeAiSuggestion" class="ai-suggestion-execute" style="display: none;">执行建议</button>
+</div>
+
+    </div>
+    <br>
+    <br>
+    <br>
+    <h3>指令回馈</h3>
+    <div style="position: relative;height: 50%">
+      <pre id="infoReturn">
+  </pre>
+    </div>
+
+  </div>
+  {%endblock%}
+
+  {%block js%}
+  <script>
+
+    function initialazeTwoIndex() {
+      var tp = "disk"
+      var model = "get_ipadress"
+      var values = ""
+      requestTwoModel(tp, model, values)
+    }
+
+    $(document).ready(function () {
+      var tp = "disk"
+      initialazeTwoIndex()
+
+      // 当前选中的AI策略
+      var currentAiStrategy = null;
+
+      // 新的统一下拉框和按钮逻辑
+      $("#sendCommandOrStrategy").on("click", function () {
+        var inputCmd = $("#cmd").val().trim();
+        var selected = $("#commandOrStrategy").val();
+        var ipValue = $(".ip-selected").text();
+        var portValue = $(".port-selected").text();
+
+        if (inputCmd) {
+          // 有自定义输入，自动补全前缀
+          var cmdToSend = inputCmd.startsWith("command:") ? inputCmd : "command:" + inputCmd;
+          var values = JSON.stringify({ "ip": ipValue, "port": portValue, "cmdString": cmdToSend, "defaultCmdString": "0" });
+          requestFourModel(values);
+          return;
+        }
+
+        if (!selected) {
+          alert("请选择一个指令或策略包，或在输入框输入自定义指令");
+          return;
+        }
+
+        if (selected.startsWith("cmd_")) {
+          // 默认指令
+          var defaultCmdString = selected.replace("cmd_", "");
+          var values = JSON.stringify({ "ip": ipValue, "port": portValue, "cmdString": "0", "defaultCmdString": defaultCmdString });
+          requestFourModel(values);
+        } else if (selected.startsWith("strategy_")) {
+          // 策略包
+          var strategy = selected.replace("strategy_", "");
+          var values = JSON.stringify({ "ip": ipValue, "port": portValue, "strategy": strategy });
+          $.ajax({
+            url: "/api/strategy/apply",
+            method: "POST",
+            data: values,
+            contentType: "application/json",
+            success: function (response) {
+              let html = "";
+              if (response.results) {
+                response.results.forEach(function(item){
+                  html += "<b>" + item.command + "</b><br><pre>" + item.result + "</pre><hr>";
+                });
+              } else {
+                html = JSON.stringify(response);
+              }
+              $("#infoReturn").html(html);
+            },
+            error: function () {
+              alert("请求失败");
+            }
+          });
+        }
+      });
+
+      $(document).on("click", "#ipSelect .ip", function () {
+        var selectedText = $(this).text();
+        var selectedIp = $(this).attr("data-ip");  // 获取存储的实际IP地址
+        $(".ip-selected").text(selectedText);
+        $(".ip-items").hide();
+
+        model = "get_port"
+        var ipValue = JSON.stringify({
+          "ip": selectedIp  // 使用实际的IP地址
+        })
+        requestTwoModel(tp, model, ipValue)
+      });
+
+      $(document).on("click", "#portSelect .port", function () {
+        var selectedText = $(this).text();
+        $(".port-selected").text(selectedText);
+        $(".port-items").hide();
+      })
+
+      // 设置IP选择框
+      setupDropdown("ip-selected", "ip-items");
+      // 设置端口选择框
+      setupDropdown("port-selected", "port-items");
+
+      // AI调优建议刷新按钮
+      $("#refreshAiSuggestion").on("click", function() {
+        fetchAiSuggestions();
+      });
+
+      // 执行AI调优建议
+      $("#executeAiSuggestion").on("click", function() {
+        if (currentAiStrategy) {
+          executeAiStrategy(currentAiStrategy);
+        } else {
+          alert("没有可执行的AI建议");
+        }
+      });
+
+      // 页面加载时获取AI建议
+      fetchAiSuggestions();
+    })
+
+    function requestFourModel(values) {
+      var url = "/api/cmd/fourModel"
+      $.ajax({
+        url: url, // 替换为实际的服务器端处理程序的URL
+        method: "POST", // 使用POST方法发送数据
+        data: values, // 发送的数据对象
+        contentType: "application/json",
+        success: function (response) {
+          $("#infoReturn").html(response)
+        },
+        error: function (xhr, status, error) {
+          // 请求失败时执行的操作
+          alert("请求失败");
+        }
+      });
+    }
+
+    // 清洗AI回答：去除联网搜索卡片和无关提示
+    function sanitizeAiAnswer(text) {
+      if (!text) return "";
+      var s = String(text).trim();
+      // 去掉前缀提示
+      s = s.replace(/^知识库中.*?~\s*/,'');
+      // 若包含卡片JSON，截取最后一个大括号之后的自然语言
+      var firstCard = s.indexOf('{"card_type"');
+      var lastBrace = s.lastIndexOf('}');
+      if (firstCard !== -1 && lastBrace !== -1 && lastBrace > firstCard) {
+        s = s.slice(lastBrace + 1).trim();
+      }
+      // 清理多余分隔符
+      s = s.replace(/^[:：\-—\s]+/, '');
+      // 兜底：尝试提取以“根据/基于”开头的段落
+      var m = s.match(/(根据[\s\S]*$|基于[\s\S]*$)/);
+      if (m) s = m[1].trim();
+      return s || "无AI建议";
+    }
+
+    // 获取AI调优建议
+    function fetchAiSuggestions() {
+      $("#aiSuggestionContent").html('<div class="ai-loading"><div class="ai-loading-spinner"></div>正在获取AI调优建议...</div>');
+      $("#executeAiSuggestion").hide();
+      
+      // 组装问题：把当前页面可用参数拼成一句话
+      var ipValue = $(".ip-selected").text() || "";
+      var portValue = $(".port-selected").text() || "";
+      var cpuText = $("#cpuCard .card-content").text() || "";
+      var parts = [];
+      if (ipValue && ipValue !== "选择IP") parts.push("主机:" + ipValue);
+      if (portValue && portValue !== "选择端口") parts.push("端口:" + portValue);
+      if (cpuText) parts.push("最近采集:\n" + cpuText.trim());
+      var question = parts.length ? ("请根据以下监控数据给出优化建议:\n" + parts.join("\n")) : "请分析当前系统状态并给出优化建议";
+      
+      $.ajax({
+        url: "/api/ai_optimize/",
+        method: "POST",
+        data: JSON.stringify({ question: question, stream: true }),
+        contentType: "application/json",
+        timeout: 25000,
+        success: function(response) {
+          if (response && response.success && response.answer) {
+            var clean = sanitizeAiAnswer(response.answer);
+            $("#aiSuggestionContent").text(clean);
+            $("#executeAiSuggestion").hide();
+          } else {
+            $("#aiSuggestionContent").text("未获取到AI回答，请稍后重试。");
+          }
+        },
+        error: function(xhr) {
+          var msg = "获取AI调优建议失败";
+          if (xhr && xhr.responseText) msg += "：" + xhr.responseText;
+          $("#aiSuggestionContent").text(msg);
+        }
+      });
+    }
+    
+    // 执行AI策略
+    function executeAiStrategy(strategyData) {
+      var ipValue = $(".ip-selected").text();
+      var portValue = $(".port-selected").text();
+      
+      if (ipValue === "选择IP" || portValue === "选择端口") {
+        alert("请先选择IP和端口");
+        return;
+      }
+      
+      // 显示加载状态
+      $("#infoReturn").html('<div class="ai-loading"><div class="ai-loading-spinner"></div>正在执行AI调优策略...</div>');
+      
+      $.ajax({
+        url: "/api/execute_ai_strategy/",
+        method: "POST",
+        data: JSON.stringify({
+          ip: ipValue,
+          port: portValue,
+          strategy: strategyData.strategy
+        }),
+        contentType: "application/json",
+        success: function(response) {
+          if (response.success) {
+            $("#infoReturn").html("<b>执行命令:</b> " + response.command + "<br><pre>" + response.result + "</pre>");
+          } else {
+            $("#infoReturn").html("<b>执行失败:</b> " + (response.error || "未知错误"));
+          }
+        },
+        error: function() {
+          $("#infoReturn").html("<b>执行失败:</b> 请求发送失败，请检查网络连接");
+        }
+      });
+    }
+
+  </script>
+  {%endblock%}

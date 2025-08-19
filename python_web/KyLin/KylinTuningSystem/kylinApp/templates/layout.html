@@ -1,0 +1,3386 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kylin{% endblock %}</title>
+    <link rel="stylesheet" href={% static "./css/style.css" %}>
+    <link rel="icon" href={% static "./img/kylin.ico" %} type="image/x-icon">
+    <link rel="stylesheet" href={% static "./plugins/bootstrap-3.4.1/css/bootstrap.min.css" %}>
+    <!-- 引入Element UI -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    
+    {% block css %}{% endblock %}
+    
+    <style>
+        /* 重置样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url("{% static './img/bg.png' %}");
+            background-size: cover;
+            background-attachment: fixed;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 布局容器 */
+        .layout-container {
+            height: 100vh;
+            display: flex;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 科技感背景动画 */
+        .layout-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.3), transparent),
+                radial-gradient(2px 2px at 160px 30px, rgba(255,255,255,0.2), transparent);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+            animation: sparkle 20s linear infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes sparkle {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-100px); }
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 240px;
+            background: rgba(15, 25, 45, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 10;
+        }
+
+        .sidebar.collapsed {
+            width: 64px;
+        }
+        
+        /* 监控球样式 */
+        .monitor-ball {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .monitor-ball:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        
+        /* 当预警面板打开时，隐藏预警球 */
+        .monitor-ball.panel-open {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .monitor-ball.alert {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* AI小助手样式 */
+        .ai-assistant {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 999;
+            transition: all 0.3s ease;
+            font-size: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .ai-assistant:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        
+        .ai-assistant.typing {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .ai-chat-window {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 450px;
+            height: 600px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .ai-chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ai-chat-close {
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0.8;
+        }
+        
+        .ai-chat-close:hover {
+            opacity: 1;
+        }
+        
+        .ai-chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            min-height: 300px;
+            max-height: 400px;
+        }
+        
+        .ai-message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        
+        .ai-message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .ai-message.assistant {
+            background: white;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+        
+        .ai-chat-input {
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            display: flex;
+        }
+        
+        .ai-chat-input input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+        }
+        
+        .ai-chat-input button {
+            margin-left: 10px;
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .ai-chat-input button:hover {
+            transform: translateY(-1px);
+        }
+
+
+
+        .sidebar-header {
+            height: 70px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            background: rgba(10, 20, 40, 0.6);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .sidebar-header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* 内容区域顶部导航栏 */
+        .content-header {
+            height: 60px;
+            background: #ffffff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px 0 20px;
+            margin: 0;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-header::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+        }
+
+        /* 左侧导航区域 */
+        .header-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-toggle-btn {
+            background: none;
+            border: none;
+            color: rgba(0, 0, 0, 0.6);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-toggle-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .breadcrumb-item {
+            color: rgba(0, 0, 0, 0.6);
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .breadcrumb-item.clickable {
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .breadcrumb-item.clickable:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .breadcrumb-item.active {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .breadcrumb-item.readonly {
+            color: rgba(0, 0, 0, 0.6);
+            cursor: default;
+        }
+
+        .breadcrumb-separator {
+            color: rgba(0, 0, 0, 0.4);
+            font-size: 12px;
+            margin: 0 2px;
+        }
+
+        /* 右侧操作区域 */
+        .header-actions-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: rgba(0, 0, 0, 0.6);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .action-btn.has-badge::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            background: #ff4757;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+        }
+
+        .user-info-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .user-info-header:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .user-avatar-header {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .user-name-header {
+            color: rgba(0, 0, 0, 0.8);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .user-dropdown-header {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 160px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-dropdown-header.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            color: rgba(0, 0, 0, 0.7);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .dropdown-item-header:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .dropdown-divider-header {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 4px 0;
+        }
+
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 160px;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+
+        .user-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f5f5f5;
+            color: #1890ff;
+        }
+
+        .dropdown-item i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: #e8e8e8;
+            margin: 4px 0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header-nav {
+                display: none;
+            }
+
+            .header-brand span {
+                display: none;
+            }
+
+            .header-actions {
+                gap: 8px;
+            }
+
+            .user-name {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .top-header {
+                padding: 0 8px;
+            }
+
+            .header-actions {
+                gap: 4px;
+            }
+
+            .action-icon {
+                width: 28px;
+                height: 28px;
+            }
+        }
+        
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            margin: 20px 20px 20px 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            color: #333333;
+        }
+        
+        /* Element UI菜单自定义样式 - 深蓝科技风 */
+        .el-menu {
+            border-right: none !important;
+            background-color: transparent !important;
+        }
+
+        .el-menu-item, .el-submenu__title {
+            color: rgba(255, 255, 255, 0.8) !important;
+            border-bottom: none !important;
+            background-color: transparent !important;
+            transition: all 0.3s ease !important;
+            margin: 2px 8px !important;
+            border-radius: 8px !important;
+            position: relative !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+        }
+
+        .el-menu-item:hover, .el-submenu__title:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
+            transform: translateX(4px) !important;
+        }
+
+        .el-menu-item.is-active {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3)) !important;
+            color: #ffffff !important;
+            border-left: 3px solid #667eea !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+        }
+
+        .el-submenu .el-menu-item {
+            background-color: rgba(10, 20, 40, 0.3) !important;
+            min-height: 40px !important;
+            line-height: 40px !important;
+            margin: 1px 16px !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+        }
+
+        .el-submenu .el-menu-item:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            transform: translateX(6px) !important;
+        }
+
+        .el-submenu__title {
+            background-color: transparent !important;
+        }
+
+        .el-submenu .el-menu {
+            background-color: transparent !important;
+        }
+
+        /* 菜单图标样式 */
+        .el-menu-item i, .el-submenu__title i {
+            color: rgba(255, 255, 255, 0.6) !important;
+            margin-right: 8px !important;
+            transition: color 0.3s ease !important;
+        }
+
+        .el-menu-item:hover i, .el-submenu__title:hover i {
+            color: #ffffff !important;
+        }
+        
+        /* 确保侧边栏文字完整显示 */
+        .sidebar .el-menu-item span,
+        .sidebar .el-submenu__title span {
+            font-size: 14px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* 折叠按钮样式 */
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .collapse-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 监控球样式 */
+        .monitor-ball {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .monitor-ball:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        
+        /* 当预警面板打开时，隐藏预警球 */
+        .monitor-ball.panel-open {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        /* 内容区域内部样式 */
+        .content-area h1, .content-area h2, .content-area h3 {
+            color: #000000;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .content-area * {
+            color: #000000 !important;
+        }
+
+        .content-area h1 {
+            font-size: 24px;
+            border-bottom: 2px solid #e8e8e8;
+            padding-bottom: 10px;
+        }
+
+        .content-area h2 {
+            font-size: 18px;
+        }
+
+        .content-area h3 {
+            font-size: 16px;
+        }
+
+        /* 表格样式 */
+        .content-area table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .content-area table th {
+            background: #fafafa;
+            color: #333333;
+            font-weight: 500;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 14px;
+        }
+
+        .content-area table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #666666;
+            font-size: 14px;
+        }
+
+        .content-area table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* 按钮样式 */
+        .content-area .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 400;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .content-area .btn-primary {
+            background: #1890ff;
+            color: white;
+        }
+
+        .content-area .btn-primary:hover {
+            background: #40a9ff;
+        }
+
+        .content-area .btn-success {
+            background: #52c41a;
+            color: white;
+        }
+
+        .content-area .btn-success:hover {
+            background: #73d13d;
+        }
+
+        .content-area .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .content-area .btn-danger:hover {
+            background: #ff7875;
+        }
+
+        .content-area .btn-warning {
+            background: #faad14;
+            color: white;
+        }
+
+        .content-area .btn-warning:hover {
+            background: #ffc53d;
+        }
+
+        /* 状态指示器 */
+        .content-area .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .content-area .status-online {
+            background: #52c41a;
+        }
+
+        .content-area .status-offline {
+            background: #ff4d4f;
+        }
+
+        .content-area .status-warning {
+            background: #faad14;
+        }
+
+        /* 表单样式 */
+        .content-area .form-group {
+            margin-bottom: 16px;
+        }
+
+        .content-area .form-label {
+            display: block;
+            margin-bottom: 4px;
+            color: #333333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .content-area .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333333;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .content-area .form-control:focus {
+            border-color: #1890ff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        /* 分页样式 */
+        .content-area .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 8px;
+        }
+
+        .content-area .pagination .page-item {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            color: #333333;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .content-area .pagination .page-item:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .content-area .pagination .page-item.active {
+            background: #1890ff;
+            border-color: #1890ff;
+            color: white;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            background-color: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d9d9d9;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bfbfbf;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 4px;
+        }
+
+        /* 全局模态框按钮样式 - 确保保存按钮可见 */
+        .modal-footer {
+            display: flex !important;
+            justify-content: flex-end !important;
+            padding: 15px !important;
+            border-top: 1px solid #e5e5e5 !important;
+        }
+
+        .modal-footer .btn {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            margin-left: 10px !important;
+        }
+
+        /* 特定保存按钮样式 */
+        #saveMiddlewareBtn, #saveServerBtn {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background-color: #1890ff !important;
+            border-color: #1890ff !important;
+            color: white !important;
+            padding: 8px 16px !important;
+            border-radius: 4px !important;
+            border: 1px solid #1890ff !important;
+        }
+
+        #saveMiddlewareBtn:hover, #saveServerBtn:hover {
+            background-color: #40a9ff !important;
+            border-color: #40a9ff !important;
+        }
+    </style>
+</head>
+<body>
+    {% verbatim %}
+    <div id="app" class="layout-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar" :class="{ collapsed: isCollapsed }">
+            <!-- 侧边栏头部 -->
+            <div class="sidebar-header">
+                <span v-if="!isCollapsed">龙芯智优</span>
+                <span v-else>麒麟</span>
+            </div>
+            
+            <!-- Element UI 菜单 -->
+            <el-menu
+                ref="menu"
+                :default-active="activeMenuIndex"
+                class="el-menu-vertical"
+                :collapse="isCollapsed"
+                :collapse-transition="false"
+                @open="handleOpen"
+                @close="handleClose"
+                unique-opened>
+
+                <!-- 用户管理 -->
+                <el-submenu index="1">
+                    <template slot="title">
+                        <i class="el-icon-user-solid"></i>
+                        <span>用户管理</span>
+                    </template>
+                    <el-menu-item index="1-1" @click="navigateTo('/index/usermanager')">
+                        用户管理
+                    </el-menu-item>
+                </el-submenu>
+
+                <!-- 信息管理 -->
+                <el-submenu index="2">
+                    <template slot="title">
+                        <i class="el-icon-s-data"></i>
+                        <span>信息管理</span>
+                    </template>
+                    <el-menu-item index="2-1" @click="navigateTo('/index/')">
+                        服务器信息管理
+                    </el-menu-item>
+
+                    <el-menu-item index="2-3" @click="navigateTo('/index/fuwuxinxiguanli')">
+                        中间件信息管理
+                    </el-menu-item>
+                </el-submenu>
+                
+                <!-- 数据采集 -->
+                <el-submenu index="3">
+                    <template slot="title">
+                        <i class="el-icon-download"></i>
+                        <span>数据采集</span>
+                    </template>
+                    <el-menu-item index="3-1" @click="navigateTo('/index/caijicpuxinnengzhibiao')">
+                        CPU性能指标采集
+                    </el-menu-item>
+                    <el-menu-item index="3-2" @click="navigateTo('/index/caijineicunxinnengzhibiao')">
+                        内存性能指标采集
+                    </el-menu-item>
+                    <el-menu-item index="3-3" @click="navigateTo('/index/caijicipanxinnengzhibiao')">
+                        磁盘性能指标采集
+                    </el-menu-item>
+                    <el-menu-item index="3-4" @click="navigateTo('/index/caijiwangluoxinnengzhibiao')">
+                        网络性能指标采集
+                    </el-menu-item>
+                    <el-menu-item index="3-5" @click="navigateTo('/index/caijiqitaxinxi')">
+                        软硬件信息采集
+                    </el-menu-item>
+                    <el-menu-item index="3-6" @click="navigateTo('/index/yijiancaiji')">
+                        数据轮询采集
+                    </el-menu-item>
+                </el-submenu>
+                
+                <!-- 采集数据分析 -->
+                <el-submenu index="4">
+                    <template slot="title">
+                        <i class="el-icon-data-analysis"></i>
+                        <span>采集数据分析</span>
+                    </template>
+                    <el-menu-item index="4-1" @click="navigateTo('/index/cpuxinnengzhibiaofenxi')">
+                        CPU性能指标分析
+                    </el-menu-item>
+                    <el-menu-item index="4-2" @click="navigateTo('/index/neicunxinnengzhibiaofenxi')">
+                        内存性能指标分析
+                    </el-menu-item>
+                    <el-menu-item index="4-3" @click="navigateTo('/index/cipanxinnengzhibiaofenxi')">
+                        磁盘性能指标分析
+                    </el-menu-item>
+                    <el-menu-item index="4-4" @click="navigateTo('/index/wangluoxinnengzhibiaofenxi')">
+                        网络性能指标分析
+                    </el-menu-item>
+                    <el-menu-item index="4-5" @click="navigateTo('/index/ziyuanliantiaofenxi')">
+                        资源链条分析
+                    </el-menu-item>
+                </el-submenu>
+                
+                <!-- 调优可视化 -->
+                <el-submenu index="5">
+                    <template slot="title">
+                        <i class="el-icon-view"></i>
+                        <span>调优可视化</span>
+                    </template>
+           <el-menu-item index="5-4" @click="navigateTo('/index/datadashboard')">
+               大屏监控
+           </el-menu-item>
+                    <el-menu-item index="5-2" @click="navigateTo('/index/zhanshiguanjianshuju')">
+                        关键数据展示
+                    </el-menu-item>
+
+                </el-submenu>
+
+                <!-- 数据统计及分析 -->
+                <el-submenu index="6">
+                    <template slot="title">
+                        <i class="el-icon-s-data"></i>
+                        <span>数据统计及分析</span>
+                    </template>
+                    <el-menu-item index="6-2" @click="navigateTo('/index/cpushujutongjifenxi')">
+                        CPU数据统计及分析
+                    </el-menu-item>
+                </el-submenu>
+                
+                <!-- 日志记录 -->
+                <el-submenu index="7">
+                    <template slot="title">
+                        <i class="el-icon-document"></i>
+                        <span>日志记录</span>
+                    </template>
+                    <el-menu-item index="7-1" @click="navigateTo('/index/rizhijilu')">
+                        日志上传管理
+                    </el-menu-item>
+                </el-submenu>
+                
+                <!-- 亲和性自动调整 -->
+                <el-submenu index="8">
+                    <template slot="title">
+                        <i class="el-icon-setting"></i>
+                        <span>亲和性自动调整</span>
+                    </template>
+                    <el-menu-item index="8-1" @click="navigateTo('/index/qinhexintiaozheng')">
+                        自动迁移进程
+                    </el-menu-item>
+                </el-submenu>
+            </el-menu>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 内容区域顶部导航栏 -->
+            <div class="content-header">
+                <!-- 左侧导航区域 -->
+                <div class="header-nav-left">
+                    <button class="nav-toggle-btn" @click="toggleCollapse" title="切换侧边栏">
+                        <i class="el-icon-menu"></i>
+                    </button>
+                    <div class="breadcrumb-nav">
+                        <span class="breadcrumb-item readonly" v-text="breadcrumbPath[0] || '首页'">首页</span>
+                        <span class="breadcrumb-separator" v-if="breadcrumbPath.length > 1">\</span>
+                        <span class="breadcrumb-item readonly" v-if="breadcrumbPath.length > 1" v-text="breadcrumbPath[1]">系统管理</span>
+                        <span class="breadcrumb-separator" v-if="breadcrumbPath.length > 2">\</span>
+                        <span class="breadcrumb-item active" v-if="breadcrumbPath.length > 2" v-text="breadcrumbPath[2]">用户管理</span>
+                        <span class="breadcrumb-item active" v-if="breadcrumbPath.length === 1" v-text="currentPageTitle">首页</span>
+                    </div>
+                </div>
+
+                <!-- 右侧操作区域 -->
+                <div class="header-actions-right">
+                    <button class="action-btn" @click="toggleFullscreen" title="全屏">
+                        <i class="el-icon-full-screen"></i>
+                    </button>
+                    <button class="action-btn" title="设置">
+                        <i class="el-icon-setting"></i>
+                    </button>
+                    <button class="action-btn has-badge" title="通知">
+                        <i class="el-icon-bell"></i>
+                    </button>
+
+                    <!-- 用户信息 -->
+                    <div class="user-info-header" @click="toggleUserDropdown" v-click-outside="hideUserDropdown">
+                        <div class="user-avatar-header" v-text="currentUser.avatar || 'A'"></div>
+                        <span class="user-name-header" v-text="currentUser.name || 'admin'"></span>
+                        <i class="el-icon-arrow-down" style="color: rgba(255,255,255,0.6); font-size: 12px; transition: transform 0.3s;" :style="{ transform: showUserDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }"></i>
+
+                        <!-- 用户下拉菜单 -->
+                        <div class="user-dropdown-header" :class="{ show: showUserDropdown }">
+                            <a href="#" class="dropdown-item-header" @click.prevent="goToProfile">
+                                <i class="el-icon-user"></i>
+                                个人中心
+                            </a>
+                            <a href="#" class="dropdown-item-header" @click.prevent="goToSettings">
+                                <i class="el-icon-setting"></i>
+                                系统设置
+                            </a>
+                            <div class="dropdown-divider-header"></div>
+                            <button class="dropdown-item-header" @click="logout">
+                                <i class="el-icon-switch-button"></i>
+                                退出登录
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内容区域 -->
+            <div class="content-area">
+                {% endverbatim %}
+                {% block content %}
+                {% endblock %}
+                {% verbatim %}
+            </div>
+        </div>
+    </div>
+    {% endverbatim %}
+
+    <!-- 监控悬浮球 -->
+    <div id="monitorBall" class="monitor-ball" style="display: none;">
+        <i class="el-icon-warning"></i>
+        <div class="ball-count" style="position: absolute; top: -8px; right: -8px; background: #f56c6c; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; display: none; align-items: center; justify-content: center;">0</div>
+        <div class="ball-tooltip" style="display: none; position: absolute; right: 70px; top: 0; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 10px; width: 300px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); z-index: 1001;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <strong>系统告警</strong>
+                <button id="monitorReadAllBtn" style="background: #409eff; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 12px;">全部已读</button>
+            </div>
+            <div class="tooltip-content" style="max-height: 200px; overflow-y: auto;">
+                暂无告警信息
+            </div>
+        </div>
+    </div>
+
+    <script src={% static "./js/jquery-3.3.1.min.js" %}></script>
+    <script src={% static "./plugins/bootstrap-3.4.1/js/bootstrap.min.js" %}></script>
+    <script src={% static "./js/echarts.min.js" %}></script>
+    <!-- 引入Vue和Element UI -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+    <script>
+        // 添加CSS动画样式
+        if (!$('#monitor-animations').length) {
+            $('<style id="monitor-animations">')
+                .text(`
+                    @keyframes slideIn {
+                        from { transform: translateY(-20px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                    
+                    @keyframes pulse {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.05); }
+                        100% { transform: scale(1); }
+                    }
+                    
+                    .monitor-ball {
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .monitor-ball:hover {
+                        transform: scale(1.1);
+                    }
+                    
+                    .alert-notification {
+                        animation: slideIn 0.3s ease-out;
+                    }
+                `)
+                .appendTo('head');
+        }
+        
+        // 先定义监控管理器
+        const monitorManager = {
+            alerts: [],
+            ball: null,
+            tooltip: null,
+            content: null,
+            count: null,
+            isTooltipVisible: false,
+            checkInterval: null,
+            
+            // 播放警报声音
+            playAlertSound() {
+                console.log('全局播放警报声音...');
+                
+                // 在HTTP环境下，优先使用Web Audio API
+                if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+                    console.log('检测到HTTP环境，使用Web Audio API');
+                    this.playWebAudioFallback();
+                    return;
+                }
+                
+                try {
+                    // 创建新的音频元素
+                    const audio = new Audio("{% static 'sounds/alert.mp3' %}");
+                    audio.volume = 0.8;
+                    
+                    // 添加用户交互来解锁音频
+                    const playPromise = audio.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('警报声音播放成功');
+                        }).catch(err => {
+                            console.error('播放音频失败:', err);
+                            // 备选方案：使用Web Audio API
+                            this.playWebAudioFallback();
+                        });
+                    }
+                } catch (e) {
+                    console.error('创建音频对象失败:', e);
+                    // 备选方案：使用Web Audio API
+                    this.playWebAudioFallback();
+                }
+            },
+            
+            // Web Audio API备选方案
+            playWebAudioFallback() {
+                try {
+                    console.log('使用Web Audio API播放警报声音...');
+                    
+                    // 检查是否已经有音频上下文
+                    if (!this.audioContext) {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    
+                    // 如果音频上下文被暂停，恢复它
+                    if (this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+                    
+                    // 创建振荡器
+                    const oscillator = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    
+                    oscillator.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = 800; // 800Hz
+                    gain.gain.value = 0.3; // 降低音量
+                    
+                    oscillator.start();
+                    
+                    // 播放500毫秒后停止
+                    setTimeout(() => {
+                        oscillator.stop();
+                        // 不关闭音频上下文，保持它活跃
+                    }, 500);
+                    
+                    console.log('Web Audio API警报声音播放成功');
+                } catch (e) {
+                    console.error('Web Audio API失败:', e);
+                    // 最后的备选方案：使用浏览器通知
+                    this.showBrowserNotification();
+                }
+            },
+            
+            // 浏览器通知备选方案
+            showBrowserNotification() {
+                try {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('系统预警', {
+                            body: '检测到性能指标超过阈值',
+                            icon: '/static/img/kylin.ico'
+                        });
+                    }
+                } catch (e) {
+                    console.error('浏览器通知失败:', e);
+                }
+            },
+            
+            // 从localStorage恢复告警状态
+            restoreAlerts() {
+                const savedAlerts = localStorage.getItem('monitorAlerts');
+                if (savedAlerts) {
+                    try {
+                        this.alerts = JSON.parse(savedAlerts);
+                        console.log('从localStorage恢复告警状态:', this.alerts);
+                        this.updateBallState();
+                    } catch (e) {
+                        console.error('恢复告警状态失败:', e);
+                        this.alerts = [];
+                    }
+                }
+            },
+            
+            // 保存告警状态到localStorage
+            saveAlerts() {
+                localStorage.setItem('monitorAlerts', JSON.stringify(this.alerts));
+                console.log('保存告警状态到localStorage:', this.alerts);
+            },
+
+            init() {
+                this.createMonitorBall();
+                
+                // 检查是否有正在进行的采集任务
+                const isCollecting = localStorage.getItem('isCollecting');
+                console.log('monitorManager初始化时检查采集状态:', isCollecting);
+                
+                if (isCollecting === 'true') {
+                    // 只有在采集中时才恢复告警状态和启动监控
+                    this.restoreAlerts(); // 恢复告警状态
+                    this.startChecking(); // 启动全局监控检查
+                    console.log('检测到正在进行的采集任务，启动全局监控检查');
+                } else {
+                    // 不在采集中，清除所有告警状态
+                    this.alerts = [];
+                    this.saveAlerts();
+                    this.updateBallState();
+                    console.log('未检测到正在进行的采集任务，清除告警状态');
+                }
+                
+                // 从localStorage恢复阈值设置
+                const cpuThreshold = localStorage.getItem('cpuThreshold');
+                const memThreshold = localStorage.getItem('memThreshold');
+                const diskThreshold = localStorage.getItem('diskThreshold');
+                const netThreshold = localStorage.getItem('netThreshold');
+                
+                console.log('恢复阈值设置:', {
+                    cpu: cpuThreshold,
+                    memory: memThreshold,
+                    disk: diskThreshold,
+                    network: netThreshold
+                });
+            },
+
+            createMonitorBall() {
+                // 创建监控球
+                this.ball = $('<div class="monitor-ball">').html('<i class="el-icon-warning"></i>');
+                this.ball.appendTo('body');
+                
+                // 创建提示框
+                this.tooltip = $('<div>').css({
+                    position: 'fixed',
+                    background: 'rgba(0,0,0,0.9)',
+                    color: 'white',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    maxWidth: '350px',
+                    zIndex: 1001,
+                    display: 'none',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }).appendTo('body');
+
+                this.content = $('<div>').appendTo(this.tooltip);
+                this.count = $('<div>').css({
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px',
+                    background: 'red',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    fontSize: '12px',
+                    textAlign: 'center',
+                    lineHeight: '20px',
+                    display: 'none'
+                }).appendTo(this.ball);
+
+                // 绑定事件
+                this.ball.on('mouseenter', () => this.showTooltip());
+                this.ball.on('mouseleave', () => this.hideTooltip());
+                this.ball.on('click', () => this.showAlertPanel());
+            },
+
+            showTooltip() {
+                if (this.alerts.length === 0) return;
+                
+                this.content.empty();
+                const unreadAlerts = this.alerts.filter(alert => !alert.isRead);
+                
+                if (unreadAlerts.length === 0) {
+                    this.content.append('<div style="color: #aaa;">所有预警已读</div>');
+                } else {
+                    unreadAlerts.forEach(alert => {
+                        this.content.append(`<div style="margin-bottom: 5px;">${alert.message}</div>`);
+                    });
+                }
+                
+                const ballPos = this.ball.offset();
+                this.tooltip.css({
+                    top: ballPos.top - this.tooltip.outerHeight() - 10,
+                    left: ballPos.left - this.tooltip.outerWidth() + this.ball.outerWidth(),
+                    display: 'block'
+                });
+                
+                this.isTooltipVisible = true;
+            },
+
+            hideTooltip() {
+                this.tooltip.hide();
+                this.isTooltipVisible = false;
+            },
+
+            // 显示预警面板
+            showAlertPanel() {
+                // 移除已存在的面板
+                $('#alertPanel').remove();
+                
+                // 隐藏预警球
+                this.ball.addClass('panel-open');
+                
+                const panel = $(`
+                    <div id="alertPanel" style="
+                        position: fixed;
+                        bottom: 100px;
+                        right: 30px;
+                        background: white;
+                        border-radius: 12px;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                        padding: 20px;
+                        width: 400px;
+                        max-height: 500px;
+                        overflow-y: auto;
+                        z-index: 1002;
+                        font-family: Arial, sans-serif;
+                        transform: translateY(0);
+                        transition: all 0.3s ease;
+                    ">
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 15px;
+                            border-bottom: 1px solid #eee;
+                            padding-bottom: 10px;
+                        ">
+                            <h3 style="margin: 0; color: #333;">预警管理</h3>
+                            <button id="closeAlertPanel" style="
+                                background: none;
+                                border: none;
+                                font-size: 20px;
+                                cursor: pointer;
+                                color: #999;
+                            ">&times;</button>
+                        </div>
+                        <div id="alertList"></div>
+                        <div style="
+                            margin-top: 15px;
+                            padding-top: 15px;
+                            border-top: 1px solid #eee;
+                            text-align: center;
+                        ">
+                            <button id="markAllRead" style="
+                                background: #4CAF50;
+                                color: white;
+                                border: none;
+                                padding: 8px 16px;
+                                border-radius: 4px;
+                                cursor: pointer;
+                                margin-right: 10px;
+                            ">全部标记为已读</button>
+                            <button id="clearAllAlerts" style="
+                                background: #f44336;
+                                color: white;
+                                border: none;
+                                padding: 8px 16px;
+                                border-radius: 4px;
+                                cursor: pointer;
+                            ">清除所有预警</button>
+                        </div>
+                    </div>
+                `);
+                
+                panel.appendTo('body');
+                this.renderAlertList();
+                
+                // 绑定事件
+                $('#closeAlertPanel').on('click', () => {
+                    panel.remove();
+                    this.ball.removeClass('panel-open');
+                });
+                $('#markAllRead').on('click', () => this.markAllAsRead());
+                $('#clearAllAlerts').on('click', () => {
+                    this.clearAllAlerts();
+                    panel.remove();
+                    this.ball.removeClass('panel-open');
+                });
+                
+                // 点击外部关闭
+                panel.on('click', (e) => {
+                    if (e.target === panel[0]) {
+                        panel.remove();
+                        this.ball.removeClass('panel-open');
+                    }
+                });
+            },
+
+            // 渲染预警列表
+            renderAlertList() {
+                const alertList = $('#alertList');
+                alertList.empty();
+                
+                if (this.alerts.length === 0) {
+                    alertList.html('<div style="text-align: center; color: #999; padding: 20px;">暂无预警</div>');
+                    return;
+                }
+                
+                this.alerts.forEach((alert, index) => {
+                    const alertItem = $(`
+                        <div class="alert-item" style="
+                            border: 1px solid #eee;
+                            border-radius: 6px;
+                            padding: 12px;
+                            margin-bottom: 10px;
+                            background: ${alert.isRead ? '#f9f9f9' : '#fff3cd'};
+                            border-left: 4px solid ${alert.isRead ? '#ccc' : '#ffc107'};
+                        ">
+                            <div style="
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: flex-start;
+                            ">
+                                <div style="flex: 1;">
+                                    <div style="
+                                        font-weight: bold;
+                                        color: ${alert.isRead ? '#666' : '#333'};
+                                        margin-bottom: 5px;
+                                    ">${alert.message}</div>
+                                    <div style="
+                                        font-size: 12px;
+                                        color: #999;
+                                        margin-bottom: 8px;
+                                    ">${alert.timestamp}</div>
+                                    <div style="
+                                        font-size: 11px;
+                                        color: #666;
+                                        background: #f0f0f0;
+                                        padding: 2px 6px;
+                                        border-radius: 3px;
+                                        display: inline-block;
+                                    ">${alert.type}</div>
+                                </div>
+                                <div style="margin-left: 10px;">
+                                    ${!alert.isRead ? `
+                                        <button class="mark-read-btn" data-index="${index}" style="
+                                            background: #28a745;
+                                            color: white;
+                                            border: none;
+                                            padding: 4px 8px;
+                                            border-radius: 3px;
+                                            cursor: pointer;
+                                            font-size: 11px;
+                                        ">标记已读</button>
+                                    ` : `
+                                        <span style="
+                                            color: #28a745;
+                                            font-size: 11px;
+                                            font-weight: bold;
+                                        ">已读</span>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    
+                    alertList.append(alertItem);
+                });
+                
+                // 绑定标记已读事件
+                $('.mark-read-btn').on('click', (e) => {
+                    const index = parseInt($(e.target).data('index'));
+                    this.markAsRead(index);
+                });
+            },
+
+            // 标记单个预警为已读
+            markAsRead(index) {
+                if (index >= 0 && index < this.alerts.length) {
+                    this.alerts[index].isRead = true;
+                    this.saveAlerts();
+                    this.updateBallState();
+                    this.renderAlertList();
+                    console.log(`预警 ${index} 已标记为已读`);
+                }
+            },
+
+            // 标记所有预警为已读
+            markAllAsRead() {
+                this.alerts.forEach(alert => {
+                    alert.isRead = true;
+                });
+                this.saveAlerts();
+                this.updateBallState();
+                this.renderAlertList();
+                console.log('所有预警已标记为已读');
+            },
+
+            // 清除所有预警
+            clearAllAlerts(showConfirm = true) {
+                // 如果不在采集中，不显示确认框
+                const isCollecting = localStorage.getItem('isCollecting');
+                if (isCollecting !== 'true') {
+                    showConfirm = false;
+                }
+                
+                if (!showConfirm || confirm('确定要清除所有预警吗？')) {
+                    this.alerts = [];
+                    this.saveAlerts();
+                    this.updateBallState();
+                    $('#alertPanel').remove();
+                    console.log('已清除所有预警');
+                }
+            },
+
+            startChecking() {
+                // 清除可能存在的旧定时器
+                if (this.checkInterval) {
+                    clearInterval(this.checkInterval);
+                }
+                
+                // 立即执行一次检查
+                this.fetchMonitorData();
+                
+                // 设置定时器，每5秒检查一次
+                this.checkInterval = setInterval(() => {
+                    this.fetchMonitorData();
+                }, 5000); // 每5秒检查一次
+                
+                console.log('全局监控已启动，检查间隔: 5秒');
+            },
+
+            stopChecking() {
+                // 清除定时器
+                if (this.checkInterval) {
+                    clearInterval(this.checkInterval);
+                    this.checkInterval = null;
+                    console.log('全局监控已停止');
+                }
+                
+                // 清除所有告警，不显示确认框
+                this.clearAllAlerts(false);
+            },
+
+            fetchMonitorData() {
+                // 检查是否有正在进行的采集任务
+                const isCollecting = localStorage.getItem('isCollecting');
+                if (isCollecting !== 'true') {
+                    console.log('没有正在进行的采集任务，跳过监控检查');
+                    return;
+                }
+                
+                // 从localStorage获取阈值设置
+                const cpuThreshold = parseFloat(localStorage.getItem('cpuThreshold')) || 0;
+                const memThreshold = parseFloat(localStorage.getItem('memThreshold')) || 0;
+                const diskThreshold = parseFloat(localStorage.getItem('diskThreshold')) || 0;
+                const netThreshold = parseFloat(localStorage.getItem('netThreshold')) || 0;
+                
+                // 获取当前选中的IP和端口
+                const selectedIp = localStorage.getItem('selectedIp');
+                const selectedPort = localStorage.getItem('selectedPort');
+                
+                if (!selectedIp || !selectedPort) {
+                    console.log('未选择IP或端口，跳过监控检查');
+                    return;
+                }
+                
+                // 获取最新数据
+                $.ajax({
+                    url: '/api/get_latest_data/',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        ip: selectedIp,
+                        port: selectedPort
+                    }),
+                    success: (data) => {
+                        if (data.success && data.data) {
+                            console.log('全局监控获取数据成功:', data.data);
+                            this.checkThresholds(data.data, {
+                                cpu: cpuThreshold,
+                                memory: memThreshold,
+                                disk: diskThreshold,
+                                network: netThreshold
+                            });
+                        } else {
+                            console.log('获取监控数据失败或数据为空');
+                        }
+                    },
+                    error: (xhr, status, error) => {
+                        console.log('监控数据获取失败:', error);
+                        // 即使获取数据失败，也保持现有的告警状态
+                    }
+                });
+            },
+
+            checkThresholds(data, thresholds) {
+                // 保留现有的已读状态
+                const existingAlerts = this.alerts.filter(alert => alert.isRead);
+                const oldAlertCount = this.alerts.filter(alert => !alert.isRead).length;
+                this.alerts = [];
+                
+                let newAlertDetected = false;
+                
+                // 检查CPU告警
+                if (thresholds.cpu > 0 && data.cpu && data.cpu.cpu_percent > thresholds.cpu) {
+                    this.alerts.push({
+                        type: 'cpu',
+                        message: `CPU使用率过高: ${data.cpu.cpu_percent}% (阈值: ${thresholds.cpu}%)`,
+                        timestamp: new Date().toLocaleString(),
+                        isRead: false
+                    });
+                    newAlertDetected = true;
+                }
+                
+                // 检查内存告警
+                if (thresholds.memory > 0 && data.memory && data.memory.mem_percent > thresholds.memory) {
+                    this.alerts.push({
+                        type: 'memory', 
+                        message: `内存使用率过高: ${data.memory.mem_percent}% (阈值: ${thresholds.memory}%)`,
+                        timestamp: new Date().toLocaleString(),
+                        isRead: false
+                    });
+                    newAlertDetected = true;
+                }
+                
+                // 检查磁盘告警
+                if (thresholds.disk > 0 && data.disk && data.disk.disk_percent > thresholds.disk) {
+                    this.alerts.push({
+                        type: 'disk',
+                        message: `磁盘使用率过高: ${data.disk.disk_percent}% (阈值: ${thresholds.disk}%)`,
+                        timestamp: new Date().toLocaleString(),
+                        isRead: false
+                    });
+                    newAlertDetected = true;
+                }
+                
+                // 检查网络告警
+                if (thresholds.network > 0 && data.network && parseFloat(data.network.net_speed) > thresholds.network) {
+                    this.alerts.push({
+                        type: 'network',
+                        message: `网络速率过高: ${data.network.net_speed}Mbps (阈值: ${thresholds.network}Mbps)`,
+                        timestamp: new Date().toLocaleString(),
+                        isRead: false
+                    });
+                    newAlertDetected = true;
+                }
+
+                // 恢复已读状态
+                this.alerts = this.alerts.concat(existingAlerts);
+                
+                // 如果有新告警，播放警报声音
+                const newAlertCount = this.alerts.filter(alert => !alert.isRead).length;
+                if (newAlertCount > oldAlertCount && newAlertDetected) {
+                    console.log('检测到新告警，播放警报声音');
+                    this.playAlertSound();
+                }
+
+                // 保存告警状态到localStorage
+                this.saveAlerts();
+                this.updateBallState();
+            },
+
+            updateBallState() {
+                const unreadCount = this.alerts.filter(alert => !alert.isRead).length;
+                
+                if (unreadCount > 0) {
+                    this.ball.css('background', 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)');
+                    this.count.text(unreadCount).show();
+                } else {
+                    this.ball.css('background', 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)');
+                    this.count.hide();
+                }
+            },
+            
+            clearAlerts() {
+                this.alerts = [];
+                this.saveAlerts();
+                this.updateBallState();
+                console.log('已清除所有告警');
+            },
+
+            addAlert(title, message, currentValue, thresholdRange) {
+                // 添加告警到列表
+                const alert = {
+                    type: title.toLowerCase().replace('告警', ''),
+                    message: `${title}: ${message} (当前值: ${currentValue}, 阈值: ${thresholdRange})`,
+                    timestamp: new Date().toLocaleString(),
+                    isRead: false
+                };
+                
+                // 检查是否已存在相同类型的告警
+                const existingIndex = this.alerts.findIndex(a => a.type === alert.type);
+                if (existingIndex >= 0) {
+                    // 更新现有告警，保持已读状态
+                    const isRead = this.alerts[existingIndex].isRead;
+                    this.alerts[existingIndex] = alert;
+                    this.alerts[existingIndex].isRead = isRead;
+                } else {
+                    // 添加新告警
+                    this.alerts.push(alert);
+                    // 播放警报声音
+                    this.playAlertSound();
+                }
+                
+                // 保存告警状态到localStorage
+                this.saveAlerts();
+                
+                // 更新监控球状态
+                this.updateBallState();
+                
+                // 显示告警提示
+                this.showAlertNotification(alert);
+            },
+
+            showAlertNotification(alert) {
+                // 创建告警通知
+                const notification = $(`
+                    <div class="alert-notification" style="
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+                        color: white;
+                        padding: 25px;
+                        border-radius: 12px;
+                        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+                        max-width: 450px;
+                        width: 80%;
+                        z-index: 9999;
+                        animation: fadeIn 0.5s ease-out;
+                        text-align: center;
+                    ">
+                        <div style="font-weight: bold; font-size: 20px; margin-bottom: 15px;">⚠️ 性能告警</div>
+                        <div style="font-size: 16px; margin-bottom: 15px;">${alert.message}</div>
+                        <div style="
+                            font-size: 14px;
+                            margin-top: 10px;
+                            opacity: 0.8;
+                        ">${alert.timestamp}</div>
+                        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
+                            <button class="mark-read-notification" style="
+                                background: rgba(255,255,255,0.2);
+                                border: 1px solid rgba(255,255,255,0.3);
+                                color: white;
+                                padding: 8px 16px;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-size: 14px;
+                            ">标记已读</button>
+                            <button class="close-notification" style="
+                                background: rgba(0,0,0,0.2);
+                                border: 1px solid rgba(0,0,0,0.1);
+                                color: white;
+                                padding: 8px 16px;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-size: 14px;
+                            ">关闭</button>
+                        </div>
+                    </div>
+                    <div class="notification-overlay" style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0,0,0,0.5);
+                        z-index: 9998;
+                    "></div>
+                `);
+                
+                notification.appendTo('body');
+                
+                // 添加淡入动画样式
+                if (!document.getElementById('notification-styles')) {
+                    $('<style id="notification-styles">')
+                        .text(`
+                            @keyframes fadeIn {
+                                from { opacity: 0; }
+                                to { opacity: 1; }
+                            }
+                        `)
+                        .appendTo('head');
+                }
+                
+                // 绑定标记已读事件
+                notification.find('.mark-read-notification').on('click', () => {
+                    const alertIndex = this.alerts.findIndex(a => 
+                        a.message === alert.message && a.timestamp === alert.timestamp
+                    );
+                    if (alertIndex >= 0) {
+                        this.markAsRead(alertIndex);
+                    }
+                    notification.remove();
+                    $('.notification-overlay').remove();
+                });
+                
+                // 绑定关闭事件
+                notification.find('.close-notification').on('click', () => {
+                    notification.remove();
+                    $('.notification-overlay').remove();
+                });
+                
+                // 10秒后自动消失
+                setTimeout(() => {
+                    notification.fadeOut(() => {
+                        notification.remove();
+                        $('.notification-overlay').remove();
+                    });
+                }, 10000);
+            },
+
+            // 启动全局监控检查
+            startChecking() {
+                if (this.checkInterval) {
+                    clearInterval(this.checkInterval);
+                }
+                
+                console.log('启动全局监控检查...');
+                this.checkInterval = setInterval(() => {
+                    this.performGlobalCheck();
+                }, 10000); // 每10秒检查一次
+            },
+            
+            // 停止全局监控检查
+            stopChecking() {
+                if (this.checkInterval) {
+                    clearInterval(this.checkInterval);
+                    this.checkInterval = null;
+                    console.log('停止全局监控检查');
+                }
+            },
+            
+            // 执行全局检查
+            performGlobalCheck() {
+                console.log('执行全局阈值检查...');
+                
+                // 从localStorage获取阈值设置
+                const cpuThreshold = parseFloat(localStorage.getItem('cpuThreshold')) || 0;
+                const memThreshold = parseFloat(localStorage.getItem('memThreshold')) || 0;
+                const diskThreshold = parseFloat(localStorage.getItem('diskThreshold')) || 0;
+                const netThreshold = parseFloat(localStorage.getItem('netThreshold')) || 0;
+                
+                console.log('当前阈值设置:', {
+                    cpu: cpuThreshold,
+                    memory: memThreshold,
+                    disk: diskThreshold,
+                    network: netThreshold
+                });
+                
+                // 如果没有设置阈值，不进行检查
+                if (cpuThreshold === 0 && memThreshold === 0 && diskThreshold === 0 && netThreshold === 0) {
+                    console.log('未设置阈值，跳过检查');
+                    return;
+                }
+                
+                // 获取最新的性能数据
+                this.fetchLatestData().then(data => {
+                    console.log('获取到最新数据:', data);
+                    if (data) {
+                        this.checkThresholds(data, {
+                            cpu: cpuThreshold,
+                            memory: memThreshold,
+                            disk: diskThreshold,
+                            network: netThreshold
+                        });
+                    }
+                }).catch(error => {
+                    console.error('获取最新数据失败:', error);
+                });
+            },
+            
+            // 获取最新数据
+            async fetchLatestData() {
+                try {
+                    const response = await fetch('/api/get_latest_data_simple/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({})
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        return result.data;
+                    } else {
+                        console.error('获取最新数据失败:', response.status);
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('获取最新数据异常:', error);
+                    return null;
+                }
+            },
+            
+            // 检查阈值
+            checkThresholds(data, thresholds) {
+                console.log('检查阈值:', { data, thresholds });
+                
+                // 检查CPU阈值
+                if (thresholds.cpu > 0 && data.cpu_usage > thresholds.cpu) {
+                    console.log(`全局CPU告警: ${data.cpu_usage}% > ${thresholds.cpu}%`);
+                    this.addAlert(
+                        'CPU告警',
+                        'CPU使用率超过设定阈值',
+                        `${data.cpu_usage}%`,
+                        `阈值: ${thresholds.cpu}%`
+                    );
+                }
+                
+                // 检查内存阈值
+                if (thresholds.memory > 0 && data.memory_usage > thresholds.memory) {
+                    console.log(`全局内存告警: ${data.memory_usage}% > ${thresholds.memory}%`);
+                    this.addAlert(
+                        '内存告警',
+                        '内存使用率超过设定阈值',
+                        `${data.memory_usage}%`,
+                        `阈值: ${thresholds.memory}%`
+                    );
+                }
+                
+                // 检查磁盘阈值
+                if (thresholds.disk > 0 && data.disk_usage > thresholds.disk) {
+                    console.log(`全局磁盘告警: ${data.disk_usage}% > ${thresholds.disk}%`);
+                    this.addAlert(
+                        '磁盘告警',
+                        '磁盘使用率超过设定阈值',
+                        `${data.disk_usage}%`,
+                        `阈值: ${thresholds.disk}%`
+                    );
+                }
+                
+                // 检查网络阈值
+                if (thresholds.network > 0 && data.network_usage > thresholds.network) {
+                    console.log(`全局网络告警: ${data.network_usage}Mbps > ${thresholds.network}Mbps`);
+                    this.addAlert(
+                        '网络告警',
+                        '网络速率超过设定阈值',
+                        `${data.network_usage}Mbps`,
+                        `阈值: ${thresholds.network}Mbps`
+                    );
+                }
+            },
+            
+            
+            
+        };
+
+        // 添加缺失的工具函数
+        function get_time() {
+            const now = new Date();
+            const hour = now.getHours();
+            if (hour < 12) {
+                return '上午好';
+            } else if (hour < 18) {
+                return '下午好';
+            } else {
+                return '晚上好';
+            }
+        }
+        
+        // AI小助手管理器
+        const aiAssistant = {
+            isOpen: false,
+            messages: [],
+            
+            init() {
+                this.createAssistant();
+                this.createChatWindow();
+                this.loadMessages();
+                
+                // 添加测试消息
+                setTimeout(() => {
+                    console.log('添加测试消息...');
+                    this.addMessage('测试消息：AI小助手正常工作！', 'assistant');
+                }, 1000);
+                
+                this.showWelcomeMessage();
+            },
+            
+            createAssistant() {
+                console.log('创建AI助手元素...');
+                this.assistant = $('<div class="ai-assistant">🤖</div>');
+                this.assistant.appendTo('body');
+                console.log('AI助手元素已添加到页面');
+                
+                this.assistant.on('click', () => {
+                    console.log('AI助手被点击');
+                    this.toggleChat();
+                });
+                console.log('AI助手点击事件已绑定');
+            },
+            
+            createChatWindow() {
+                this.chatWindow = $(`
+                    <div class="ai-chat-window">
+                        <div class="ai-chat-header">
+                            <span>🤖 AI小助手</span>
+                            <span class="ai-chat-close">×</span>
+                        </div>
+                        <div class="ai-chat-messages"></div>
+                        <div class="ai-quick-actions" style="padding: 10px; border-top: 1px solid #eee; background: #f8f9fa;">
+                            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">快速操作：</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                <button class="quick-btn" data-action="data-collection">数据采集</button>
+                                <button class="quick-btn" data-action="dashboard">大屏监控</button>
+                                <button class="quick-btn" data-action="data-center">数据中台</button>
+                                <button class="quick-btn" data-action="help">帮助</button>
+                            </div>
+                        </div>
+                        <div class="ai-chat-input">
+                            <input type="text" placeholder="输入您的问题...">
+                            <button>发送</button>
+                        </div>
+                    </div>
+                `);
+                
+                // 添加快速操作按钮样式
+                $('<style>')
+                    .text(`
+                        .quick-btn {
+                            padding: 4px 8px;
+                            font-size: 11px;
+                            background: #667eea;
+                            color: white;
+                            border: none;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        }
+                        .quick-btn:hover {
+                            background: #5a6fd8;
+                            transform: translateY(-1px);
+                        }
+                    `)
+                    .appendTo('head');
+                
+                // 绑定事件
+                this.chatWindow.find('.ai-chat-close').on('click', () => this.closeChat());
+                this.chatWindow.find('button').on('click', () => this.sendMessage());
+                this.chatWindow.find('input').on('keypress', (e) => {
+                    if (e.which === 13) this.sendMessage();
+                });
+                
+                // 绑定快速操作按钮
+                this.chatWindow.find('.quick-btn').on('click', (e) => {
+                    const action = $(e.target).data('action');
+                    this.handleQuickAction(action);
+                });
+                
+                // 将聊天窗口添加到页面
+                this.chatWindow.appendTo('body');
+                console.log('聊天窗口已添加到页面');
+            },
+            
+            toggleChat() {
+                console.log('切换聊天窗口状态, 当前状态:', this.isOpen);
+                if (this.isOpen) {
+                    this.closeChat();
+                } else {
+                    this.openChat();
+                }
+            },
+            
+            openChat() {
+                console.log('打开聊天窗口');
+                console.log('聊天窗口元素:', this.chatWindow);
+                console.log('聊天窗口当前显示状态:', this.chatWindow.is(':visible'));
+                
+                this.chatWindow.show();
+                this.isOpen = true;
+                this.scrollToBottom();
+                
+                console.log('聊天窗口显示状态:', this.chatWindow.is(':visible'));
+                console.log('聊天窗口已打开');
+            },
+            
+            closeChat() {
+                console.log('关闭聊天窗口');
+                this.chatWindow.hide();
+                this.isOpen = false;
+                console.log('聊天窗口已关闭');
+            },
+            
+            async sendMessage() {
+                const input = this.chatWindow.find('input');
+                const message = input.val().trim();
+                
+                if (!message) return;
+                
+                // 添加用户消息
+                this.addMessage(message, 'user');
+                input.val('');
+                
+                // 显示正在输入状态
+                this.assistant.addClass('typing');
+                
+                try {
+                    // 调用AI回复
+                    await this.generateResponse(message);
+                } catch (error) {
+                    console.error('发送消息失败:', error);
+                } finally {
+                    this.assistant.removeClass('typing');
+                }
+            },
+            
+            addMessage(text, sender) {
+                console.log('添加消息:', { text, sender });
+                const messageDiv = $(`<div class="ai-message ${sender}">${text}</div>`);
+                console.log('创建的消息元素:', messageDiv);
+                
+                const messagesContainer = this.chatWindow.find('.ai-chat-messages');
+                console.log('消息容器:', messagesContainer);
+                console.log('消息容器长度:', messagesContainer.length);
+                
+                messagesContainer.append(messageDiv);
+                console.log('消息已添加到容器');
+                
+                this.messages.push({ text, sender, timestamp: new Date() });
+                this.saveMessages();
+                this.scrollToBottom();
+                console.log('消息已添加，当前消息数量:', this.messages.length);
+            },
+            
+            async generateResponse(userMessage) {
+                console.log('生成回复:', userMessage);
+                
+                // 显示正在输入状态
+                this.addMessage('正在思考中...', 'assistant');
+                
+                try {
+                    // 调用豆包API
+                    const response = await this.callDouBaoAPI(userMessage);
+                    
+                    // 移除"正在思考中..."消息
+                    this.chatWindow.find('.ai-message.assistant').last().remove();
+                    
+                    // 添加真实回复
+                    this.addMessage(response, 'assistant');
+                } catch (error) {
+                    console.error('生成回复失败:', error);
+                    
+                    // 移除"正在思考中..."消息
+                    this.chatWindow.find('.ai-message.assistant').last().remove();
+                    
+                    // 使用本地回复作为备用
+                    const localResponse = this.getLocalResponse(userMessage);
+                    this.addMessage(localResponse, 'assistant');
+                }
+            },
+            
+            // 调用豆包API
+            async callDouBaoAPI(userMessage) {
+                try {
+                    console.log('调用豆包API:', userMessage);
+                    
+                    // 构建系统上下文
+                    const systemContext = `你是一个专业的系统监控和性能分析助手。用户正在使用一个系统监控平台，包含以下功能：
+1. 数据采集：CPU、内存、磁盘、网络性能监控
+2. 阈值设置：可以设置性能指标阈值，超过时告警
+3. 大屏监控：实时显示系统性能数据
+4. 数据中台：综合性能数据展示和分析
+5. 性能分析：CPU、内存、磁盘、网络性能分析
+
+当前页面：${window.location.pathname}
+
+请用专业、友好的语气回答用户问题，提供实用的建议和指导。`;
+                    
+                    const response = await fetch('/api/doubao_chat/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCSRFToken()
+                        },
+                        body: JSON.stringify({
+                            message: userMessage,
+                            system_context: systemContext
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('豆包API响应:', data);
+                    
+                    if (data.success) {
+                        return data.response;
+                    } else {
+                        console.error('豆包API错误:', data.error);
+                        return '抱歉，我暂时无法回答您的问题。请稍后再试。';
+                    }
+                } catch (error) {
+                    console.error('调用豆包API失败:', error);
+                    // 如果API调用失败，使用本地回复
+                    return this.getLocalResponse(userMessage);
+                }
+            },
+            
+            // 获取CSRF Token
+            getCSRFToken() {
+                const token = document.querySelector('[name=csrfmiddlewaretoken]');
+                return token ? token.value : '';
+            },
+            
+            // 本地回复（作为备用）
+            getLocalResponse(userMessage) {
+                const message = userMessage.toLowerCase();
+                const currentPath = window.location.pathname;
+                
+                // 系统监控相关
+                if (message.includes('监控') || message.includes('告警')) {
+                    return '我可以帮您监控系统状态！当前监控功能包括：CPU、内存、磁盘、网络性能监控。您可以在数据采集页面设置阈值，当数据超过阈值时会自动告警。';
+                }
+                
+                // 数据采集相关
+                if (message.includes('采集') || message.includes('数据')) {
+                    return '数据采集功能可以帮助您实时监控服务器性能。您可以：1. 选择要监控的服务器 2. 设置性能阈值 3. 开始数据采集 4. 查看实时数据和分析报告。';
+                }
+                
+                // 阈值设置相关
+                if (message.includes('阈值') || message.includes('设置')) {
+                    return '阈值设置可以帮您监控系统性能：CPU使用率阈值、内存使用率阈值、磁盘使用率阈值、网络速率阈值。当性能指标超过阈值时会自动告警。';
+                }
+                
+                // 大屏监控相关
+                if (message.includes('大屏') || message.includes('dashboard')) {
+                    return '大屏监控页面可以实时显示系统性能数据，包括CPU、内存、磁盘、网络使用率的圆形进度图。您可以点击侧边栏的"大屏监控"进入。';
+                }
+                
+                // 数据中台相关
+                if (message.includes('中台') || message.includes('数据中台')) {
+                    return '数据中台页面提供了系统性能数据的综合展示，包括各种性能指标的可视化图表和分析报告。';
+                }
+                
+                // 性能分析相关
+                if (message.includes('分析') || message.includes('性能')) {
+                    return '系统提供了多种性能分析功能：CPU性能分析、内存性能分析、磁盘性能分析、网络性能分析。您可以在侧边栏找到相应的分析页面。';
+                }
+                
+                // 帮助相关
+                if (message.includes('帮助') || message.includes('怎么') || message.includes('如何')) {
+                    let helpText = '我是您的AI小助手！我可以帮您：1. 解答系统监控相关问题 2. 指导数据采集操作 3. 解释各种功能用法 4. 提供技术支持。';
+                    
+                    // 根据当前页面提供特定帮助
+                    if (currentPath.includes('yijiancaiji')) {
+                        helpText += ' 当前您在数据采集页面，可以设置阈值并开始数据采集。';
+                    } else if (currentPath.includes('datadashboard')) {
+                        helpText += ' 当前您在大屏监控页面，可以查看实时性能数据。';
+                    } else if (currentPath.includes('shujuzhongtai')) {
+                        helpText += ' 当前您在数据中台页面，可以查看综合性能数据。';
+                    }
+                    
+                    return helpText;
+                }
+                
+                // 问候相关
+                if (message.includes('你好') || message.includes('hi') || message.includes('hello')) {
+                    return '您好！我是您的AI小助手 🤖 很高兴为您服务！我可以帮您解答系统监控、数据采集、性能分析等相关问题。';
+                }
+                
+                // 当前页面相关建议
+                if (message.includes('当前') || message.includes('这里') || message.includes('页面')) {
+                    if (currentPath.includes('yijiancaiji')) {
+                        return '当前您在数据采集页面。您可以：1. 选择要监控的服务器 2. 设置性能阈值 3. 开始数据采集 4. 查看实时数据。';
+                    } else if (currentPath.includes('datadashboard')) {
+                        return '当前您在大屏监控页面。这里可以实时查看CPU、内存、磁盘、网络性能数据，以圆形进度图的形式展示。';
+                    } else if (currentPath.includes('shujuzhongtai')) {
+                        return '当前您在数据中台页面。这里提供了系统性能数据的综合展示和分析。';
+                    } else {
+                        return '当前页面是系统管理页面。您可以通过侧边栏导航到不同的功能模块。';
+                    }
+                }
+                
+                // 默认回复
+                return '我理解您的问题，但可能需要更多信息。您可以询问关于系统监控、数据采集、性能分析等方面的问题，我会尽力帮助您！';
+            },
+            
+            showWelcomeMessage() {
+                console.log('显示欢迎消息...');
+                setTimeout(() => {
+                    console.log('添加欢迎消息');
+                    this.addMessage('您好！我是您的AI小助手 🤖 有什么可以帮助您的吗？', 'assistant');
+                    
+                    // 根据当前页面提供智能提示
+                    this.showContextualTip();
+                }, 500);
+            },
+            
+            showContextualTip() {
+                const currentPath = window.location.pathname;
+                let tip = '';
+                
+                if (currentPath.includes('yijiancaiji')) {
+                    tip = '💡 提示：您可以在这里设置性能阈值并开始数据采集。';
+                } else if (currentPath.includes('datadashboard')) {
+                    tip = '💡 提示：这里可以实时查看系统性能数据。';
+                } else if (currentPath.includes('shujuzhongtai')) {
+                    tip = '💡 提示：这里提供了系统性能数据的综合展示。';
+                } else if (currentPath.includes('test_threshold')) {
+                    tip = '💡 提示：这里可以测试阈值监控功能。';
+                } else if (currentPath.includes('global_monitor_test')) {
+                    tip = '💡 提示：这里可以测试全局监控功能。';
+                } else if (currentPath.includes('alert_test')) {
+                    tip = '💡 提示：这里可以测试预警已读功能，包括添加预警、标记已读、查看预警面板等。';
+                }
+                
+                if (tip) {
+                    setTimeout(() => {
+                        this.addMessage(tip, 'assistant');
+                    }, 1000);
+                }
+            },
+            
+            scrollToBottom() {
+                const messages = this.chatWindow.find('.ai-chat-messages');
+                messages.scrollTop(messages[0].scrollHeight);
+            },
+            
+            saveMessages() {
+                localStorage.setItem('aiChatMessages', JSON.stringify(this.messages));
+            },
+            
+            loadMessages() {
+                console.log('加载聊天记录...');
+                const saved = localStorage.getItem('aiChatMessages');
+                if (saved) {
+                    try {
+                        this.messages = JSON.parse(saved);
+                        console.log('从localStorage加载的消息:', this.messages);
+                        // 只显示最近10条消息
+                        const recentMessages = this.messages.slice(-10);
+                        recentMessages.forEach(msg => {
+                            const messageDiv = $(`<div class="ai-message ${msg.sender}">${msg.text}</div>`);
+                            this.chatWindow.find('.ai-chat-messages').append(messageDiv);
+                        });
+                        console.log('已加载', recentMessages.length, '条消息');
+                    } catch (e) {
+                        console.error('加载聊天记录失败:', e);
+                        this.messages = [];
+                    }
+                } else {
+                    console.log('没有找到保存的聊天记录');
+                }
+            },
+            
+            handleQuickAction(action) {
+                switch(action) {
+                    case 'data-collection':
+                        window.location.href = '/index/yijiancaiji';
+                        break;
+                    case 'dashboard':
+                        window.location.href = '/index/datadashboard';
+                        break;
+                    case 'data-center':
+                        window.location.href = '/index/shujuzhongtai';
+                        break;
+                    case 'help':
+                        this.addMessage('我是您的AI小助手！我可以帮您：1. 解答系统监控相关问题 2. 指导数据采集操作 3. 解释各种功能用法 4. 提供技术支持。', 'assistant');
+                        break;
+                }
+            }
+        };
+
+        // 兼容函数 - 防止其他页面调用时出错
+        function requestUserModel(action, data) {
+            console.warn('requestUserModel 已废弃，请使用 Vue 实例方法');
+        }
+
+        // Vue应用初始化
+        new Vue({
+            el: '#app',
+            data: {
+                isCollapsed: false,
+                showUserDropdown: false,
+                currentPage: 'home',
+                currentPageTitle: '用户管理',
+                breadcrumbPath: ['首页', '系统管理', '用户管理'],
+                activeMenuIndex: '1-1',
+                currentUser: {
+                    name: '',
+                    avatar: ''
+                }
+            },
+            directives: {
+                'click-outside': {
+                    bind: function (el, binding, vnode) {
+                        el.clickOutsideEvent = function (event) {
+                            if (!(el == event.target || el.contains(event.target))) {
+                                vnode.context[binding.expression](event);
+                            }
+                        };
+                        document.addEventListener('click', el.clickOutsideEvent);
+                    },
+                    unbind: function (el) {
+                        document.removeEventListener('click', el.clickOutsideEvent);
+                    }
+                }
+            },
+            methods: {
+                toggleCollapse() {
+                    this.isCollapsed = !this.isCollapsed;
+                },
+                navigateTo(url) {
+                    // 保存当前URL，以便在新页面加载后可以判断是否真的发生了导航
+                    localStorage.setItem('lastUrl', window.location.pathname);
+                    localStorage.setItem('targetUrl', url);
+                    
+                    // 保存当前激活的菜单项，以便在新页面加载后恢复
+                    // 信息管理
+                    if (url.includes('jiankongshujukuxinxiguanli')) {
+                        localStorage.setItem('activeMenuIndex', '2-2');
+                        localStorage.setItem('openSubmenu', '2');
+                    } else if (url.includes('fuwuxinxiguanli')) {
+                        localStorage.setItem('activeMenuIndex', '2-3');
+                        localStorage.setItem('openSubmenu', '2');
+                    } else if (url === '/index/') {
+                        localStorage.setItem('activeMenuIndex', '2-1');
+                        localStorage.setItem('openSubmenu', '2');
+                    } else if (url.includes('usermanager')) {
+                        localStorage.setItem('activeMenuIndex', '1-1');
+                        localStorage.setItem('openSubmenu', '1');
+                    } 
+                    // 数据采集
+                    else if (url.includes('caijicpuxinnengzhibiao')) {
+                        localStorage.setItem('activeMenuIndex', '3-1');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('caijineicunxinnengzhibiao')) {
+                        localStorage.setItem('activeMenuIndex', '3-2');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('caijicipanxinnengzhibiao')) {
+                        localStorage.setItem('activeMenuIndex', '3-3');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('caijiwangluoxinnengzhibiao')) {
+                        localStorage.setItem('activeMenuIndex', '3-4');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('caijiqitaxinxi')) {
+                        localStorage.setItem('activeMenuIndex', '3-5');
+                        localStorage.setItem('openSubmenu', '3');
+                    } else if (url.includes('yijiancaiji')) {
+                        localStorage.setItem('activeMenuIndex', '3-6');
+                        localStorage.setItem('openSubmenu', '3');
+                    } 
+                    // 采集数据分析
+                    else if (url.includes('cpuxinnengzhibiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-1');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('neicunxinnengzhibiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-2');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('cipanxinnengzhibiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-3');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('wangluoxinnengzhibiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-4');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('ziyuanliantiaofenxi')) {
+                        localStorage.setItem('activeMenuIndex', '4-5');
+                        localStorage.setItem('openSubmenu', '4');
+                    } 
+                    // 调优可视化
+                    else if (url.includes('datadashboard')) {
+                        localStorage.setItem('activeMenuIndex', '5-4');
+                        localStorage.setItem('openSubmenu', '5');
+                    } else if (url.includes('zhanshiguanjianshuju')) {
+                        localStorage.setItem('activeMenuIndex', '5-2');
+                        localStorage.setItem('openSubmenu', '5');
+                    } 
+                    // 数据统计及分析
+                    else if (url.includes('iozhanshujutonglifenxi')) {
+                        localStorage.setItem('activeMenuIndex', '6-1');
+                        localStorage.setItem('openSubmenu', '6');
+                    } else if (url.includes('cpushujutongjifenxi')) {
+                        localStorage.setItem('activeMenuIndex', '6-2');
+                        localStorage.setItem('openSubmenu', '6');
+                    } 
+                    // 日志记录
+                    else if (url.includes('rizhijilu')) {
+                        localStorage.setItem('activeMenuIndex', '7-1');
+                        localStorage.setItem('openSubmenu', '7');
+                    } 
+                    // 亲和性自动调整
+                    else if (url.includes('qinhexintiaozheng')) {
+                        localStorage.setItem('activeMenuIndex', '8-1');
+                        localStorage.setItem('openSubmenu', '8');
+                    } 
+                    // 设置调优策略（放在调优可视化下）
+                    else if (url.includes('shezhitiaoyoucelue')) {
+                        localStorage.setItem('activeMenuIndex', '5-3');
+                        localStorage.setItem('openSubmenu', '5');
+                    }
+                    
+                    window.location.href = url;
+                },
+                
+                // 处理菜单打开事件
+                handleOpen(key, keyPath) {
+                    console.log('菜单打开:', key, keyPath);
+                    localStorage.setItem('openSubmenu', key);
+                    
+                    // 当一个菜单打开时，确保其他菜单都关闭
+                    const allSubmenus = document.querySelectorAll('.el-submenu');
+                    allSubmenus.forEach(submenu => {
+                        const index = submenu.getAttribute('index');
+                        if (index !== key) {
+                            const submenuInstance = submenu.__vue__;
+                            if (submenuInstance && submenuInstance.opened) {
+                                // 使用Element UI的方法关闭子菜单
+                                this.$refs.menu.close(index);
+                            }
+                        }
+                    });
+                },
+                
+                // 处理菜单关闭事件
+                handleClose(key, keyPath) {
+                    console.log('菜单关闭:', key, keyPath);
+                    // 如果关闭的是当前活动菜单的父菜单，则不保存关闭状态
+                    const activeParent = this.activeMenuIndex.split('-')[0];
+                    if (key !== activeParent) {
+                        localStorage.removeItem('openSubmenu');
+                    }
+                },
+                toggleUserDropdown() {
+                    this.showUserDropdown = !this.showUserDropdown;
+                },
+                hideUserDropdown() {
+                    this.showUserDropdown = false;
+                },
+                toggleFullscreen() {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen();
+                    } else {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        }
+                    }
+                },
+                // 恢复菜单状态
+                restoreMenuState() {
+                    // 根据当前URL更新页面信息和面包屑
+                    const path = window.location.pathname;
+                    
+                    // 检查是否从localStorage恢复状态
+                    const savedMenuIndex = localStorage.getItem('activeMenuIndex');
+                    const savedSubmenu = localStorage.getItem('openSubmenu');
+                    const targetUrl = localStorage.getItem('targetUrl');
+                    
+                    // 如果当前URL与目标URL匹配，则使用保存的菜单状态
+                    if (targetUrl && path === targetUrl) {
+                        if (savedMenuIndex) {
+                            this.activeMenuIndex = savedMenuIndex;
+                        }
+                        
+                        // 根据保存的菜单索引设置页面标题和面包屑
+                        this.setPageInfoByMenuIndex(this.activeMenuIndex);
+                        
+                        // 清除localStorage中的临时导航数据
+                        localStorage.removeItem('targetUrl');
+                        return;
+                    }
+                    
+                    // 如果没有从localStorage恢复，则根据URL设置菜单状态
+                    this.updatePageInfo();
+                },
+                
+                // 根据菜单索引设置页面信息
+                setPageInfoByMenuIndex(index) {
+                    switch(index) {
+                        case '1-1':
+                            this.currentPageTitle = '用户管理';
+                            this.currentPage = 'system';
+                            this.breadcrumbPath = ['首页', '系统管理', '用户管理'];
+                            break;
+                        case '2-1':
+                            this.currentPageTitle = '服务器信息管理';
+                            this.currentPage = 'system';
+                            this.breadcrumbPath = ['首页', '信息管理', '服务器信息管理'];
+                            break;
+                        case '2-2':
+                            this.currentPageTitle = '监控数据库信息管理';
+                            this.currentPage = 'system';
+                            this.breadcrumbPath = ['首页', '信息管理', '监控数据库信息管理'];
+                            break;
+                        case '2-3':
+                            this.currentPageTitle = '中间件信息管理';
+                            this.currentPage = 'system';
+                            this.breadcrumbPath = ['首页', '信息管理', '中间件信息管理'];
+                            break;
+                        // 其他菜单项...
+                    }
+                },
+                
+                // 打开活动子菜单
+                openActiveSubmenu() {
+                    // 获取菜单组件
+                    const menu = this.$refs.menu;
+                    if (!menu) return;
+                    
+                    // 从activeMenuIndex中提取父菜单索引
+                    const parentIndex = this.activeMenuIndex.split('-')[0];
+                    
+                    // 使用Vue的nextTick，确保DOM已更新
+                    this.$nextTick(() => {
+                        // 先关闭所有子菜单
+                        const allSubmenus = document.querySelectorAll('.el-submenu');
+                        allSubmenus.forEach(submenu => {
+                            const index = submenu.getAttribute('index');
+                            const submenuInstance = submenu.__vue__;
+                            if (submenuInstance && submenuInstance.opened && index !== parentIndex) {
+                                this.$refs.menu.close(index);
+                            }
+                        });
+                        
+                        // 打开当前活动菜单项的父菜单
+                        const activeSubmenu = document.querySelector(`.el-submenu[index="${parentIndex}"]`);
+                        if (activeSubmenu) {
+                            const submenuInstance = activeSubmenu.__vue__;
+                            if (submenuInstance && !submenuInstance.opened) {
+                                this.$refs.menu.open(parentIndex);
+                            }
+                        }
+                        
+                        // 设置活动菜单项
+                        const menuItem = document.querySelector(`.el-menu-item[index="${this.activeMenuIndex}"]`);
+                        if (menuItem) {
+                            menuItem.classList.add('is-active');
+                        }
+                    });
+                },
+                
+                updatePageInfo() {
+                    // 根据当前URL更新页面信息和面包屑
+                    const path = window.location.pathname;
+                    if (path.includes('usermanager')) {
+                        this.currentPageTitle = '用户管理';
+                        this.currentPage = 'system';
+                        this.breadcrumbPath = ['首页', '系统管理', '用户管理'];
+                        this.activeMenuIndex = '1-1';
+                    } else if (path.includes('jiankongshujukuxinxiguanli')) {
+                        this.currentPageTitle = '监控数据库信息管理';
+                        this.currentPage = 'system';
+                        this.breadcrumbPath = ['首页', '信息管理', '监控数据库信息管理'];
+                        this.activeMenuIndex = '2-2';
+                    } else if (path.includes('fuwuxinxiguanli')) {
+                        this.currentPageTitle = '中间件信息管理';
+                        this.currentPage = 'system';
+                        this.breadcrumbPath = ['首页', '信息管理', '中间件信息管理'];
+                        this.activeMenuIndex = '2-3';
+                    } else if (path.includes('caijicpuxinnengzhibiao')) {
+                        this.currentPageTitle = 'CPU性能指标采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', 'CPU性能指标采集'];
+                        this.activeMenuIndex = '3-1';
+                    } else if (path.includes('caijineicunxinnengzhibiao')) {
+                        this.currentPageTitle = '内存性能指标采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', '内存性能指标采集'];
+                        this.activeMenuIndex = '3-2';
+                    } else if (path.includes('caijicipanxinnengzhibiao')) {
+                        this.currentPageTitle = '磁盘性能指标采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', '磁盘性能指标采集'];
+                        this.activeMenuIndex = '3-3';
+                    } else if (path.includes('caijiwangluoxinnengzhibiao')) {
+                        this.currentPageTitle = '网络性能指标采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', '网络性能指标采集'];
+                        this.activeMenuIndex = '3-4';
+                    } else if (path.includes('caijiqitaxinxi')) {
+                        this.currentPageTitle = '软硬件信息采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', '软硬件信息采集'];
+                        this.activeMenuIndex = '3-5';
+                    } else if (path.includes('yijiancaiji')) {
+                        this.currentPageTitle = '数据轮询采集';
+                        this.currentPage = 'monitor';
+                        this.breadcrumbPath = ['首页', '数据采集', '数据轮询采集'];
+                        this.activeMenuIndex = '3-6';
+                    } else if (path.includes('cpuxinnengzhibiaofenxi')) {
+                        this.currentPageTitle = 'CPU性能指标分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', 'CPU性能指标分析'];
+                        this.activeMenuIndex = '4-1';
+                    } else if (path.includes('neicunxinnengzhibiaofenxi')) {
+                        this.currentPageTitle = '内存性能指标分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '内存性能指标分析'];
+                        this.activeMenuIndex = '4-2';
+                    } else if (path.includes('cipanxinnengzhibiaofenxi')) {
+                        this.currentPageTitle = '磁盘性能指标分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '磁盘性能指标分析'];
+                        this.activeMenuIndex = '4-3';
+                    } else if (path.includes('wangluoxinnengzhibiaofenxi')) {
+                        this.currentPageTitle = '网络性能指标分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '网络性能指标分析'];
+                        this.activeMenuIndex = '4-4';
+                    } else if (path.includes('ziyuanliantiaofenxi')) {
+                        this.currentPageTitle = '资源链条分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '资源链条分析'];
+                        this.activeMenuIndex = '4-5';
+                    } else if (path.includes('datadashboard')) {
+                        this.currentPageTitle = '大屏监控';
+                        this.currentPage = 'visualization';
+                        this.breadcrumbPath = ['首页', '调优可视化', '大屏监控'];
+                        this.activeMenuIndex = '5-4';
+                    } else if (path.includes('zhanshiguanjianshuju')) {
+                        this.currentPageTitle = '关键数据展示';
+                        this.currentPage = 'visualization';
+                        this.breadcrumbPath = ['首页', '调优可视化', '关键数据展示'];
+                        this.activeMenuIndex = '5-2';
+                    } else if (path.includes('iozhanshujutonglifenxi')) {
+                        this.currentPageTitle = 'IO栈数据统计及分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '数据统计及分析', 'IO栈数据统计及分析'];
+                        this.activeMenuIndex = '6-1';
+                    } else if (path.includes('cpushujutongjifenxi')) {
+                        this.currentPageTitle = 'CPU数据统计及分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '数据统计及分析', 'CPU数据统计及分析'];
+                        this.activeMenuIndex = '6-2';
+                    } else if (path.includes('rizhijilu')) {
+                        this.currentPageTitle = '日志上传管理';
+                        this.currentPage = 'log';
+                        this.breadcrumbPath = ['首页', '日志记录', '日志上传管理'];
+                        this.activeMenuIndex = '7-1';
+                    } else if (path.includes('qinhexintiaozheng')) {
+                        this.currentPageTitle = '自动迁移进程';
+                        this.currentPage = 'optimize';
+                        this.breadcrumbPath = ['首页', '亲和性自动调整', '自动迁移进程'];
+                        this.activeMenuIndex = '8-1';
+                    } else if (path.includes('shezhitiaoyoucelue')) {
+                        this.currentPageTitle = 'AI一键调优';
+                        this.currentPage = 'visualization';
+                        this.breadcrumbPath = ['首页', '调优可视化', 'AI一键调优'];
+                        this.activeMenuIndex = '5-3';
+                    } else if (path === '/index/' || path === '/') {
+                        this.currentPageTitle = '服务器信息管理';
+                        this.currentPage = 'system';
+                        this.breadcrumbPath = ['首页', '信息管理', '服务器信息管理'];
+                        this.activeMenuIndex = '2-1';
+                    } else {
+                        this.currentPageTitle = '系统管理';
+                        this.currentPage = 'system';
+                        this.breadcrumbPath = ['首页', '系统管理'];
+                        this.activeMenuIndex = '1-1';
+                    }
+                    
+                    // 保存当前激活的菜单项到localStorage
+                    localStorage.setItem('activeMenuIndex', this.activeMenuIndex);
+                    localStorage.setItem('openSubmenu', this.activeMenuIndex.split('-')[0]);
+                },
+
+                goToProfile() {
+                    this.hideUserDropdown();
+                    window.location.href = '/index/usermanager';
+                },
+                goToSettings() {
+                    this.hideUserDropdown();
+                    alert('系统设置功能开发中...');
+                },
+                logout() {
+                    this.hideUserDropdown();
+                    if (confirm('确定要退出登录吗？')) {
+                        window.location.href = '/logout';
+                    }
+                },
+
+
+
+                updateUserInfo(userInfo) {
+                    this.currentUser.name = userInfo.name;
+                    this.currentUser.avatar = userInfo.avatar || userInfo.name.charAt(0).toUpperCase();
+                    
+                    const userNameEl = document.getElementById('userName');
+                    const userAvatarEl = document.getElementById('userAvatar');
+                    
+                    if (userNameEl) {
+                        userNameEl.textContent = userInfo.name;
+                    }
+                    if (userAvatarEl) {
+                        userAvatarEl.textContent = this.currentUser.avatar;
+                    }
+                },
+                getUserInfo() {
+                    const self = this;
+                    $.ajax({
+                        url: "/api/user_info",
+                        type: "GET",
+                        datatype: "JSON",
+                        success(res) {
+                            const userInfo = {
+                                name: res.info,
+                                avatar: res.info.charAt(0).toUpperCase()
+                            };
+                            
+                            self.updateUserInfo(userInfo);
+                            
+                            const currentPageEl = document.getElementById('currentPage');
+                            if (currentPageEl && window.location.pathname !== '/index/') {
+                                const pathMap = {
+                                    '/index/usermanager': '用户管理',
+                                    '/index/jiankongshujukuxinxiguanli': '数据库信息管理',
+                                    '/index/fuwuxinxiguanli': '中间件信息管理',
+                                    '/index/caijicpuxinnengzhibiao': 'CPU性能指标采集',
+                                    '/index/caijineicunxinnengzhibiao': '内存性能指标采集',
+                                    '/index/caijicipanxinnengzhibiao': '磁盘性能指标采集',
+                                    '/index/caijiwangluoxinnengzhibiao': '网络性能指标采集',
+                                    '/index/caijiqitaxinxi': '软硬件信息采集',
+                                    '/index/yijiancaiji': '数据轮询采集'
+                                };
+                                currentPageEl.textContent = pathMap[window.location.pathname] || '系统管理';
+                            }
+                        },
+                        error() {
+                            console.error('获取用户信息失败');
+                            const userNameEl = document.getElementById('userName');
+                            if (userNameEl) {
+                                userNameEl.textContent = '未知用户';
+                            }
+                        }
+                    });
+                },
+                
+                // 请求音频播放权限
+                requestAudioPermission() {
+                    // 请求浏览器通知权限
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission();
+                    }
+                    
+                    // 初始化Web Audio API上下文
+                    try {
+                        if (!this.audioContext) {
+                            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            console.log('Web Audio API上下文已初始化');
+                        }
+                    } catch (e) {
+                        console.log('Web Audio API初始化失败:', e);
+                    }
+                    
+                    // 尝试播放一个静音的音频来解锁音频上下文
+                    try {
+                        const audio = new Audio("{% static 'sounds/alert.mp3' %}");
+                        audio.volume = 0;
+                        audio.play().then(() => {
+                            console.log('音频上下文已解锁');
+                            audio.pause();
+                        }).catch(err => {
+                            console.log('音频解锁失败，将在用户交互时重试:', err);
+                        });
+                    } catch (e) {
+                        console.log('音频解锁初始化失败:', e);
+                    }
+                }
+            },
+            mounted() {
+                // 初始化监控管理器
+                monitorManager.init();
+                
+                // 将monitorManager挂载到window对象，使其全局可用
+                window.monitorManager = monitorManager;
+                
+                // 请求音频播放权限
+                this.requestAudioPermission();
+                
+                // 添加页面卸载事件监听，停止监控
+                window.addEventListener('beforeunload', () => {
+                    if (window.monitorManager) {
+                        window.monitorManager.stopChecking();
+                    }
+                });
+                
+                // 获取用户信息
+                this.getUserInfo();
+                
+                // 从URL和localStorage恢复菜单状态
+                this.restoreMenuState();
+                
+                // 不再自动打开子菜单
+                this.$nextTick(() => {
+                    // 只设置活动菜单项，不自动展开
+                    this.openActiveSubmenu();
+                });
+            },
+            
+            // 新增生命周期钩子，确保在更新后打开菜单
+            updated() {
+                // 只设置活动菜单项，不自动展开
+                this.$nextTick(() => {
+                    this.openActiveSubmenu();
+                });
+            }
+        });
+
+        // 兼容原有的getUserInfo函数
+        function getUserInfo() {
+            const app = document.getElementById('app').__vue__;
+            if (app && app.getUserInfo) {
+                app.getUserInfo();
+            }
+        }
+        
+        // 在document ready中初始化
+        $(document).ready(function() {
+            console.log('Document ready, 检查依赖...');
+            console.log('jQuery状态:', typeof $);
+            console.log('aiAssistant状态:', typeof aiAssistant);
+            
+            // 确保jQuery已加载
+            if (typeof $ !== 'undefined' && typeof aiAssistant !== 'undefined') {
+                console.log('初始化AI小助手...');
+                try {
+                    aiAssistant.init();
+                    console.log('AI小助手初始化成功');
+                } catch (error) {
+                    console.error('AI小助手初始化失败:', error);
+                }
+            } else {
+                console.error('jQuery或aiAssistant未定义');
+            }
+            
+            // 确保菜单状态正确
+            setTimeout(function() {
+                // 获取Vue实例
+                const app = document.getElementById('app').__vue__;
+                if (app && app.openActiveSubmenu) {
+                    console.log('手动触发菜单状态更新');
+                    app.openActiveSubmenu();
+                }
+            }, 100);
+        });
+
+
+
+        // 添加缺失的时间函数
+        function get_time() {
+            const now = new Date();
+            const hour = now.getHours();
+            if (hour < 12) {
+                return '上午好';
+            } else if (hour < 18) {
+                return '下午好';
+            } else {
+                return '晚上好';
+            }
+        }
+
+        // 保持所有原有的请求函数
+        function requestOneModel(name, type, values, numberRange = "1-50") {
+            var url = "/api/" + name + "/" + type + "/" + numberRange + "/" + "oneModel";
+            console.log("requestOneModel called with:", {name, type, values, numberRange, url});
+            $.ajax({
+                url: url,
+                method: "POST",
+                data: values,
+                timeout: 5000,
+                contentType: "application/json",
+                success: function (response) {
+                    if (type === "create") {
+                        alert("新建成功")
+                        location.reload()
+                    } else if (type === "select") {
+                        paddingTagOneContent(response)
+                    } else if (type === "del") {
+                        location.reload()
+                    } else if (type === "update") {
+                        alert("修改成功")
+                        location.reload()
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Request failed:", {xhr, status, error});
+                    console.error("Response text:", xhr.responseText);
+
+                    var errorMessage = "请求失败";
+                    if (xhr.responseText) {
+                        try {
+                            var errorData = JSON.parse(xhr.responseText);
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            } else if (errorData.error) {
+                                errorMessage = errorData.error;
+                            }
+                        } catch (e) {
+                            errorMessage = xhr.responseText;
+                        }
+                    }
+
+                    alert(errorMessage);
+                }
+            });
+        }
+
+        function requestTwoModel(tp, name, values, successCallback, errorCallback) {
+            var url = "/api/" + tp + "/" + name + "/twoModel";
+            $.ajax({
+                url: url,
+                method: "POST",
+                data: values,
+                timeout: 5000,
+                contentType: "application/json",
+                success: function (response) {
+                    if (typeof successCallback === "function") {
+                        successCallback(response);
+                        return;
+                    }
+                    if (name === "get_ipadress") {
+                        paddingIpSelectTag(response);
+                    } else if (name === "get_port") {
+                        paddingPortSelectTag(response);
+                    } else if (name === "start_caiji") {
+                        if (response.state === "no") {
+                            $("#stateInfo").text(response.info);
+                        } else {
+                            paddingInfoStateEnd();
+                            setTimeout(() => {
+                                paddingInfoStateIng();
+                            }, 2000);
+                            paddingReturnData(JSON.stringify(response.info));
+                        }
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('API请求失败:', {url: url, status: status, error: error});
+                    if (typeof errorCallback === "function") {
+                        errorCallback(error);
+                    } else {
+                        alert("请求失败: " + error);
+                    }
+                }
+            });
+        }
+
+        function requestThreeModel(tp, name, values) {
+            var url = "/api/" + tp + "/" + name + "/threeModel";
+            $.ajax({
+                url: url,
+                method: "POST",
+                data: values,
+                timeout: 5000,
+                contentType: "application/json",
+                success: function (response) {
+                    if (name === "get_ipadress") {
+                        paddingIpSelectTag(response);
+                    } else if (name === "get_port") {
+                        paddingPortSelectTag(response);
+                    } else if (name === "start_caiji") {
+                        if (response.state === "no") {
+                            $("#stateInfo").text(response.info);
+                        } else {
+                            paddingInfoStateEnd();
+                            setTimeout(() => {
+                                paddingInfoStateIng();
+                            }, 2000);
+                            paddingReturnData(JSON.stringify(response.info));
+                        }
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert("请求失败");
+                }
+            });
+        }
+
+        function requestFourModel() {
+            var url = "/api/four/get_ipadress/fourModel";
+            $.ajax({
+                url: url,
+                method: "POST",
+                data: {},
+                timeout: 5000,
+                contentType: "application/json",
+                success: function (response) {
+                    paddingContentFour(response);
+                },
+                error: function (xhr, status, error) {
+                    alert("请求失败");
+                }
+            });
+        }
+
+        function paddingTagOneContent(data) {
+            var tbody = $("#tbodyContent");
+            tbody.empty();
+
+            // 检查数据类型和格式
+            if (!data) {
+                console.log("No data received");
+                return;
+            }
+
+            // 如果data是对象且包含all_data属性，使用data.all_data
+            if (typeof data === 'object' && data.all_data && Array.isArray(data.all_data)) {
+                data = data.all_data;
+            }
+            // 如果data是对象且包含data属性，使用data.data
+            else if (typeof data === 'object' && data.data && Array.isArray(data.data)) {
+                data = data.data;
+            }
+            // 如果data不是数组，尝试转换或显示错误
+            else if (!Array.isArray(data)) {
+                console.error("Data is not an array:", data);
+                console.log("Available properties:", Object.keys(data));
+                tbody.append("<tr><td colspan='8'>数据格式错误或无数据</td></tr>");
+                return;
+            }
+
+            data.forEach(function (item) {
+                var row = $("<tr>");
+                // 复选框列
+                row.append("<td><input type='checkbox' class='row-checkbox' data-id='" + (item.id || '') + "'></td>");
+                // IP地址
+                row.append("<td>" + (item.ip || '') + "</td>");
+                // 端口
+                row.append("<td>" + (item.port || '') + "</td>");
+                // 服务类型
+                row.append("<td>" + (item.server_category || item.severCategory || '') + "</td>");
+                // 状态
+                row.append("<td><span class='status-indicator status-online'><span class='status-dot'></span>在线</span></td>");
+                // 备注
+                row.append("<td>" + (item.remarks || item.remark || '') + "</td>");
+                // 创建时间
+                var createTime = item.created_at || item.create_time || new Date().toLocaleString();
+                row.append("<td>" + createTime + "</td>");
+                // 操作
+                row.append("<td><button class='btn btn-primary btn-sm edit-btn revise' data-id='" + (item.id || '') + "'>编辑</button> <button class='btn btn-danger btn-sm delete-btn del' data-id='" + (item.id || '') + "'>删除</button></td>");
+                tbody.append(row);
+            });
+        }
+
+        function paddingReturnData(data) {
+            $("#returnData").text(data);
+        }
+
+        function paddingIpSelectTag(data) {
+            var ipSelect = $("#ipSelect");
+            ipSelect.empty();
+            
+            // 处理不同的数据格式
+            var ipList = [];
+            
+            // 如果是get_ipadress API返回的格式 {remark: ip}
+            if (typeof data === 'object' && data !== null && !Array.isArray(data) && !data.all_data) {
+                for (var remark in data) {
+                    if (data.hasOwnProperty(remark)) {
+                        ipList.push({
+                            ip: data[remark],
+                            displayText: remark
+                        });
+                    }
+                }
+            }
+            // 如果是{all_data: [...]}格式
+            else if (data && data.all_data && Array.isArray(data.all_data)) {
+                data.all_data.forEach(function(item) {
+                    var displayText = item.remarks && item.remarks.trim() !== "" ? item.remarks : item.ip;
+                    ipList.push({
+                        ip: item.ip,
+                        displayText: displayText + " (" + item.ip + ")"
+                    });
+                });
+            }
+            // 如果是数组格式
+            else if (Array.isArray(data)) {
+                data.forEach(function(item) {
+                    var displayText = item.remarks && item.remarks.trim() !== "" ? item.remarks : item.ip;
+                    ipList.push({
+                        ip: item.ip,
+                        displayText: displayText + " (" + item.ip + ")"
+                    });
+                });
+            }
+            
+            // 填充选项
+            ipList.forEach(function(item) {
+                var option = $("<option>");
+                option.val(item.ip);
+                option.text(item.displayText);
+                ipSelect.append(option);
+            });
+        }
+
+        function paddingPortSelectTag(data) {
+            var portSelect = $("#portSelect");
+            portSelect.empty();
+            data.forEach(function (item) {
+                var option = $("<option>");
+                option.val(item.port);
+                option.text("端口: " + item.port);
+                portSelect.append(option);
+            });
+        }
+
+        function paddingIp() {
+            requestTwoModel("cpu", "get_ipadress", {});
+        }
+
+        function paddingPort() {
+            var ip = $("#ipSelect").val();
+            requestTwoModel("cpu", "get_port", JSON.stringify({"ip": ip}));
+        }
+
+        function setupDropdown(selectedClass, itemsClass) {
+            $("." + selectedClass).click(function () {
+                $("." + itemsClass).toggle();
+            });
+
+            $(document).click(function (event) {
+                if (!$(event.target).closest('.' + selectedClass).length) {
+                    $("." + itemsClass).hide();
+                }
+            });
+        }
+    </script>
+    
+    {% block js %}{% endblock %}
+</body>
+</html>

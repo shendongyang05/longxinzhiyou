@@ -1,0 +1,703 @@
+{%extends "layout.html"%}
+{%load static%}
+
+{%block css%}
+<style>
+    /* 基础样式重置 */
+    * {
+        font-size: 16px;
+        box-sizing: border-box;
+    }
+
+    /* 主容器样式 */
+    .analysis-container {
+        color: #333;
+    }
+
+    .analysis-title {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 30px;
+        color: #333;
+        text-align: left;
+    }
+
+    /* 控制区域样式 */
+    .control-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .control-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .control-label {
+        font-weight: 600;
+        color: #333;
+        min-width: 120px;
+        font-size: 14px;
+    }
+
+    .control-select, .control-input {
+        background: white;
+        color: #333;
+        border: 1px solid #ddd;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+        min-width: 200px;
+        transition: border-color 0.3s ease;
+    }
+
+    .control-select:focus, .control-input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    /* 统一按钮样式 */
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        border: 1px solid #007bff;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0056b3, #004085);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border: 1px solid #28a745;
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #218838, #1ea080);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+        background: #e9ecef !important;
+        color: #6c757d !important;
+        border-color: #dee2e6 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* 数据展示区域样式 */
+    .content-section {
+        display: block;
+        margin-bottom: 25px;
+    }
+
+    .data-panel {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .panel-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #333;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+    }
+
+    .panel-content {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        min-height: 300px;
+        border: 1px solid #e9ecef;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 确保表格和内容区域宽度对齐 */
+    .table-container, .contentBox {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* 表格样式 */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .table th,
+    .table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .table tr:hover {
+        background: #f8f9fa;
+    }
+
+  .contentBox{
+    margin-top: 20px;
+  }
+
+    /* 自定义下拉框样式 */
+    .custom-select {
+        position: relative;
+        display: inline-block;
+        min-width: 200px;
+    }
+
+    .select-selected {
+        background-color: white;
+        color: #333;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        transition: border-color 0.3s ease;
+    }
+
+    .select-selected:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 15px;
+        width: 0;
+        height: 0;
+        border: 6px solid transparent;
+        border-color: #666 transparent transparent transparent;
+        transform: translateY(-50%);
+        transition: transform 0.3s ease;
+    }
+
+    .select-selected.select-arrow-active:after {
+        border-color: transparent transparent #666 transparent;
+        transform: translateY(-50%) rotate(180deg);
+    }
+
+    .select-selected:hover {
+        border-color: #007bff;
+    }
+
+    .select-items {
+        position: absolute;
+        background-color: white;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 99;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .select-items div {
+        color: #333;
+        padding: 10px 15px;
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .select-items div:hover {
+        background-color: #f8f9fa;
+    }
+
+    .select-items div.selected {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .select-hide {
+        display: none;
+    }
+
+    /* 状态指示器 */
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .status-loading {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+{%endblock%}
+
+{%block content%}
+<div class="analysis-container">
+    <h1 class="analysis-title">CPU性能指标分析</h1>
+
+    <!-- 控制区域 -->
+    <div class="control-section">
+        <div class="control-group">
+            <span class="control-label">开始日期：</span>
+            <input class="control-input" id="startDate" type="date">
+        </div>
+
+        <div class="control-group">
+            <span class="control-label">结束日期：</span>
+            <input class="control-input" id="endDate" type="date">
+        </div>
+
+        <div class="control-group">
+            <span class="control-label">IP地址选择：</span>
+            <div class="custom-select ip-select">
+                <div class="select-selected ip-selected">选择IP</div>
+                <div class="select-items ip-items" id="ipSelect" style="display: none;">
+                    <div>Option 1</div>
+                    <div>Option 2</div>
+                    <div>Option 3</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <span class="control-label">页数选择：</span>
+            <select class="control-select" id="pageSelect">
+                <option value="1-50">1-50页</option>
+                <option value="50-100">50-100页</option>
+                <option value="100-150">100-150页</option>
+            </select>
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn btn-primary" id="selectTwoModel">
+                <i class="fa fa-search"></i> 查询数据
+            </button>
+            <button class="btn btn-success" id="exportDataBtn">
+                <i class="fa fa-download"></i> 导出数据
+            </button>
+        </div>
+
+        <div class="control-group">
+            <span class="status-indicator status-loading" id="statusIndicator" style="display: none;">
+                <i class="fa fa-spinner fa-spin"></i>
+                正在查询数据...
+            </span>
+        </div>
+    </div>
+
+    <!-- 数据展示区域 -->
+    <div class="content-section">
+        <div class="data-panel">
+            <h3 class="panel-title">CPU性能数据表格</h3>
+            <div style="overflow-x: auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>IP地址</th>
+                            <th>用户时间</th>
+                            <th>系统时间</th>
+                            <th>等待IO</th>
+                            <th>空闲时间</th>
+                            <th>计数</th>
+                            <th>百分比</th>
+                            <th>当前时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyContent">
+                        <!-- 动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="data-panel">
+            <h3 class="panel-title">CPU性能趋势图表</h3>
+            <div id="echartsMain" style="width: 100%; height: 400px; background: #f8f9fa; border-radius: 4px;"></div>
+        </div>
+    </div>
+</div>
+
+
+{%endblock%}
+
+{%block js%}
+<script>
+  function initialazeTwoIndex() {
+    var tp = "disk"
+    var model = "get_ipadress"
+    var values = ""
+
+    requestTwoModel(tp, model, values)
+
+  }
+
+  // CPU性能数据查询函数
+  function requestThreeModel(name, startTime, endTime, numberRange, ipValue) {
+    var url = "/api/" + name + "/" + startTime + "/" + endTime + "/" + numberRange + "/" + ipValue + "/threeModel";
+    $.ajax({
+      url: url,
+      method: "GET",
+      timeout: 10000,
+      success: function(response) {
+        console.log("数据查询成功:", response);
+        paddingContentThree(response);
+      },
+      error: function(xhr, status, error) {
+        console.error("数据查询失败:", error);
+        alert("数据查询失败，请检查网络连接或稍后重试");
+      }
+    });
+  }
+
+  // 填充数据到表格和图表
+  function paddingContentThree(data) {
+    var tbody = $("#tbodyContent");
+    tbody.empty();
+
+    if (data && data.all_data && data.all_data.length > 0) {
+      data.all_data.forEach(function(item, index) {
+        var row = "<tr>" +
+          "<td>" + (index + 1) + "</td>" +
+          "<td>" + (item.ipaddress || '-') + "</td>" +
+          "<td>" + (item.userTime || '-') + "</td>" +
+          "<td>" + (item.SystemTime || '-') + "</td>" +
+          "<td>" + (item.waitIO || '-') + "</td>" +
+          "<td>" + (item.Idle || '-') + "</td>" +
+          "<td>" + (item.count || '-') + "</td>" +
+          "<td>" + (item.percent || '-') + "</td>" +
+          "<td>" + (item.currentTime || '-') + "</td>" +
+          "</tr>";
+        tbody.append(row);
+      });
+
+      // 更新图表
+      updateCPUChart(data.all_data);
+    } else {
+      tbody.append('<tr><td colspan="9" style="text-align: center;">暂无数据</td></tr>');
+    }
+  }
+
+  // 更新CPU性能图表
+  function updateCPUChart(data) {
+    var chartDom = document.getElementById('echartsMain');
+    var myChart = echarts.init(chartDom);
+
+    var times = data.map(item => item.currentTime);
+    var userTimeData = data.map(item => parseFloat(item.userTime) || 0);
+    var systemTimeData = data.map(item => parseFloat(item.SystemTime) || 0);
+    var idleData = data.map(item => parseFloat(item.Idle) || 0);
+    var percentData = data.map(item => parseFloat(item.percent) || 0);
+
+    var option = {
+      title: {
+        text: 'CPU使用趋势'
+      },
+      tooltip: {
+        trigger: 'axis'
+      },
+      legend: {
+        data: ['用户时间', '系统时间', '空闲时间', '使用率(%)']
+      },
+      xAxis: {
+        type: 'category',
+        data: times
+      },
+      yAxis: [
+        {
+          type: 'value',
+          name: '时间百分比'
+        },
+        {
+          type: 'value',
+          name: '使用率(%)',
+          max: 100
+        }
+      ],
+      series: [
+        {
+          name: '用户时间',
+          type: 'line',
+          yAxisIndex: 0,
+          data: userTimeData
+        },
+        {
+          name: '系统时间',
+          type: 'line',
+          yAxisIndex: 0,
+          data: systemTimeData
+        },
+        {
+          name: '空闲时间',
+          type: 'line',
+          yAxisIndex: 0,
+          data: idleData
+        },
+        {
+          name: '使用率(%)',
+          type: 'line',
+          yAxisIndex: 1,
+          data: percentData
+        }
+      ]
+    };
+
+    myChart.setOption(option);
+  }
+  // 初始化自定义下拉框功能
+  function initCustomSelects() {
+    // IP选择框点击事件
+    $(".ip-selected").on("click", function(e) {
+      e.stopPropagation()
+      closeAllSelect(this)
+      $(".ip-items").toggle()
+      $(this).toggleClass("select-arrow-active")
+    })
+
+    // 点击其他地方关闭下拉框
+    $(document).on("click", function() {
+      closeAllSelect()
+    })
+  }
+
+  // 关闭所有下拉框
+  function closeAllSelect(elmnt) {
+    $(".ip-items").hide()
+    $(".ip-selected").removeClass("select-arrow-active")
+  }
+
+  // 加载服务器IP地址列表
+  function loadServerIpList() {
+    console.log("Loading server IP list...")
+
+    $.ajax({
+      url: "/api/JianKongFuWuQi/select/1-1000/oneModel",
+      method: "POST",
+      data: "{}",
+      contentType: "application/json",
+      success: function(response) {
+        console.log("Server IP list loaded:", response)
+        populateIpSelect(response)
+      },
+      error: function(xhr, status, error) {
+        console.error("Failed to load server IP list:", error)
+        // 使用默认IP列表
+        populateIpSelect({
+          all_data: [
+            {ip: "192.168.1.100", port: "7788", remarks: "服务器1"},
+            {ip: "192.168.1.101", port: "7789", remarks: "服务器2"},
+            {ip: "192.168.1.102", port: "7790", remarks: "服务器3"}
+          ]
+        })
+      }
+    })
+  }
+
+  // 填充IP选择下拉框
+  function populateIpSelect(data) {
+    var ipItems = $("#ipSelect")
+    ipItems.empty()
+
+    if (data && data.all_data && data.all_data.length > 0) {
+      data.all_data.forEach(function(server) {
+        var displayText = server.ip
+        if (server.remarks && server.remarks.trim() !== "") {
+          displayText += " (" + server.remarks + ")"
+        }
+        ipItems.append('<div class="ip-option" data-ip="' + server.ip + '">' + displayText + '</div>')
+      })
+      console.log("Added " + data.all_data.length + " IP addresses to select")
+    } else {
+      ipItems.append('<div class="empty">暂无可用的服务器IP地址</div>')
+      console.log("No server data available")
+    }
+
+    // 绑定IP选择事件
+    ipItems.find(".ip-option").on("click", function(e) {
+      var selectedText = $(this).text()
+      var selectedIp = $(this).data("ip")
+
+      // 更新选中的文本
+      $(".ip-selected").text(selectedText).removeClass("select-arrow-active")
+
+      // 隐藏下拉列表
+      $(".ip-items").hide()
+
+      console.log("Selected IP:", selectedIp)
+    })
+  }
+
+  $(document).ready(function () {
+    console.log("CPU性能指标分析页面初始化开始...")
+
+    // 初始化页面
+    initialazeTwoIndex()
+
+    // 初始化自定义下拉框
+    initCustomSelects()
+
+    // 加载服务器IP地址列表
+    loadServerIpList()
+
+    var name = "cpuxinnengzhibiao"
+    var numberRange = "1-50"
+
+    // 设置默认日期
+    var today = new Date().toISOString().split('T')[0]
+    $("#startDate").val(today)
+    $("#endDate").val(today)
+
+    var sTime = $("#startDate").val()
+    var eTime = $("#endDate").val()
+    var ipValue = "no"
+
+    //页面初始数值为今天的日期，范围1-50
+    requestThreeModel(name, sTime, eTime, numberRange, ipValue)
+
+    $("#selectTwoModel").on("click", function () {
+      var statusIndicator = $("#statusIndicator")
+      var selectBtn = $(this)
+
+      var ipText = $(".ip-selected").text()
+      var sTime = $("#startDate").val()
+      var eTime = $("#endDate").val()
+      var pageRange = $("#pageSelect").val()
+
+      // 验证输入
+      if (!sTime || !eTime) {
+        alert("请选择开始日期和结束日期！")
+        return
+      }
+
+      if (new Date(sTime) > new Date(eTime)) {
+        alert("开始日期不能晚于结束日期！")
+        return
+      }
+
+      // 提取实际的IP值
+      var ipValue = "no"
+      if (ipText !== "选择IP" && ipText !== "") {
+        ipValue = ipText.split(" ")[0] // 获取IP地址部分（去掉备注）
+      }
+
+      // 显示加载状态
+      statusIndicator.show()
+      selectBtn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> 查询中...')
+
+      console.log("查询参数:", {name, sTime, eTime, pageRange, ipValue})
+
+      requestThreeModel(name, sTime, eTime, pageRange, ipValue)
+
+      // 恢复按钮状态
+      setTimeout(function() {
+        statusIndicator.hide()
+        selectBtn.prop("disabled", false).html('<i class="fa fa-search"></i> 查询数据')
+      }, 2000)
+    })
+
+    // 页数选择变化事件
+    $("#pageSelect").on("change", function () {
+      var sTime = $("#startDate").val()
+      var eTime = $("#endDate").val()
+      var pageRange = $(this).val()
+      var ipText = $(".ip-selected").text()
+      var ipValue = (ipText !== "选择IP" && ipText !== "") ? ipText.split(" ")[0] : "no"
+
+      console.log("页数变化查询:", {name, sTime, eTime, pageRange, ipValue})
+      requestThreeModel(name, sTime, eTime, pageRange, ipValue)
+    })
+
+    // 导出数据功能
+    $("#exportDataBtn").on("click", function() {
+      var tableData = []
+      $("#tbodyContent tr").each(function() {
+        var rowData = []
+        $(this).find("td").each(function() {
+          rowData.push($(this).text())
+        })
+        if (rowData.length > 0) {
+          tableData.push(rowData)
+        }
+      })
+
+      if (tableData.length === 0) {
+        alert("暂无数据可导出！")
+        return
+      }
+
+      // 这里可以添加实际的导出逻辑
+      console.log("导出数据:", tableData)
+      alert("数据导出功能开发中...")
+    })
+
+    console.log("页面初始化完成！")
+  })
+
+
+</script>
+{%endblock%}

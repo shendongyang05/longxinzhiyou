@@ -1,0 +1,166 @@
+{% extends 'layout.html' %}
+
+{% block title %}轮询调试{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>轮询调试页面</h1>
+    
+    <div class="debug-section">
+        <h3>当前状态</h3>
+        <p><strong>isCollecting:</strong> <span id="isCollecting">检查中...</span></p>
+        <p><strong>currentTaskId:</strong> <span id="currentTaskId">检查中...</span></p>
+        <p><strong>dataTimer:</strong> <span id="dataTimer">检查中...</span></p>
+        <p><strong>localStorage状态:</strong> <span id="localStorageStatus">检查中...</span></p>
+    </div>
+    
+    <div class="action-section">
+        <h3>操作</h3>
+        <button onclick="checkStatus()" class="btn btn-primary">检查状态</button>
+        <button onclick="forceStop()" class="btn btn-danger">强制停止</button>
+        <button onclick="clearLocalStorage()" class="btn btn-warning">清除localStorage</button>
+        <button onclick="reloadPage()" class="btn btn-info">刷新页面</button>
+    </div>
+    
+    <div class="log-section">
+        <h3>调试日志</h3>
+        <div id="debugLog" style="
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        "></div>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.debug-section, .action-section, .log-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.btn-primary { background: #007bff; color: white; }
+.btn-danger { background: #dc3545; color: white; }
+.btn-warning { background: #ffc107; color: black; }
+.btn-info { background: #17a2b8; color: white; }
+</style>
+
+<script>
+function log(message) {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = `[${timestamp}] ${message}`;
+    $('#debugLog').prepend(`<div>${logEntry}</div>`);
+    
+    // 限制日志条目数量
+    const logEntries = $('#debugLog div');
+    if (logEntries.length > 50) {
+        logEntries.slice(50).remove();
+    }
+}
+
+function checkStatus() {
+    log('=== 检查状态 ===');
+    
+    // 检查全局变量
+    const isCollecting = typeof window.isCollecting !== 'undefined' ? window.isCollecting : 'undefined';
+    const currentTaskId = typeof window.currentTaskId !== 'undefined' ? window.currentTaskId : 'undefined';
+    const dataTimer = typeof window.dataTimer !== 'undefined' ? window.dataTimer : 'undefined';
+    
+    $('#isCollecting').text(isCollecting);
+    $('#currentTaskId').text(currentTaskId);
+    $('#dataTimer').text(dataTimer);
+    
+    log(`isCollecting: ${isCollecting}`);
+    log(`currentTaskId: ${currentTaskId}`);
+    log(`dataTimer: ${dataTimer}`);
+    
+    // 检查localStorage
+    const localStorageState = localStorage.getItem('collectionTaskState');
+    $('#localStorageStatus').text(localStorageState || '无');
+    log(`localStorage: ${localStorageState || '无'}`);
+    
+    // 检查所有定时器
+    let activeTimers = 0;
+    for (let i = 1; i <= 1000; i++) {
+        try {
+            // 尝试清除定时器，如果成功说明存在
+            clearInterval(i);
+            clearTimeout(i);
+        } catch (e) {
+            // 忽略错误
+        }
+    }
+    
+    log(`检查完成，发现 ${activeTimers} 个活动定时器`);
+}
+
+function forceStop() {
+    log('=== 强制停止所有轮询 ===');
+    
+    // 调用yijiancaiji.html中的函数（如果存在）
+    if (typeof window.forceStopAllPolling === 'function') {
+        window.forceStopAllPolling();
+        log('调用了forceStopAllPolling函数');
+    } else {
+        log('forceStopAllPolling函数不存在');
+    }
+    
+    // 清除所有定时器
+    for (let i = 1; i <= 10000; i++) {
+        clearInterval(i);
+        clearTimeout(i);
+    }
+    
+    // 重置状态
+    if (typeof window.isCollecting !== 'undefined') {
+        window.isCollecting = false;
+    }
+    if (typeof window.currentTaskId !== 'undefined') {
+        window.currentTaskId = null;
+    }
+    if (typeof window.dataTimer !== 'undefined') {
+        window.dataTimer = null;
+    }
+    
+    log('所有定时器已清除，状态已重置');
+}
+
+function clearLocalStorage() {
+    log('=== 清除localStorage ===');
+    localStorage.removeItem('collectionTaskState');
+    log('collectionTaskState已从localStorage中删除');
+}
+
+function reloadPage() {
+    log('=== 刷新页面 ===');
+    location.reload();
+}
+
+// 页面加载时自动检查状态
+$(document).ready(function() {
+    log('调试页面已加载');
+    setTimeout(checkStatus, 1000);
+});
+</script>
+{% endblock %} 

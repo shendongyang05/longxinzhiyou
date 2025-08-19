@@ -1,0 +1,198 @@
+{% extends 'layout.html' %}
+
+{% block title %}全局监控测试{% endblock %}
+
+{% block css %}
+<style>
+    .test-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .status-section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    
+    .status-item {
+        margin: 10px 0;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 3px;
+    }
+    
+    .button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+    }
+    
+    .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="test-container">
+    <h1>🌐 全局监控测试页面</h1>
+    
+    <div class="status-section">
+        <h3>📊 当前状态</h3>
+        <div class="status-item">
+            <strong>选中的IP:</strong> <span id="currentIp">未设置</span>
+        </div>
+        <div class="status-item">
+            <strong>选中的端口:</strong> <span id="currentPort">未设置</span>
+        </div>
+        <div class="status-item">
+            <strong>CPU阈值:</strong> <span id="cpuThreshold">未设置</span>
+        </div>
+        <div class="status-item">
+            <strong>内存阈值:</strong> <span id="memThreshold">未设置</span>
+        </div>
+        <div class="status-item">
+            <strong>磁盘阈值:</strong> <span id="diskThreshold">未设置</span>
+        </div>
+        <div class="status-item">
+            <strong>网络阈值:</strong> <span id="netThreshold">未设置</span>
+        </div>
+        <div class="status-item">
+            <strong>监控球状态:</strong> <span id="ballStatus">正常</span>
+        </div>
+        <div class="status-item">
+            <strong>告警数量:</strong> <span id="alertCount">0</span>
+        </div>
+    </div>
+    
+    <div class="status-section">
+        <h3>🔧 操作</h3>
+        <button class="button" onclick="updateStatus()">刷新状态</button>
+        <button class="button" onclick="testMonitor()">测试监控</button>
+        <button class="button" onclick="simulateData()">模拟数据</button>
+        <button class="button" onclick="clearAlerts()">清除告警</button>
+        <button class="button" onclick="clearStorage()">清除设置</button>
+        <button class="button" onclick="goToDataCollection()">跳转到数据采集</button>
+    </div>
+    
+    <div class="status-section">
+        <h3>📝 说明</h3>
+        <p>1. 在数据采集页面设置阈值和选择服务器</p>
+        <p>2. 跳转到其他页面，监控球会继续工作</p>
+        <p>3. 当数据超过阈值时会显示告警</p>
+        <p>4. 告警会在所有页面显示</p>
+    </div>
+</div>
+
+<script>
+function updateStatus() {
+    // 更新状态显示
+    document.getElementById('currentIp').textContent = localStorage.getItem('selectedIp') || '未设置';
+    document.getElementById('currentPort').textContent = localStorage.getItem('selectedPort') || '未设置';
+    document.getElementById('cpuThreshold').textContent = localStorage.getItem('cpuThreshold') || '未设置';
+    document.getElementById('memThreshold').textContent = localStorage.getItem('memThreshold') || '未设置';
+    document.getElementById('diskThreshold').textContent = localStorage.getItem('diskThreshold') || '未设置';
+    document.getElementById('netThreshold').textContent = localStorage.getItem('netThreshold') || '未设置';
+    
+    // 更新监控球状态
+    if (window.monitorManager) {
+        document.getElementById('ballStatus').textContent = 
+            window.monitorManager.alerts.length > 0 ? '告警' : '正常';
+        document.getElementById('alertCount').textContent = 
+            window.monitorManager.alerts.length;
+    }
+}
+
+function testMonitor() {
+    // 模拟一些测试数据
+    if (window.monitorManager) {
+        window.monitorManager.addAlert(
+            '测试告警',
+            '这是一个测试告警',
+            '85%',
+            '阈值: 80%'
+        );
+        updateStatus();
+    }
+}
+
+function clearAlerts() {
+    if (window.monitorManager) {
+        window.monitorManager.clearAlerts();
+        updateStatus();
+        alert('告警已清除');
+    }
+}
+
+function simulateData() {
+    // 模拟一些测试数据来触发告警
+    const cpuThreshold = parseFloat(localStorage.getItem('cpuThreshold')) || 80;
+    const memThreshold = parseFloat(localStorage.getItem('memThreshold')) || 85;
+    const diskThreshold = parseFloat(localStorage.getItem('diskThreshold')) || 90;
+    const netThreshold = parseFloat(localStorage.getItem('netThreshold')) || 100;
+    
+    // 模拟超过阈值的数据
+    const mockData = {
+        cpu: { cpu_percent: cpuThreshold + 10 },
+        memory: { mem_percent: memThreshold + 5 },
+        disk: { disk_percent: diskThreshold + 3 },
+        network: { net_speed: netThreshold + 20 }
+    };
+    
+    const thresholds = {
+        cpu: cpuThreshold,
+        memory: memThreshold,
+        disk: diskThreshold,
+        network: netThreshold
+    };
+    
+    if (window.monitorManager) {
+        window.monitorManager.checkThresholds(mockData, thresholds);
+        updateStatus();
+        alert('已模拟数据并检查告警');
+    }
+}
+
+function clearStorage() {
+    // 清除localStorage中的设置
+    localStorage.removeItem('selectedIp');
+    localStorage.removeItem('selectedPort');
+    localStorage.removeItem('cpuThreshold');
+    localStorage.removeItem('memThreshold');
+    localStorage.removeItem('diskThreshold');
+    localStorage.removeItem('netThreshold');
+    localStorage.removeItem('monitorAlerts');
+    
+    // 清除告警
+    if (window.monitorManager) {
+        window.monitorManager.clearAlerts();
+    }
+    
+    updateStatus();
+    alert('设置已清除');
+}
+
+function goToDataCollection() {
+    window.location.href = '/index/yijiancaiji';
+}
+
+// 页面加载时更新状态
+document.addEventListener('DOMContentLoaded', function() {
+    updateStatus();
+    
+    // 定期更新状态
+    setInterval(updateStatus, 2000);
+});
+</script>
+{% endblock %} 

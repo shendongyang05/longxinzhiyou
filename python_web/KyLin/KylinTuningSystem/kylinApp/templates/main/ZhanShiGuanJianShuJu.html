@@ -1,0 +1,314 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+  .chartBox {
+    position: relative;
+    
+  }
+*{
+    font-size: 20px;
+}
+  /* .chartBox :nth-child(even) {
+    width: 50vh;
+    height: 34vh;
+  }
+
+  .chartBox :nth-child(odd) {
+    width: 50vh;
+    height: 34vh;
+    margin-left: 5vh;
+    margin-right: 20vh;
+  } */
+
+  #cpuChart {
+    position: absolute;
+    top: -5vh;
+    left: 0;
+    width: 45vh;
+    height: 45vh;
+    /* top: -25vh;
+    height: 90vh; */
+
+  }
+
+  #memoryChart {
+    position: absolute;
+    right: 0;
+    top: -5vh;
+    width: 45vh;
+    height: 45vh;
+  }
+
+  #diskChart {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    top: -5vh;
+    width: 45vh;
+    height: 45vh;
+  }
+
+  #networkChart {
+    position: absolute;
+    top: 32vh;
+    left: 0;
+    width: 70vh;
+    height: 43vh;
+  }
+
+  #osInfoChart {
+    position: absolute;
+    top: 32vh;
+    right: 0;
+    width: 70vh;
+    height: 43vh;
+    padding-left: 70px;
+    padding-top: 20px;
+    /* line-height: 20px; */
+    /* background-color: aquamarine; */
+  }
+
+  #osInfoChart h4 {
+    display: inline;
+    line-height: 7vh;
+    color: #000;
+  }
+  
+  #osInfoChart span {
+    color: #000;
+  }
+</style>
+{%endblock%}
+
+{%block content%}
+<h3 style="color: #000;">关键数据展示</h3>
+<div class="chartBox">
+  <div id="cpuChart"></div>
+  <div id="memoryChart"></div>
+  <div id="diskChart"></div>
+  <div id="networkChart"></div>
+  <div id="osInfoChart">
+    <h4 style="color: #000;">操作系统名称：</h4><span style="color: #000;"></span>
+    <br>
+    <h4 style="color: #000;">操作系统信息：</h4><span style="color: #000;"></span>
+    <br>
+    <h4 style="color: #000;">操作系统版本：</h4><span style="color: #000;"></span>
+    <br>
+    <h4 style="color: #000;">计算机处理号名称和处理号架构：</h4><span style="color: #000;"></span>
+    <br>
+    <h4 style="color: #000;">物理机版本架构：</h4><span style="color: #000;"></span>
+  </div>
+</div>
+{%endblock%}
+
+{%block js%}
+<script>
+
+  // barChart
+    function initBarChart(containerId, categories, values) {
+        // 获取图表容器
+        var chartContainer = document.getElementById(containerId);
+
+        // 初始化 ECharts 实例
+        var myChart = echarts.init(chartContainer);
+
+        // 配置项
+        var option = {
+            title: {
+                text: '网络发送与接收数据量', // 图表标题
+                textStyle: {
+                    color: "#000", // 标题文字颜色改为黑色
+                    fontSize: 20 // 标题字体大小
+                }
+            },
+            tooltip: {
+                trigger: 'axis', // 提示框触发方式，axis 表示触发于坐标轴
+                formatter: '{b}: {c} MB' // 提示框格式
+            },
+            xAxis: {
+                type: 'category', // 类目轴，适用于离散的类目数据
+                data: categories, // x 轴数据
+                axisLabel: {
+                    color: '#000' // x 轴标签文字颜色改为黑色
+                }
+            },
+            yAxis: {
+                type: 'value', // 数值轴，适用于连续的数值数据
+                axisLabel: {
+                    color: '#000', // y 轴标签文字颜色改为黑色
+                    formatter: '{value} M' // 格式化 y 轴标签显示 MB 单位
+                }
+            },
+            series: [{
+                type: 'bar', // 柱状图
+                data: values, // 数据量，对应 x 轴的数据
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                        offset: 0, color: '#1890ff' // 渐变开始颜色
+                    }, {
+                        offset: 1, color: '#2ed573' // 渐变结束颜色
+                    }]), // 柱子颜色设置为渐变色
+                },
+                label: {
+                    show: true, // 显示标签
+                    position: 'top', // 标签的位置
+                    color: '#000', // 标签文字颜色改为黑色
+                    fontSize: 16, // 标签字体大小
+                    formatter: '{c}MB ' // 标签格式，显示数据量
+                }
+            }]
+        };
+
+        // 使用 setOption 方法设置配置项
+        myChart.setOption(option);
+
+        // 如果需要响应式布局，可以监听窗口大小变化重新绘制图表
+        window.addEventListener('resize', function () {
+            myChart.resize();
+        });
+    }
+  // 仪表 盘
+    function initGaugeChart(containerId, usage, name) {
+        // 获取图表容器
+        var chartContainer = document.getElementById(containerId);
+
+        // 创建 ECharts 实例
+        var myChart = echarts.init(chartContainer);
+
+        // 配置项
+        var option = {
+            series: [{
+                type: 'gauge',
+                data: [{ value: usage, name: name }],
+                min: 0,
+                max: 100,
+                axisLine: {
+                    lineStyle: {
+                        width: 10, // 仪表盘轴线宽度
+                        color: [
+                            [0.3, '#1f77b4'],    // 30% 处的颜色为深蓝色
+                            [0.7, '#ff7f0e'],    // 70% 处的颜色为橙色
+                            [1, '#d62728']       // 100% 处的颜色为红色
+                        ]
+                    }
+                },
+                axisLabel: {
+                    show: true,
+                    distance: 20, // 刻度标签与轴线的距离
+                    formatter: '{value}%', // 刻度标签格式
+                    textStyle: {
+                        color: '#000' // 刻度标签文本颜色改为黑色
+                    }
+                },
+                pointer: {
+                    length: '70%', // 指针长度，可以是绝对值（像素）或相对值（百分比）
+                    width: 6 // 指针宽度
+                },
+                title: {
+                    show: true,
+                    offsetCenter: [0, '-40%'], // 标题位置，相对于中心的偏移
+                    fontSize: 14, // 标题字体大小
+                    textStyle: {
+                        color: '#000' // 标题文本颜色改为黑色
+                    }
+                },
+                detail: {
+                    show: true,
+                    offsetCenter: [0, '60%'], // 详情位置，相对于中心的偏移
+                    formatter: '{value}%', // 详情显示格式
+                    fontSize: 18, // 详情字体大小
+                    textStyle: {
+                        color: '#000' // 详情文本颜色改为黑色
+                    }
+                }
+            }]
+        };
+
+        // 使用 setOption 方法设置配置项
+        myChart.setOption(option);
+
+        // 如果需要响应式布局，可以监听窗口大小变化重新绘制图表
+        window.addEventListener('resize', function () {
+            myChart.resize();
+        });
+    }
+
+  function requestFourModel() {
+    var url = "/api/" + "fourModel";
+    $.ajax({
+      url: url,
+      method: "GET",
+      contentType: "application/json",
+      success: function (response) {
+        paddingContentFour(response)
+      },
+      error: function (xhr, status, error) {
+        // 请求失败时执行的操作
+        alert("请求超时");
+      }
+    });
+  }
+  function convertToMB(values) {
+    return values.map(value => {
+      let number;
+      let unit;
+
+      // 检查最后一个字符是否是字母单位
+      if (isNaN(value.slice(-1))) {
+        number = parseFloat(value); // 提取数字部分
+        unit = value.slice(-1).toUpperCase(); // 提取单位部分，并转换为大写以进行统一处理
+      } else {
+        number = parseFloat(value); // 提取数字部分
+        unit = 'M'; // 默认单位是MB
+      }
+
+      switch (unit) {
+        case 'K':
+          return number / 1e3; // 将KB单位的值转成MB
+        case 'M':
+          return number; // MB单位的值不需要转换
+        case 'G':
+          return number * 1e3; // 将GB单位的值转成MB
+        default:
+          throw new Error('Unknown unit: ' + unit);
+      }
+    });
+  }
+
+  function paddingContentFour(data) {
+    initGaugeChart('cpuChart', parseFloat(data.cpu_percent), "CPU使用率");
+    initGaugeChart('memoryChart', parseFloat(data.memory_percent), "内存使用率");
+    initGaugeChart('diskChart', parseFloat(data.disk_percent), "磁盘使用率");
+
+    var categories = ['发送', '接收']; // x 轴数据
+    var netValues = [data.network_data.sent, data.network_data.recv]; // 发送和接收数据量，单位：GB
+    // 调用函数初始化柱状图
+    initBarChart('networkChart', categories, convertToMB(netValues));
+
+    var osData = data.os_data
+    var texts = [osData.os_name, osData.os_info, osData.os_version, osData.os_processor_architecture, osData.os_processor_name];
+
+    $("#osInfoChart span").each(function (index) {
+      $(this).text(texts[index]);
+    });
+  }
+  $(document).ready(function () {
+
+    requestFourModel()
+
+
+
+
+
+
+
+  })
+
+
+
+
+</script>
+{%endblock%}

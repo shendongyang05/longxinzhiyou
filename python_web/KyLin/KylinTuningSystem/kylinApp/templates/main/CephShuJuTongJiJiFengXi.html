@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+    /* 基础样式重置 */
+    * {
+        font-size: 16px;
+        box-sizing: border-box;
+    }
+
+    /* 主容器样式 */
+    .analysis-container {
+        color: #333;
+    }
+
+    .analysis-title {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 30px;
+        color: #333;
+        text-align: left;
+    }
+
+    /* iframe容器样式 */
+    .iframe-container {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+    }
+
+    #myIframe {
+        width: 100%;
+        height: 800px;
+        border: none;
+        border-radius: 4px;
+    }
+</style>
+{%endblock%}
+
+{%block content%}
+<div class="analysis-container">
+    <h1 class="analysis-title">Ceph数据统计分析</h1>
+
+    <div class="iframe-container">
+        <iframe id="myIframe" src="http://10.21.17.188:3000/d/multi/ceph-multicluster?orgId=1&refresh=30s&from=1730372373241&to=1730393973241&theme=dark"></iframe>
+    </div>
+</div>
+{%endblock%}
+
+{%block js%}
+<script>
+
+</script>
+{%endblock%}

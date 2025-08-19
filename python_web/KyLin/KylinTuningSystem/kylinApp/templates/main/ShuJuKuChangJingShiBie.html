@@ -1,0 +1,461 @@
+{% extends "layout.html" %}
+{%load static%}
+
+{%block css%}
+<style>
+  .panel {
+    width: 50vh;
+  }
+
+  .col-sm-2 {
+    margin-right: 7%;
+  }
+
+  .center {
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .dots-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+  }
+
+  .dot {
+    height: 20px;
+    width: 20px;
+    margin-right: 10px;
+    border-radius: 10px;
+    background-color: #b3d4fc;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+
+  .dot:last-child {
+    margin-right: 0;
+  }
+
+  .dot:nth-child(1) {
+    animation-delay: -0.3s;
+  }
+
+  .dot:nth-child(2) {
+    animation-delay: -0.1s;
+  }
+
+  .dot:nth-child(3) {
+    animation-delay: 0.1s;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(0.8);
+      background-color: #b3d4fc;
+      box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+    }
+
+    50% {
+      transform: scale(1.2);
+      background-color: #6793fb;
+      box-shadow: 0 0 0 10px rgba(178, 212, 252, 0);
+    }
+
+    100% {
+      transform: scale(0.8);
+      background-color: #b3d4fc;
+      box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+    }
+  }
+
+  tr th {
+    background-color: #6793fb;
+    width: 50%;
+  }
+</style>
+{%endblock%}
+
+{%block content%}
+<h2>数据库场景识别</h2>
+<div class="caijiBox">
+  <div class="caiJiPosition">
+    <div class="clearfix">
+
+      <div class="col-sm-2">
+        <span>选择数据库:</span>
+        <div class="custom-select db-select">
+          <div class="select-selected db-selected">选择数据库</div>
+          <div class="select-items db-items" id="dbSelect">
+            <div>Option 1</div>
+            <div>Option 2</div>
+            <div>Option 3</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-2">
+        <span>选择数据库类型:</span>
+        <div class="custom-select db-Type-select">
+          <div class="select-selected db-type-selected">选择数据库类型</div>
+          <div class="select-items db-type-items" id="dbTypeSelect">
+            <div>Option 1</div>
+            <div>Option 2</div>
+            <div>Option 3</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-2">
+        <span>IP地址选择：</span>
+        <div class="custom-select ip-select">
+          <div class="select-selected ip-selected">选择IP</div>
+          <div class="select-items ip-items" id="ipSelect">
+            <div>Option 1</div>
+            <div>Option 2</div>
+            <div>Option 3</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-2">
+        <span>选择端口:</span>
+        <div class="custom-select port-select">
+          <div class="select-selected port-selected">选择端口</div>
+          <div class="select-items port-items" id="portSelect">
+            <div>Option 1</div>
+            <div>Option 2</div>
+            <div>Option 3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <div class="left" style="width: 55%; margin-right: 5%;  font-size: 20px;">
+        <div style="margin: 2.5% 0;" id="stateDbInfo">状态：等待选择数据库...</div>
+        <table class="table table-bordered center">
+          <tbody>
+            <tr>
+              <th scope="row">连接数</th>
+              <td id="connected">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">表总数</th>
+              <td id="tabelCount">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">所有表的行数</th>
+              <td id="rowCount">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">读取数据</th>
+              <td id="readCount">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">写入数据</th>
+              <td id="writeCount">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">读写比率</th>
+              <td id="rwRatio">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">每秒查询速率</th>
+              <td id="speedRatio">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">场景</th>
+              <td id="scene">
+                <section class="dots-container">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </section>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="right" style="color:black; width:40%;">
+        <div class="bs-example" data-example-id="contextual-panels">
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              <h3 class="panel-title">OLTP</h3>
+            </div>
+            <div class="panel-body">
+              在线事务处理场景
+            </div>
+          </div>
+          <div class="panel panel-success">
+            <div class="panel-heading">
+              <h3 class="panel-title"> OLAP</h3>
+            </div>
+            <div class="panel-body">
+              在线分析处理场景
+            </div>
+          </div>
+          <div class="panel panel-info">
+            <div class="panel-heading">
+              <h3 class="panel-title">CMS</h3>
+            </div>
+            <div class="panel-body">
+              内容管理系统场景
+            </div>
+          </div>
+          <div class="panel panel-warning">
+            <div class="panel-heading">
+              <h3 class="panel-title">Normal scene</h3>
+            </div>
+            <div class="panel-body">
+              正常开发场景
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{%endblock%}
+
+{%block js%}
+<script>
+
+
+  function paddingDBContent(response) {
+    var dbSelectTag = $("#dbSelect")
+    dbSelectTag.empty()
+    var data = response["database"]
+    for (var i = 0; i < data.length; i++) {
+      var divTag = $("<div>")
+      divTag.attr("class", "db")
+      divTag.text(data[i])
+      dbSelectTag.append(divTag)
+    }
+  }
+  function paddingDBInfoContent(response) {
+    var selectPortTag = $("#portSelect")
+    selectPortTag.empty()
+    var selectIPTag = $("#ipSelect")
+    selectIPTag.empty()
+    var dbTypeSelectTag = $("#dbTypeSelect")
+    dbTypeSelectTag.empty()
+
+    var data = response['info']
+    var portData = data.port
+    var IPData = data.ip
+    var dbTypeData = data.dbtype
+
+    if (portData.length === 1) {
+      $(".port-selected").text(portData[0])
+    }
+    for (var i = 0; i < portData.length; i++) {
+      var optionTag = $("<div>")
+      optionTag.attr("class", "port")
+      optionTag.text(portData[i])
+      selectPortTag.append(optionTag)
+    }
+
+    if (IPData.length === 1) {
+      $(".ip-selected").text(IPData[0])
+    }
+    for (var i = 0; i < IPData.length; i++) {
+      var optionTag = $("<div>")
+      optionTag.attr("class", "ip")
+      optionTag.text(IPData[i])
+      selectIPTag.append(optionTag)
+    }
+
+    if (dbTypeData.length === 1) {
+      $(".db-type-selected").text(dbTypeData[0])
+    }
+    for (var i = 0; i < dbTypeData.length; i++) {
+      var optionTag = $("<div>")
+      optionTag.attr("class", "db-type")
+      optionTag.text(dbTypeData[i])
+      dbTypeSelectTag.append(optionTag)
+    }
+  }
+  function initializeDBInfo(values) {
+    values["type"] = "get_db"
+    requestSixModel(values)
+  }
+  function paddingDbInfo(response) {
+    console.log(response)
+    var con = response["connected"]
+    var tab = response["db_state"]["total_tables"]
+    var row = response["db_state"]["total_rows"]
+    var red = response["db_state"]["read_count"]
+    var wri = response["db_state"]["write_count"]
+    var rw = response["db_state"]["read_write_ratio"]
+    var speed = response["speed"]
+    var scene = response["scene"]
+    getTabelTag(con, tab, row, red, wri, rw, speed, scene)
+  }
+  function getTabelTag(con, tab, row, red, wri, rw, speed, scen) {
+    var connectTag = $("#connected")
+    var tableTag = $("#tabelCount")
+    var rowTag = $("#rowCount")
+    var redTag = $("#readCount")
+    var writeTag = $("#writeCount")
+    var rwTag = $("#rwRatio")
+    var speedTag = $("#speedRatio")
+    var sceneTag = $("#scene")
+    connectTag.empty()
+    connectTag.text(con)
+    tableTag.empty()
+    tableTag.text(tab)
+    rowTag.empty()
+    rowTag.text(row)
+    redTag.empty()
+    redTag.text(red)
+    writeTag.empty()
+    writeTag.text(wri)
+    speedTag.empty()
+    speedTag.text(speed)
+    rwTag.empty()
+    rwTag.text(rw)
+    console.log(scen)
+    sceneTag.empty()
+    sceneTag.text(scen)
+
+  }
+  $(document).ready(function () {
+    var values = {
+      type: "get_db",
+      db: "",
+      db_type: "",
+      ip: "",
+      port: ""
+    }
+    initializeDBInfo(values)
+    // 设置IP选择框
+    setupDropdown("ip-selected", "ip-items");
+
+    // 设置端口选择框
+    setupDropdown("port-selected", "port-items");
+    // 设置数据库选择框
+    setupDropdown("db-selected", "db-items");
+    // 设置数据库类型选择框
+    setupDropdown("db-type-selected", "db-type-items");
+
+
+    $(document).on("click", "#dbSelect .db", function () {
+      var selectedText = $(this).text();
+      $(".db-selected").text(selectedText);
+      $(".db-items").hide();
+      values["type"] = "get_db_info"
+      values["db"] = selectedText
+      $("#stateDbInfo").text("正在自动实别...")
+      requestSixModel(values)
+      setTimeout(function () {
+        values = {
+          type: "get_db_scene",
+          db: $(".db-selected").text(),
+          db_type: $(".db-type-selected").text(),
+          ip: $(".ip-selected").text(),
+          port: $(".port-selected").text()
+        }
+        var stringList = ["选择数据库类型", "选择IP", "选择端口"]
+        if (checkValuesInList(values, stringList)) {
+          alert("请填充完整的信息")
+          return
+        }
+        requestSixModel(values)
+      }, 1000)
+    });
+
+    // 定义一个函数来检查 values 对象中的每个值是否出现在字符串列表中
+    function checkValuesInList(values, stringList) {
+      for (let key in values) {
+        if (values.hasOwnProperty(key)) {
+          if (stringList.includes(values[key])) {
+            // 可以返回或执行其他逻辑
+            return true
+          }
+        }
+      }
+      // 如果没有匹配的值，返回 null 或执行其他逻辑
+      return null;
+    }
+
+
+
+    $(document).on("click", "#dbTypeSelect .db-type", function () {
+      var selectedText = $(this).text();
+      $(".db-type-selected").text(selectedText);
+      $(".db-Type-items").hide();
+    });
+
+    $(document).on("click", "#ipSelect .ip", function () {
+      var selectedText = $(this).text();
+      $(".ip-selected").text(selectedText);
+      $(".ip-items").hide();
+    });
+
+    $(document).on("click", "#portSelect .port", function () {
+      var selectedText = $(this).text();
+      $(".port-selected").text(selectedText);
+      $(".port-items").hide();
+    })
+
+  })
+
+</script>
+{%endblock%}

@@ -1,0 +1,252 @@
+import socket, os, datetime, json
+import time
+
+#from ..ModuleTwo import cpu, disk, memory, network, other
+import threading
+# from kylinApp.utils import draw,write_data
+import re
+
+
+def recv_data(client_socket):
+    # 分段接收数据
+    recv_info = ""
+    leng = 0
+    while True:
+        recv_data = client_socket.recv(1024).decode('utf-8')
+        if leng == 0:
+            len_data = int(recv_data)
+        recv_info = recv_info + recv_data
+        if isinstance(recv_data, int):
+            leng = leng + len(str(recv_data))
+        else:
+            leng = leng + len(recv_data)
+        if leng >= len_data:
+            break
+    return recv_info
+
+
+def remove_leading_numbers(input_string):
+    # 正则表达式模式：匹配开头的一个或多个数字
+    pattern = r'^\d+'
+    # 使用sub函数替换匹配到的部分为空字符串
+    result = re.sub(pattern, '', input_string)
+    return result
+
+
+# def set_network_info(data):
+#     tp = "recieveNetWorkIfo"
+#     ip = data.get("host")
+#     sent = data.get("net_bytes_sent")
+#     recv = data.get("net_bytes_recv")
+#     packet_sent = data.get("net_packets_sent")
+#     packet_recv = data.get("net_packets_recv")
+#     current_t = data.get("time")
+#     network.insert(tp, ip, sent, recv, packet_sent, packet_recv, current_t)
+#
+#
+# def set_memory_info(data):
+#     tp = "recievememoryInfo"
+#     ip = data.get("host")
+#     total = data.get("mem_total")
+#     used = data.get("mem_used")
+#     free = data.get("mem_free")
+#     buffers = data.get("mem_buffers")
+#     cache = data.get("mem_cache")
+#     swap = data.get("mem_swap_used")
+#     percent = data.get("mem_percent")
+#     current_t = data.get("time")
+#     memory.insert(tp, ip, total, used, free, buffers, cache, swap, percent, current_t)
+#
+#
+# def set_disk_info(data):
+#     tp = "recieveHDInfo"
+#     ip = data.get("host")
+#     total = data.get("disk_total")
+#     used = data.get("disk_used")
+#     free = data.get("disk_free")
+#     percent = data.get("disk_percent")
+#     read_count = data.get("disk_read")
+#     write_count = data.get("disk_write")
+#     r_bytes = data.get("disk_read")
+#     w_bytes = data.get("disk_write")
+#     r_time = data.get("time")
+#     w_time = data.get("time")
+#     current_t = data.get("time")
+#     disk.insert(tp, ip, total, used, free, percent, read_count, write_count, r_bytes, w_bytes, r_time, w_time, current_t)
+#
+#
+# def set_cpu_info(data):
+#     tp = "recieveCPUInfo"
+#     ip = data.get("host")
+#     user_t = data.get("cpu_user_time")
+#     system_t = data.get("cpu_system_time")
+#     wait_io = data.get("cpu_wait_time")
+#     idle = data.get("cpu_idle_time")
+#     count = data.get("cpu_count")
+#     percent = data.get("cpu_percent")
+#     current_t = data.get("time")
+#     cpu.insert(tp, ip, user_t, system_t,wait_io, idle, count, percent,current_t)
+#
+#
+# def set_os_info(data):
+#     tp = "recieveOsInfo"
+#     os_info = data.get("os_info")
+#     os_version = data.get("os_version")
+#     os_release = data.get("os_release")
+#     os_name = data.get("os_name")
+#     os_processor_name = data.get("os_processor_name")
+#     os_processor_architecture = data.get("os_processor_architecture")
+#     cpu_model = data.get("os_processor_name")
+#     other.insert(tp,os_info,os_version,os_release,os_name,os_processor_name,os_processor_architecture,cpu_model)
+
+
+# def set_info(data, host, tp):
+#     data = data[tp]
+#     insert_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#     data.update({"host": host})
+#     data.update({"time": insert_time})
+#
+#     if tp == "cpu":
+#         set_cpu_info(data)
+#     elif tp == "memory":
+#         set_memory_info(data)
+#     elif tp == "network":
+#         set_network_info(data)
+#     elif tp == "os":
+#         set_os_info(data)
+#     else:
+#         set_disk_info(data)
+
+
+def category(data, tp):
+    return data[tp]
+
+
+# def get_info(host, port: int, tp):
+#     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+#         client_socket.connect((host, port))
+#         data = json.dumps({'command': 'get_info'})
+#         client_socket.sendall(data.encode('utf-8'))
+#
+#         recv_info = recv_data(client_socket)
+#         recv_info = remove_leading_numbers(recv_info)
+#         recv_info = json.loads(recv_info)
+#
+#         if tp != "ceph_info":
+#             recv_info = recv_info["os_information"]
+#             set_info(recv_info, host, tp)
+#             data_dict = {
+#                 "info": category(recv_info, tp),
+#                 "state": "ok"
+#             }
+#         else:
+#             recv_info.pop("os_information")
+#             data_dict = {
+#                 "info": recv_info,
+#                 "state": "ok"
+#             }
+#         return data_dict
+
+
+# 发送远程执行命令
+# def send_command(command_string, host, port: int):
+#     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+#         client_socket.connect((host, port))
+#         data = json.dumps({'command': command_string})
+#         client_socket.sendall(data.encode('utf-8'))
+#         if command_string == "get_flame_graph":
+#             recv_info = recv_data(client_socket)
+#             recv_info = remove_leading_numbers(recv_info)
+#             recv_info = json.loads(recv_info)
+#             with open("./kylinApp/static/img/perf.svg", mode="w") as f:
+#                 f.write(recv_info)
+#             return
+#         recv_info = recv_data(client_socket)
+#         recv_info = remove_leading_numbers(recv_info)
+#         return recv_info.encode(errors="ignore").decode('unicode-escape', errors="ignore")
+
+
+import socket
+import json
+
+
+def send_command(command_string, host, port, pid=None, cpu_id=None):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        client_socket.connect((host, port))
+
+        # 构建要发送的数据，包括 command, pid 和 cpu_id
+        data = {'command': command_string}
+        if pid is not None:
+            data['pid'] = pid
+        if cpu_id is not None:
+            data['cpu_id'] = cpu_id  # 添加 cpu_id
+
+        data_json = json.dumps(data)
+
+        client_socket.sendall(data_json.encode('utf-8'))
+
+        if command_string == "get_flame_graph":
+            recv_info = recv_data(client_socket)
+            recv_info = remove_leading_numbers(recv_info)
+            recv_info = json.loads(recv_info)
+            with open("./kylinApp/static/img/perf.svg", mode="w") as f:
+                f.write(recv_info)
+            return
+
+        recv_info = recv_data(client_socket)
+        recv_info = remove_leading_numbers(recv_info)
+        return recv_info.encode(errors="ignore").decode('unicode-escape', errors="ignore")
+
+        recv_info = recv_data(client_socket)
+        recv_info = remove_leading_numbers(recv_info)
+        return recv_info.encode(errors="ignore").decode('unicode-escape', errors="ignore")
+
+
+"""以下命令使用待定"""
+
+
+# 发送Ceph集群命令的函数
+def send_ceph_command(command, ceph_ip):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        client_socket.connect(('10.21.17.40' , 7788))
+
+        data = json.dumps({'command': command, 'cluster_ip': ceph_ip})
+        client_socket.sendall(data.encode('utf-8'))
+        recv_info = ""
+        leng = 0
+        while True:
+            recv_data = client_socket.recv(1024).decode('utf-8')
+            if leng == 0:
+                len_data = int(recv_data)
+
+            recv_info = recv_info + recv_data
+            if isinstance(recv_data,int):
+                leng  = leng + len(str(recv_data))
+            else:
+                leng = leng + len(recv_data)
+            if leng == len_data:
+                break
+        print(recv_info)
+
+# 创建线程的函数
+def create_thread(target_function, args=()):
+    thread = threading.Thread(target=target_function, args=args)
+    thread.start()
+    return thread
+
+# 并行发送多个命令
+# def parallel_commands(commands, ceph_ip="10.21.17.50"):
+#     threads = []
+#     for command in commands:
+#         if ceph_ip:
+#             thread = create_thread(send_ceph_command, (command, ceph_ip))
+#         else:
+#             thread = create_thread(send_command, (command,))
+#         threads.append(thread)
+#     # 等待所有线程完成
+#     for thread in threads:
+#         thread.join()
+
+#print(send_command('set_cpu_affinity',"10.21.17.40",7788,326719,cpu_id=2))
+#print(send_command('get_cpuhe',"10.21.17.40",7788,326719))
+print(send_command('get_ps',"10.21.17.40",7788))
