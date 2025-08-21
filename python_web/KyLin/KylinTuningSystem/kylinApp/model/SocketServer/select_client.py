@@ -144,6 +144,8 @@ def category(data, tp):
 
 def get_info(host, port: int, tp):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        # 设置连接超时和读取超时
+        client_socket.settimeout(10.0)  # 10秒超时
         client_socket.connect((host, port))
         data = json.dumps({'command': 'get_info',"cluster_ip": "10.21.17.25"})
         # data = json.dumps({'command': 'get_info'})]]
@@ -173,6 +175,8 @@ def send_command(command_string, host, port: int, change_cpu=None, pid=None):
     print(f"参数: command_string={repr(command_string)}, host={host}, port={port}")
     
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        # 设置连接超时和读取超时
+        client_socket.settimeout(10.0)  # 10秒超时
         client_socket.connect((host, port))
         command_data = {'command': command_string}
         if change_cpu and pid:
