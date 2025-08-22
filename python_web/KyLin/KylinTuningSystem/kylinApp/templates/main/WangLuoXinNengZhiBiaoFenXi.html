@@ -25,11 +25,10 @@
     /* 控制区域样式 */
     .control-section {
         background: white;
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 25px;
         margin-bottom: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e0e0e0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
     .control-group {
@@ -47,59 +46,99 @@
         font-size: 14px;
     }
 
+    .control-select, .control-input {
+        background: white;
+        color: #333;
+        border: 1px solid #ddd;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+        min-width: 200px;
+        transition: border-color 0.3s ease;
+    }
+
+    .control-select:focus, .control-input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
     /* 统一按钮样式 */
     .btn {
         padding: 10px 20px;
-        border-radius: 4px;
+        border-radius: 6px;
         font-size: 14px;
         font-weight: 500;
-        border: 1px solid;
+        border: none;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
         text-decoration: none;
         display: inline-block;
         text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .btn-primary {
-        background: #007bff;
+        background: linear-gradient(135deg, #007bff, #0056b3);
         color: white;
-        border-color: #007bff;
+        border: 1px solid #007bff;
     }
 
     .btn-primary:hover {
-        background: #0056b3;
-        border-color: #0056b3;
+        background: linear-gradient(135deg, #0056b3, #004085);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        transform: translateY(-1px);
     }
 
-    .btn:disabled {
-        background: #e9ecef;
-        color: #6c757d;
-        border-color: #dee2e6;
-        cursor: not-allowed;
+    .btn-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border: 1px solid #28a745;
     }
 
-    /* 数据展示区域样式 */
+    .btn-success:hover {
+        background: linear-gradient(135deg, #218838, #1ea080);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        color: white;
+        border: 1px solid #6c757d;
+    }
+
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #5a6268, #495057);
+        box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* 控制按钮组 */
+    .control-buttons {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    /* 数据面板样式 */
     .data-panel {
         background: white;
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         margin-bottom: 25px;
-        border: 1px solid #e0e0e0;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    /* 确保内容区域宽度对齐 */
-    .panel-content, .table-container {
-        width: 100% !important;
-        box-sizing: border-box;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
     .panel-title {
-        font-size: 18px;
-        font-weight: bold;
+        font-size: 24px;
+        font-weight: 600;
         margin-bottom: 20px;
         color: #333;
         border-bottom: 2px solid #007bff;
@@ -113,68 +152,31 @@
         margin-top: 15px;
     }
 
-    .table th,
-    .table td {
-        padding: 12px;
+    .table th, .table td {
+        padding: 12px 15px;
         text-align: left;
-        border-bottom: 1px solid #dee2e6;
+        border-bottom: 1px solid #eee;
     }
 
     .table th {
         background: #f8f9fa;
         font-weight: 600;
         color: #495057;
+        font-size: 14px;
     }
 
     .table tr:hover {
         background: #f8f9fa;
     }
 
-  #dropdownLiTag {
-    height: 120px !important;
-    overflow: auto;
-    background-color: bisque;
-    direction: rtl;
-  }
-
-  #dropdownLiTag li {
-    color: black;
-    padding: 5px;
-  }
-
-  #dropdownLiTag li:hover {
-    cursor: pointer;
-    background-color: rgb(197, 209, 219);
-  }
-
-
-          .ip-select,
-  .ip-selected,
-  .ip,
-  .startDate {
-    color: black;
-    background-color: aliceblue;
-    padding: 0 !important;
-    margin: 0;
-    width: 100px;
-      height: 30px !important;
-      line-height: 30px;
-      margin-right: 20px;
-  }
-
-  .contentBox{
-    margin-top: 20px;
-  }
-
     /* 自定义下拉框样式 */
     .custom-select {
         position: relative;
-        display: inline-block;
         min-width: 200px;
     }
 
     .select-selected {
-        background-color: white;
+        background: white;
         color: #333;
         padding: 10px 15px;
         border: 1px solid #ddd;
@@ -205,6 +207,23 @@
 
     .select-selected:hover {
         border-color: #007bff;
+    }
+
+    /* 加载状态样式 */
+    .select-selected.loading {
+        color: #666;
+        font-style: italic;
+        background-color: #f8f9fa;
+    }
+
+    .select-selected.loading:after {
+        border-color: #999 transparent transparent transparent;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: translateY(-50%) rotate(0deg); }
+        100% { transform: translateY(-50%) rotate(360deg); }
     }
 
     .select-items {
@@ -238,6 +257,27 @@
     .select-items div.selected {
         background-color: #007bff;
         color: white;
+    }
+
+    /* IP选项样式 */
+    .ip-option {
+        border-bottom: 1px solid #eee;
+    }
+
+    .ip-option:last-child {
+        border-bottom: none;
+    }
+
+    .ip-option:hover {
+        background-color: #e3f2fd !important;
+        color: #1976d2 !important;
+    }
+
+    .empty {
+        color: #999;
+        font-style: italic;
+        text-align: center;
+        padding: 20px;
     }
 
     /* 状态指示器 */
@@ -297,6 +337,9 @@
                     <div>Option 3</div>
                 </div>
             </div>
+            <button type="button" class="btn btn-sm btn-secondary" id="refreshIpBtn" title="刷新IP地址列表" style="margin-left: 10px;">
+                <i class="fa fa-refresh"></i> 刷新
+            </button>
         </div>
 
         <div class="control-group">
@@ -355,8 +398,6 @@
         </div>
     </div>
 </div>
-
-
 {%endblock%}
 
 {%block js%}
@@ -458,49 +499,79 @@
 
   }
 
-  // 初始化自定义下拉框功能
-  function initCustomSelects() {
-    // IP选择框点击事件
-    $(".ip-selected").on("click", function(e) {
-      e.stopPropagation()
-      closeAllSelect(this)
-      $(".ip-items").toggle()
-      $(this).toggleClass("select-arrow-active")
-    })
-
-    // 点击其他地方关闭下拉框
-    $(document).on("click", function() {
-      closeAllSelect()
-    })
-  }
-
-  // 关闭所有下拉框
-  function closeAllSelect(elmnt) {
-    $(".ip-items").hide()
-    $(".ip-selected").removeClass("select-arrow-active")
-  }
-
   // 加载服务器IP地址列表
   function loadServerIpList() {
     console.log("Loading server IP list...")
-
+    
+    // 显示加载状态
+    $(".ip-selected").text("加载中...").addClass("loading")
+    
     $.ajax({
       url: "/api/JianKongFuWuQi/select/1-1000/oneModel",
       method: "POST",
       data: "{}",
       contentType: "application/json",
+      timeout: 10000,
       success: function(response) {
         console.log("Server IP list loaded:", response)
-        populateIpSelect(response)
+        if (response && response.all_data && response.all_data.length > 0) {
+          populateIpSelect(response)
+        } else {
+          console.warn("No server data in response:", response)
+          // 尝试使用备用接口
+          loadBackupServerList()
+        }
       },
       error: function(xhr, status, error) {
         console.error("Failed to load server IP list:", error)
-        // 使用默认IP列表
+        console.error("Status:", status)
+        console.error("Response:", xhr.responseText)
+        
+        // 使用默认IP列表作为备用方案
         populateIpSelect({
           all_data: [
-            {ip: "192.168.1.100", port: "7788", remarks: "服务器1"},
-            {ip: "192.168.1.101", port: "7789", remarks: "服务器2"},
-            {ip: "192.168.1.102", port: "7790", remarks: "服务器3"}
+            {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
+            {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
+            {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
+          ]
+        })
+      }
+    })
+  }
+
+  // 备用服务器列表加载
+  function loadBackupServerList() {
+    console.log("Trying backup server list...")
+    
+    // 尝试从其他接口获取数据
+    $.ajax({
+      url: "/api/FuWuXinXi/select/1-1000/oneModel",
+      method: "POST",
+      data: "{}",
+      contentType: "application/json",
+      timeout: 5000,
+      success: function(response) {
+        console.log("Backup server list loaded:", response)
+        if (response && response.all_data && response.all_data.length > 0) {
+          populateIpSelect(response)
+        } else {
+          // 使用硬编码的默认列表
+          populateIpSelect({
+            all_data: [
+              {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
+              {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
+              {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
+            ]
+          })
+        }
+      },
+      error: function() {
+        // 使用硬编码的默认列表
+        populateIpSelect({
+          all_data: [
+            {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
+            {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
+            {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
           ]
         })
       }
@@ -521,15 +592,29 @@
         ipItems.append('<div class="ip-option" data-ip="' + server.ip + '">' + displayText + '</div>')
       })
       console.log("Added " + data.all_data.length + " IP addresses to select")
+      
+      // 移除加载状态
+      $(".ip-selected").removeClass("loading").text("选择IP")
     } else {
       ipItems.append('<div class="empty">暂无可用的服务器IP地址</div>')
       console.log("No server data available")
+      
+      // 移除加载状态
+      $(".ip-selected").removeClass("loading").text("选择IP")
     }
 
-    // 绑定IP选择事件
-    ipItems.find(".ip-option").on("click", function(e) {
+    // 重新绑定IP选择事件
+    bindIpSelectEvents()
+  }
+
+  // 绑定IP选择事件
+  function bindIpSelectEvents() {
+    $("#ipSelect .ip-option").off("click").on("click", function(e) {
+      e.stopPropagation()
       var selectedText = $(this).text()
       var selectedIp = $(this).data("ip")
+
+      console.log("IP selected:", selectedIp, "Text:", selectedText)
 
       // 更新选中的文本
       $(".ip-selected").text(selectedText).removeClass("select-arrow-active")
@@ -537,9 +622,41 @@
       // 隐藏下拉列表
       $(".ip-items").hide()
 
-      console.log("Selected IP:", selectedIp)
+      // 触发自定义事件，通知其他组件IP已选择
+      $(document).trigger("ipSelected", {ip: selectedIp, text: selectedText})
     })
   }
+
+  // 初始化自定义下拉框功能
+  function initCustomSelects() {
+    console.log("Initializing custom selects...")
+    
+    // IP选择框点击事件
+    $(".ip-selected").off("click").on("click", function(e) {
+      e.stopPropagation()
+      console.log("IP selector clicked")
+      
+      closeAllSelect(this)
+      $(".ip-items").toggle()
+      $(this).toggleClass("select-arrow-active")
+    })
+
+    // 点击其他地方关闭下拉框
+    $(document).off("click.selectClose").on("click.selectClose", function(e) {
+      if (!$(e.target).closest(".custom-select").length) {
+        closeAllSelect()
+      }
+    })
+    
+    console.log("Custom selects initialized")
+  }
+
+  // 关闭所有下拉框
+  function closeAllSelect(elmnt) {
+    $(".ip-items").hide()
+    $(".ip-selected").removeClass("select-arrow-active")
+  }
+
   $(document).ready(function () {
     console.log("网络性能指标分析页面初始化开始...")
 
@@ -649,9 +766,14 @@
       }
 
       // 这里可以添加实际的导出逻辑
-      console.log("导出网络数据:", tableData)
+      console.log("导出数据:", tableData)
       alert("网络数据导出功能开发中...")
     })
+
+    // 刷新IP地址列表按钮事件
+    $("#refreshIpBtn").on("click", function() {
+      loadServerIpList();
+    });
 
     console.log("网络性能指标分析页面初始化完成！")
   })

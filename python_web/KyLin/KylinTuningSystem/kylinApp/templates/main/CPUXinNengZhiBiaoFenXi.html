@@ -228,6 +228,23 @@
         border-color: #007bff;
     }
 
+    /* 加载状态样式 */
+    .select-selected.loading {
+        color: #666;
+        font-style: italic;
+        background-color: #f8f9fa;
+    }
+
+    .select-selected.loading:after {
+        border-color: #999 transparent transparent transparent;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: translateY(-50%) rotate(0deg); }
+        100% { transform: translateY(-50%) rotate(360deg); }
+    }
+
     .select-items {
         position: absolute;
         background-color: white;
@@ -261,8 +278,25 @@
         color: white;
     }
 
-    .select-hide {
-        display: none;
+    /* IP选项样式 */
+    .ip-option {
+        border-bottom: 1px solid #eee;
+    }
+
+    .ip-option:last-child {
+        border-bottom: none;
+    }
+
+    .ip-option:hover {
+        background-color: #e3f2fd !important;
+        color: #1976d2 !important;
+    }
+
+    .empty {
+        color: #999;
+        font-style: italic;
+        text-align: center;
+        padding: 20px;
     }
 
     /* 状态指示器 */
@@ -322,6 +356,9 @@
                     <div>Option 3</div>
                 </div>
             </div>
+            <button type="button" class="btn btn-sm btn-secondary" id="refreshIpBtn" title="刷新IP地址列表" style="margin-left: 10px;">
+                <i class="fa fa-refresh"></i> 刷新
+            </button>
         </div>
 
         <div class="control-group">
@@ -509,22 +546,6 @@
 
     myChart.setOption(option);
   }
-  // 初始化自定义下拉框功能
-  function initCustomSelects() {
-    // IP选择框点击事件
-    $(".ip-selected").on("click", function(e) {
-      e.stopPropagation()
-      closeAllSelect(this)
-      $(".ip-items").toggle()
-      $(this).toggleClass("select-arrow-active")
-    })
-
-    // 点击其他地方关闭下拉框
-    $(document).on("click", function() {
-      closeAllSelect()
-    })
-  }
-
   // 关闭所有下拉框
   function closeAllSelect(elmnt) {
     $(".ip-items").hide()
@@ -534,26 +555,88 @@
   // 加载服务器IP地址列表
   function loadServerIpList() {
     console.log("Loading server IP list...")
-
+    
+    // 显示加载状态
+    $(".ip-selected").text("加载中...").addClass("loading")
+    
     $.ajax({
       url: "/api/JianKongFuWuQi/select/1-1000/oneModel",
       method: "POST",
       data: "{}",
       contentType: "application/json",
+      timeout: 10000,
       success: function(response) {
         console.log("Server IP list loaded:", response)
-        populateIpSelect(response)
+        if (response && response.all_data && response.all_data.length > 0) {
+          populateIpSelect(response)
+          console.log("Added " + response.all_data.length + " IP addresses to select")
+          
+          // 移除加载状态
+          $(".ip-selected").removeClass("loading").text("选择IP")
+        } else {
+          console.warn("No server data in response:", response)
+          // 尝试使用备用接口
+          loadBackupServerList()
+        }
       },
       error: function(xhr, status, error) {
         console.error("Failed to load server IP list:", error)
-        // 使用默认IP列表
+        console.error("Status:", status)
+        console.error("Response:", xhr.responseText)
+        
+        // 使用默认IP列表作为备用方案
         populateIpSelect({
           all_data: [
-            {ip: "192.168.1.100", port: "7788", remarks: "服务器1"},
-            {ip: "192.168.1.101", port: "7789", remarks: "服务器2"},
-            {ip: "192.168.1.102", port: "7790", remarks: "服务器3"}
+            {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
+            {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
+            {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
           ]
         })
+      }
+    })
+  }
+
+  // 备用服务器列表加载
+  function loadBackupServerList() {
+    console.log("Trying backup server list...")
+    
+    // 尝试从其他接口获取数据
+    $.ajax({
+      url: "/api/FuWuXinXi/select/1-1000/oneModel",
+      method: "POST",
+      data: "{}",
+      contentType: "application/json",
+      timeout: 5000,
+      success: function(response) {
+        console.log("Backup server list loaded:", response)
+        if (response && response.all_data && response.all_data.length > 0) {
+          populateIpSelect(response)
+          console.log("Added " + response.all_data.length + " IP addresses to select")
+          
+          // 移除加载状态
+          $(".ip-selected").removeClass("loading").text("选择IP")
+        } else {
+          // 使用硬编码的默认列表
+          populateIpSelect({
+            all_data: [
+              {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
+              {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
+              {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
+            ]
+          })
+          console.log("Using default list")
+        }
+      },
+      error: function() {
+        // 使用硬编码的默认列表
+        populateIpSelect({
+          all_data: [
+            {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
+            {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
+            {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
+          ]
+        })
+        console.log("Using default list (backup failed)")
       }
     })
   }
@@ -572,15 +655,29 @@
         ipItems.append('<div class="ip-option" data-ip="' + server.ip + '">' + displayText + '</div>')
       })
       console.log("Added " + data.all_data.length + " IP addresses to select")
+      
+      // 移除加载状态
+      $(".ip-selected").removeClass("loading").text("选择IP")
     } else {
       ipItems.append('<div class="empty">暂无可用的服务器IP地址</div>')
       console.log("No server data available")
+      
+      // 移除加载状态
+      $(".ip-selected").removeClass("loading").text("选择IP")
     }
 
-    // 绑定IP选择事件
-    ipItems.find(".ip-option").on("click", function(e) {
+    // 重新绑定IP选择事件
+    bindIpSelectEvents()
+  }
+
+  // 绑定IP选择事件
+  function bindIpSelectEvents() {
+    $("#ipSelect .ip-option").off("click").on("click", function(e) {
+      e.stopPropagation()
       var selectedText = $(this).text()
       var selectedIp = $(this).data("ip")
+
+      console.log("IP selected:", selectedIp, "Text:", selectedText)
 
       // 更新选中的文本
       $(".ip-selected").text(selectedText).removeClass("select-arrow-active")
@@ -588,8 +685,33 @@
       // 隐藏下拉列表
       $(".ip-items").hide()
 
-      console.log("Selected IP:", selectedIp)
+      // 触发自定义事件，通知其他组件IP已选择
+      $(document).trigger("ipSelected", {ip: selectedIp, text: selectedText})
     })
+  }
+
+  // 初始化自定义下拉框功能
+  function initCustomSelects() {
+    console.log("Initializing custom selects...")
+    
+    // IP选择框点击事件
+    $(".ip-selected").off("click").on("click", function(e) {
+      e.stopPropagation()
+      console.log("IP selector clicked")
+      
+      closeAllSelect(this)
+      $(".ip-items").toggle()
+      $(this).toggleClass("select-arrow-active")
+    })
+
+    // 点击其他地方关闭下拉框
+    $(document).off("click.selectClose").on("click.selectClose", function(e) {
+      if (!$(e.target).closest(".custom-select").length) {
+        closeAllSelect()
+      }
+    })
+    
+    console.log("Custom selects initialized")
   }
 
   $(document).ready(function () {
@@ -694,6 +816,11 @@
       console.log("导出数据:", tableData)
       alert("数据导出功能开发中...")
     })
+
+    // 刷新IP地址列表按钮事件
+    $("#refreshIpBtn").on("click", function() {
+      loadServerIpList();
+    });
 
     console.log("页面初始化完成！")
   })

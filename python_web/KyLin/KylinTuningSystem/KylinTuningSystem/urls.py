@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path
 from kylinApp.views import view, user, api
 from kylinApp.views import ai_api
+from kylinApp.views import swagger
 
 urlpatterns = [
     # 配置管理
@@ -99,6 +100,10 @@ urlpatterns = [
     path('api/get_latest_data_simple/', api.get_latest_data),
     # 保存采集数据接口
     path('api/save_collection_data/', api.save_collected_data_api),
+
+    # Swagger/OpenAPI 文档
+    path('api/openapi.json', swagger.openapi_schema),
+    path('api/docs/', swagger.swagger_ui),
     
     # 日志记录相关路由
     path('index/rizhijilu', view.rizhijilu),
