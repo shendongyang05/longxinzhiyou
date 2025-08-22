@@ -1033,6 +1033,8 @@ label {
         console.log("JianKongXinXiFuWuGuanLi.html loaded - using JianKongFuWuQi API");
         initialaze()
 
+        // 注释掉旧的重复事件绑定，避免重复提交
+        /*
         reviseTag.on("click", function () {
             var type = "update"
             newData = get_value();
@@ -1060,6 +1062,7 @@ label {
             reviseTag.css("display", "none")
             creatDataTag.css("display", "block")
         })
+        */
 
         //绑定查询事件
         $("#selectOneModel").on("click", function () {
@@ -1211,6 +1214,88 @@ label {
         }, 10);
     }
 
+    // 选择状态管理
+    var selectedServers = [];
+    
+    // 全选/取消全选
+    $(document).on("change", "#selectAll", function() {
+        var isChecked = $(this).prop("checked");
+        $(".server-checkbox").prop("checked", isChecked);
+        updateSelectedServers();
+    });
+    
+    // 单个选择框变化
+    $(document).on("change", ".server-checkbox", function() {
+        updateSelectedServers();
+    });
+    
+    // 更新选择状态
+    function updateSelectedServers() {
+        selectedServers = [];
+        $(".server-checkbox:checked").each(function() {
+            var ip = $(this).val();
+            var row = $(this).closest("tr");
+            var port = row.find("td:nth-child(3)").text();
+            selectedServers.push({ip: ip, port: port});
+        });
+        
+        // 更新选择信息
+        var count = selectedServers.length;
+        $("#selectionInfo").text("已选择 " + count + " 项");
+        
+        // 显示/隐藏清空选择链接
+        if (count > 0) {
+            $("#clearSelection").show();
+            $("#batchDeleteBtn").prop("disabled", false);
+        } else {
+            $("#clearSelection").hide();
+            $("#batchDeleteBtn").prop("disabled", true);
+        }
+    }
+    
+    // 清空选择
+    $("#clearSelection").on("click", function(e) {
+        e.preventDefault();
+        $(".server-checkbox, #selectAll").prop("checked", false);
+        updateSelectedServers();
+    });
+    
+    // 批量删除功能
+    $("#batchDeleteBtn").on("click", function() {
+        if (selectedServers.length === 0) {
+            alert("请选择要删除的服务器");
+            return;
+        }
+
+        if (confirm("确认要删除选中的 " + selectedServers.length + " 个服务器吗？删除后将无法恢复！")) {
+            console.log("批量删除服务器:", selectedServers);
+            
+            // 调用批量删除API
+            var deletePromises = selectedServers.map(function(server) {
+                return new Promise(function(resolve, reject) {
+                    requestOneModel("JianKongFuWuQi", "del", JSON.stringify({
+                        ip: server.ip,
+                        port: server.port
+                    }));
+                    resolve();
+                });
+            });
+
+            Promise.all(deletePromises).then(function() {
+                alert("成功删除 " + selectedServers.length + " 个服务器");
+                // 清空选择
+                $(".server-checkbox, #selectAll").prop("checked", false);
+                selectedServers = [];
+                updateSelectedServers();
+                // 刷新服务器列表
+                initialaze();
+            }).catch(function(error) {
+                console.error("批量删除失败:", error);
+                alert("批量删除失败，请稍后重试");
+            });
+        }
+    });
+
     // 关闭服务器弹窗
     function closeServerModal() {
         var modal = $("#serverModal");
@@ -1224,12 +1309,22 @@ label {
         if (form) {
             form.reset();
         }
+        
+        // 重置提交状态
+        window.isSubmitting = false;
 
         console.log("Modal closed");
     }
 
     // 保存服务器
     function saveServer() {
+        // 防重复提交保护
+        if (window.isSubmitting) {
+            console.log("正在提交中，请勿重复点击");
+            return;
+        }
+        window.isSubmitting = true;
+        
         var mode = $("#saveServerBtn").data("mode");
         var ip = $("#modalIp").val().trim();
         var port = $("#modalPort").val().trim();
@@ -1285,26 +1380,35 @@ label {
         console.log("Saving server data:", data);
 
         if (mode === 'create') {
-            // 新增服务器
+            // 新增服务器 - 使用后端期望的字段名
             var createData = {
                 ip: ip,
-                port: portNum,  // 使用已验证的端口号
-                serviceType: serviceType,  // 使用服务类型，保持与前端一致
-                remarks: remarks || ""  // 确保备注不为null
+                port: portNum,
+                server_category: serviceType,  // 映射到后端字段名
+                remarks: remarks || ""
             };
             console.log("Creating server with data:", createData);
 
             // 再次验证数据
-            if (!createData.ip || !createData.port || !createData.serviceType) {
+            if (!createData.ip || !createData.port || !createData.server_category) {
                 alert("IP地址、端口和服务类型不能为空");
                 return;
             }
 
-            requestOneModel("JianKongFuWuQi", "create", JSON.stringify(createData));
+            // 直接发送数据对象，不要JSON.stringify
+            // 调用创建API
+            requestOneModel("JianKongFuWuQi", "create", createData);
+            
+            // 重置提交状态
+            setTimeout(() => {
+                window.isSubmitting = false;
+            }, 2000);
+            
         } else if (mode === 'edit') {
             // 编辑服务器
             if (!window.originalServerData) {
                 alert("原始数据丢失，请重新打开编辑窗口");
+                window.isSubmitting = false;
                 return;
             }
 
@@ -1324,19 +1428,26 @@ label {
             // 再次验证数据
             if (!newData.ip || !newData.port || !newData.server_category) {
                 alert("IP地址、端口和服务类型不能为空");
+                window.isSubmitting = false;
                 return;
             }
 
             var updateData = {
-                old: oldData,  // 直接传递对象，不要JSON.stringify
-                new: newData   // 直接传递对象，不要JSON.stringify
+                old: oldData,
+                new: newData
             };
 
             console.log("Updating server with data:", updateData);
             console.log("Old data:", oldData);
             console.log("New data:", newData);
 
-            requestOneModel("JianKongFuWuQi", "update", JSON.stringify(updateData));
+            // 直接发送数据对象，不要JSON.stringify
+            requestOneModel("JianKongFuWuQi", "update", updateData);
+            
+            // 重置提交状态
+            setTimeout(() => {
+                window.isSubmitting = false;
+            }, 2000);
         }
 
         closeServerModal();

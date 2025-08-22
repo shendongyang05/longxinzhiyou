@@ -13,6 +13,7 @@ import requests
 import traceback
 import datetime
 from datetime import timezone
+import re
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -337,27 +338,86 @@ def cha_two_tool(name, dbmodel, data, tp=""):
                     "error": f"获取IP地址列表失败: {str(e)}"
                 }, status=500)
         elif name == "start_caiji":
-            host = data["ip"]
-            port = int(data["port"])
             try:
-                data = select_client.get_info(host, port, tp)
-                return JsonResponse(data, status=200)
+                # 解析并规范化 IP
+                ip_raw = data.get("ip")
+                if not ip_raw:
+                    return JsonResponse({
+                        "error": "IP参数不能为空"
+                    }, status=400)
+
+                ip_candidate = str(ip_raw).strip()
+                ip_match = re.search(r"(\d{1,3}(?:\.\d{1,3}){3})", ip_candidate)
+                if ip_match:
+                    host = ip_match.group(1)
+                else:
+                    # 尝试用备注反查IP
+                    remark = ip_candidate.split("(")[0].strip()
+                    remark_qs = select_data(dbmodel, {"remarks": remark})
+                    if remark_qs and remark_qs.count() > 0:
+                        host = remark_qs.first().ip
+                    else:
+                        return JsonResponse({
+                            "error": f"未找到可用的IP: {ip_raw}"
+                        }, status=404)
+
+                # 解析端口
+                port_raw = data.get("port")
+                if port_raw in (None, ""):
+                    return JsonResponse({
+                        "error": "端口参数不能为空"
+                    }, status=400)
+                try:
+                    port = int(port_raw)
+                except (TypeError, ValueError):
+                    return JsonResponse({
+                        "error": f"端口格式不正确: {port_raw}"
+                    }, status=400)
+
+                # 发起采集
+                try:
+                    result = select_client.get_info(host, port, tp)
+                    return JsonResponse(result, status=200)
+                except Exception as e:
+                    logger.error(f"采集数据失败({host}:{port}): {e}")
+                    return JsonResponse({
+                        "error": f"采集数据失败: {str(e)}"
+                    }, status=500)
             except Exception as e:
-                logger.error(f"采集数据失败: {e}")
+                logger.error(f"start_caiji 参数处理异常: {e}")
                 return JsonResponse({
-                    "error": f"采集数据失败: {str(e)}"
+                    "error": f"参数处理异常: {str(e)}"
                 }, status=500)
         elif name == "get_port":
             try:
                 # 数据已经在return_data_model_two中解析过了
                 logger.info(f"get_port 接收到的数据: {data}")
                 
-                ip = data.get("ip")
-                if not ip:
+                ip_raw = data.get("ip")
+                if not ip_raw:
                     logger.error("IP参数为空")
                     return JsonResponse({
                         "error": "IP参数不能为空"
                     }, status=400)
+                
+                # 规范化IP：支持 "备注 (IP)" 或仅备注 的传参
+                ip_candidate = str(ip_raw).strip()
+                ip_match = re.search(r"(\d{1,3}(?:\.\d{1,3}){3})", ip_candidate)
+                if ip_match:
+                    ip = ip_match.group(1)
+                else:
+                    # 尝试用备注反查IP
+                    remark = ip_candidate.split("(")[0].strip()
+                    logger.info(f"根据备注反查IP: remark={remark}")
+                    remark_qs = select_data(dbmodel, {"remarks": remark})
+                    if remark_qs and remark_qs.count() > 0:
+                        ip = remark_qs.first().ip
+                    else:
+                        # 无法解析出有效IP
+                        logger.error(f"无法从参数中解析出有效IP: {ip_raw}")
+                        return JsonResponse({
+                            "error": f"未找到IP {ip_raw} 的端口信息"
+                        }, status=404)
                 
                 logger.info(f"查询IP: {ip} 的端口信息")
                 
@@ -377,8 +437,12 @@ def cha_two_tool(name, dbmodel, data, tp=""):
                 for i, port in enumerate(ports):
                     port_dict[f"port_{i}"] = port
                 
-                logger.info(f"为IP {ip} 找到端口: {port_dict}")
-                return JsonResponse(port_dict, status=200)
+                # 同时返回数组形式，便于前端直接使用
+                response_payload = {"port": ports}
+                response_payload.update(port_dict)
+                
+                logger.info(f"为IP {ip} 找到端口: {response_payload}")
+                return JsonResponse(response_payload, status=200)
             except Exception as e:
                 logger.error(f"获取端口信息失败: {e}")
                 import traceback
@@ -468,8 +532,8 @@ def return_data_model_two(request, tp, name):
 @csrf_exempt
 def return_data_model_three(request, name, start_time, end_time, number_range, ipvalue):
 
-    start_time = datetime.strptime(start_time, '%Y-%m-%d')
-    end_time = datetime.strptime(end_time, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+    start_time = datetime.datetime.strptime(start_time, '%Y-%m-%d')
+    end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
     condition = {}
     if ipvalue != "no":
         condition.update({"ipaddress": ipvalue})
@@ -487,7 +551,7 @@ def return_data_model_three(request, name, start_time, end_time, number_range, i
     filtered_records = []
     for record in records:
         # 使用 parse_date 将字符串转换为 date 对象
-        current_date = datetime.fromisoformat(str(record.currentTime))
+        current_date = datetime.datetime.fromisoformat(str(record.currentTime))
         # 移除时区信息以保持一致性
         if current_date.tzinfo is not None:
             current_date = current_date.replace(tzinfo=None)
@@ -709,6 +773,32 @@ def userManager(request, tp):
         user_name = data.get("username", "")
         UserModels.objects.filter(username=user_name).delete()
         return JsonResponse({"message": "success"}, status=200)
+    elif tp == "batchDelete":
+        usernames = data.get("usernames", [])
+        logger.info(f"批量删除请求 - 接收到的用户名列表: {usernames}")
+        
+        if not usernames:
+            logger.warning("批量删除失败 - 用户名列表为空")
+            return JsonResponse({"message": "用户名列表不能为空"}, status=400)
+        
+        try:
+            # 检查用户是否存在
+            existing_users = list(UserModels.objects.filter(username__in=usernames).values_list('username', flat=True))
+            logger.info(f"找到的用户: {existing_users}")
+            
+            # 批量删除用户
+            deleted_count = UserModels.objects.filter(username__in=usernames).delete()[0]
+            logger.info(f"成功删除 {deleted_count} 个用户")
+            
+            return JsonResponse({
+                "message": "success", 
+                "deleted_count": deleted_count,
+                "deleted_usernames": usernames,
+                "existing_users": existing_users
+            }, status=200)
+        except Exception as e:
+            logger.error(f"批量删除异常: {e}")
+            return JsonResponse({"message": f"批量删除失败: {str(e)}"}, status=500)
     elif tp == "update":
         old_value = json.loads(data.get("old", {}))
         new_value = json.loads(data.get("new", {}))
@@ -1516,9 +1606,13 @@ def delete_log(request, log_id):
     try:
         log = LogRecord.objects.get(id=log_id)
         
-        # 删除文件
-        if os.path.exists(log.file_path):
-            os.remove(log.file_path)
+        # 删除文件（仅当存在有效文件路径时）
+        if getattr(log, 'file_path', None):
+            try:
+                if os.path.exists(log.file_path):
+                    os.remove(log.file_path)
+            except Exception as file_err:
+                logging.warning(f"删除日志文件失败（忽略并继续删除记录）: {file_err}")
         
         # 删除记录
         log.delete()

@@ -866,9 +866,43 @@
             }
 
             if (confirm("确认要删除选中的 " + selectedUsers.length + " 个用户吗？删除后将无法恢复！")) {
-                // 这里添加批量删除的API调用
+                // 调用批量删除API
                 console.log("批量删除用户:", selectedUsers);
-                // TODO: 实现批量删除API
+                console.log("selectedUsers 类型:", typeof selectedUsers);
+                console.log("selectedUsers 长度:", selectedUsers.length);
+                
+                // 提取用户名列表 - selectedUsers 直接存储的是用户名字符串
+                const usernames = selectedUsers;
+                console.log("发送的用户名列表:", usernames);
+                console.log("发送的数据:", JSON.stringify({
+                    usernames: usernames
+                }));
+                
+                $.ajax({
+                    url: "/api/userManager/batchDelete",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        usernames: usernames
+                    }),
+                    success: function(response) {
+                        if (response.message === "success") {
+                            alert(`成功删除 ${response.deleted_count} 个用户`);
+                            // 清空选择
+                            $(".row-checkbox, #selectAll").prop("checked", false);
+                            selectedUsers = [];
+                            updateSelectedUsers();
+                            // 刷新用户列表
+                            initialaze();
+                        } else {
+                            alert("删除失败: " + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("批量删除失败:", error);
+                        alert("批量删除失败，请稍后重试");
+                    }
+                });
             }
         });
 

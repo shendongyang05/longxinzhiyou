@@ -183,6 +183,33 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            height: 60px;
+            flex-shrink: 0;
+        }
+        
+        .ai-chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            height: 400px;
+            flex-shrink: 0;
+        }
+        
+        .ai-quick-actions {
+            padding: 10px;
+            border-top: 1px solid #eee;
+            background: #f8f9fa;
+            height: 80px;
+            flex-shrink: 0;
+        }
+        
+        .ai-chat-input {
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            height: 60px;
+            flex-shrink: 0;
         }
         
         .ai-chat-close {
@@ -193,15 +220,6 @@
         
         .ai-chat-close:hover {
             opacity: 1;
-        }
-        
-        .ai-chat-messages {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            min-height: 300px;
-            max-height: 400px;
         }
         
         .ai-message {
@@ -223,12 +241,6 @@
             background: white;
             border: 1px solid #ddd;
             color: #333;
-        }
-        
-        .ai-chat-input {
-            padding: 15px;
-            border-top: 1px solid #ddd;
-            display: flex;
         }
         
         .ai-chat-input input {
@@ -1019,22 +1031,22 @@
                 <el-submenu index="3">
                     <template slot="title">
                         <i class="el-icon-download"></i>
-                        <span>数据采集</span>
+                        <span>数据采集优化</span>
                     </template>
                     <el-menu-item index="3-1" @click="navigateTo('/index/caijicpuxinnengzhibiao')">
-                        CPU性能指标采集
+                        CPU性能指标
                     </el-menu-item>
                     <el-menu-item index="3-2" @click="navigateTo('/index/caijineicunxinnengzhibiao')">
-                        内存性能指标采集
+                        内存性能指标
                     </el-menu-item>
                     <el-menu-item index="3-3" @click="navigateTo('/index/caijicipanxinnengzhibiao')">
-                        磁盘性能指标采集
+                        磁盘性能指标
                     </el-menu-item>
                     <el-menu-item index="3-4" @click="navigateTo('/index/caijiwangluoxinnengzhibiao')">
-                        网络性能指标采集
+                        网络性能指标
                     </el-menu-item>
                     <el-menu-item index="3-5" @click="navigateTo('/index/caijiqitaxinxi')">
-                        软硬件信息采集
+                        软硬件信息
                     </el-menu-item>
                     <el-menu-item index="3-6" @click="navigateTo('/index/yijiancaiji')">
                         数据轮询采集
@@ -1094,15 +1106,15 @@
                 <el-submenu index="7">
                     <template slot="title">
                         <i class="el-icon-document"></i>
-                        <span>日志记录</span>
+                        <span>运维日志记录</span>
                     </template>
                     <el-menu-item index="7-1" @click="navigateTo('/index/rizhijilu')">
-                        日志上传管理
+                        运维日志上传管理
                     </el-menu-item>
                 </el-submenu>
                 
                 <!-- 亲和性自动调整 -->
-                <el-submenu index="8">
+                <!-- <el-submenu index="8">
                     <template slot="title">
                         <i class="el-icon-setting"></i>
                         <span>亲和性自动调整</span>
@@ -1110,7 +1122,7 @@
                     <el-menu-item index="8-1" @click="navigateTo('/index/qinhexintiaozheng')">
                         自动迁移进程
                     </el-menu-item>
-                </el-submenu>
+                </el-submenu> -->
             </el-menu>
         </div>
         
@@ -2161,13 +2173,14 @@
                             <span class="ai-chat-close">×</span>
                         </div>
                         <div class="ai-chat-messages"></div>
-                        <div class="ai-quick-actions" style="padding: 10px; border-top: 1px solid #eee; background: #f8f9fa;">
+                        <div class="ai-quick-actions">
                             <div style="font-size: 12px; color: #666; margin-bottom: 5px;">快速操作：</div>
                             <div style="display: flex; flex-wrap: wrap; gap: 5px;">
                                 <button class="quick-btn" data-action="data-collection">数据采集</button>
                                 <button class="quick-btn" data-action="dashboard">大屏监控</button>
                                 <button class="quick-btn" data-action="data-center">数据中台</button>
                                 <button class="quick-btn" data-action="help">帮助</button>
+                                <button class="quick-btn clear-btn" data-action="clear-chat" style="background: #dc3545;">清空记录</button>
                             </div>
                         </div>
                         <div class="ai-chat-input">
@@ -2193,6 +2206,12 @@
                         .quick-btn:hover {
                             background: #5a6fd8;
                             transform: translateY(-1px);
+                        }
+                        .clear-btn {
+                            background: #dc3545 !important;
+                        }
+                        .clear-btn:hover {
+                            background: #c82333 !important;
                         }
                     `)
                     .appendTo('head');
@@ -2269,7 +2288,35 @@
             
             addMessage(text, sender) {
                 console.log('添加消息:', { text, sender });
+                
+                // 创建消息元素并确保样式正确
                 const messageDiv = $(`<div class="ai-message ${sender}">${text}</div>`);
+                
+                // 确保消息样式正确
+                messageDiv.css({
+                    'margin-bottom': '10px',
+                    'padding': '10px',
+                    'border-radius': '8px',
+                    'max-width': '80%',
+                    'word-wrap': 'break-word',
+                    'white-space': 'pre-wrap'
+                });
+                
+                // 根据发送者设置不同的样式
+                if (sender === 'user') {
+                    messageDiv.css({
+                        'background': '#007bff',
+                        'color': 'white',
+                        'margin-left': 'auto'
+                    });
+                } else {
+                    messageDiv.css({
+                        'background': 'white',
+                        'color': '#333',
+                        'margin-left': '0'
+                    });
+                }
+                
                 console.log('创建的消息元素:', messageDiv);
                 
                 const messagesContainer = this.chatWindow.find('.ai-chat-messages');
@@ -2342,6 +2389,10 @@
                     });
                     
                     if (!response.ok) {
+                        if (response.status === 404) {
+                            console.warn('豆包API接口未找到，使用本地回复');
+                            return this.getLocalResponse(userMessage);
+                        }
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
@@ -2496,6 +2547,32 @@
                         const recentMessages = this.messages.slice(-10);
                         recentMessages.forEach(msg => {
                             const messageDiv = $(`<div class="ai-message ${msg.sender}">${msg.text}</div>`);
+                            
+                            // 确保加载的消息样式正确
+                            messageDiv.css({
+                                'margin-bottom': '10px',
+                                'padding': '10px',
+                                'border-radius': '8px',
+                                'max-width': '80%',
+                                'word-wrap': 'break-word',
+                                'white-space': 'pre-wrap'
+                            });
+                            
+                            // 根据发送者设置不同的样式
+                            if (msg.sender === 'user') {
+                                messageDiv.css({
+                                    'background': '#007bff',
+                                    'color': 'white',
+                                    'margin-left': 'auto'
+                                });
+                            } else {
+                                messageDiv.css({
+                                    'background': 'white',
+                                    'color': '#333',
+                                    'margin-left': '0'
+                                });
+                            }
+                            
                             this.chatWindow.find('.ai-chat-messages').append(messageDiv);
                         });
                         console.log('已加载', recentMessages.length, '条消息');
@@ -2522,6 +2599,59 @@
                     case 'help':
                         this.addMessage('我是您的AI小助手！我可以帮您：1. 解答系统监控相关问题 2. 指导数据采集操作 3. 解释各种功能用法 4. 提供技术支持。', 'assistant');
                         break;
+                    case 'clear-chat':
+                        this.clearChatHistory();
+                        break;
+                }
+            },
+            
+            clearChatHistory() {
+                // 显示确认对话框
+                if (confirm('确定要清空所有聊天记录吗？此操作不可恢复。')) {
+                    // 清空消息数组
+                    this.messages = [];
+                    
+                    // 清空显示的消息，但保持容器结构
+                    const messagesContainer = this.chatWindow.find('.ai-chat-messages');
+                    messagesContainer.empty();
+                    
+                                        // 重置容器样式，保持固定高度
+                    messagesContainer.css({
+                        'flex': '1',
+                        'padding': '15px',
+                        'overflow-y': 'auto',
+                        'background': '#f8f9fa',
+                        'height': '400px',
+                        'flex-shrink': '0'
+                    });
+                    
+                    // 强制重新计算布局
+                    messagesContainer.hide().show(0);
+                    
+                    // 清空本地存储
+                    localStorage.removeItem('aiChatMessages');
+                    
+                    // 显示清空成功消息
+                    this.addMessage('聊天记录已清空！', 'assistant');
+                    
+                    // 显示欢迎消息
+                    setTimeout(() => {
+                        this.addMessage('您好！我是您的AI小助手 🤖 有什么可以帮助您的吗？', 'assistant');
+                        
+                        // 确保容器样式正确
+                        setTimeout(() => {
+                            messagesContainer.css({
+                                'flex': '1',
+                                'padding': '15px',
+                                'overflow-y': 'auto',
+                                'background': '#f8f9fa',
+                                'height': '400px',
+                                'flex-shrink': '0'
+                            });
+                        }, 100);
+                    }, 1000);
+                    
+                    console.log('聊天记录已清空');
                 }
             }
         };
@@ -2897,9 +3027,9 @@
                         this.breadcrumbPath = ['首页', '亲和性自动调整', '自动迁移进程'];
                         this.activeMenuIndex = '8-1';
                     } else if (path.includes('shezhitiaoyoucelue')) {
-                        this.currentPageTitle = 'AI一键调优';
+                        this.currentPageTitle = 'AI';
                         this.currentPage = 'visualization';
-                        this.breadcrumbPath = ['首页', '调优可视化', 'AI一键调优'];
+                        this.breadcrumbPath = ['首页', '调优可视化', 'AI一键诊断'];
                         this.activeMenuIndex = '5-3';
                     } else if (path === '/index/' || path === '/') {
                         this.currentPageTitle = '服务器信息管理';
@@ -3117,10 +3247,15 @@
         function requestOneModel(name, type, values, numberRange = "1-50") {
             var url = "/api/" + name + "/" + type + "/" + numberRange + "/" + "oneModel";
             console.log("requestOneModel called with:", {name, type, values, numberRange, url});
+            
+            // 如果values是对象，转换为JSON字符串
+            var dataToSend = typeof values === 'object' ? JSON.stringify(values) : values;
+            console.log("发送的数据:", dataToSend);
+            
             $.ajax({
                 url: url,
                 method: "POST",
-                data: values,
+                data: dataToSend,
                 timeout: 5000,
                 contentType: "application/json",
                 success: function (response) {

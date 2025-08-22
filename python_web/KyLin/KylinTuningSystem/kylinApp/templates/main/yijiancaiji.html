@@ -142,6 +142,18 @@ var dataTimer = null;
         box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
         transform: translateY(-1px);
     }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #000;
+        border: 1px solid #ffc107;
+    }
+    
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #e0a800, #d39e00);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+        transform: translateY(-1px);
+    }
 
     /* 禁用状态 */
     .btn:disabled {
@@ -464,9 +476,9 @@ var dataTimer = null;
             <div class="custom-select ip-select">
                 <div class="select-selected ip-selected">选择IP</div>
                 <div class="select-items ip-items" id="ipSelect" style="display: none;">
-                    <div data-value="102.168.46.50">麒麟服务器1 (102.168.46.50)</div>
-                    <div data-value="192.168.1.100">测试服务器2 (192.168.1.100)</div>
-                    <div data-value="10.0.0.50">本地服务器3 (10.0.0.50)</div>
+                    <div data-value="192.168.46.50">麒麟服务器1 (192.168.46.50)</div>
+                    <div data-value="192.168.46.101">欧拉服务器 (192.168.46.101)</div>
+                    <div data-value="12.12.12.12">测试服务器3 (12.12.12.12)</div>
                 </div>
             </div>
         </div>
@@ -504,6 +516,9 @@ var dataTimer = null;
             </button>
             <button class="btn btn-danger" id="forceStopBtn" style="margin-left: 10px; background-color: #dc3545;">
                 <i class="fa fa-power-off"></i> 强制停止所有
+            </button>
+            <button class="btn btn-warning" id="clearStateBtn" style="margin-left: 10px; background-color: #ffc107; color: #000;">
+                <i class="fa fa-refresh"></i> 重置状态
             </button>
 
 
@@ -1945,3 +1960,127 @@ function checkAndTriggerAlerts(data) {
                 '磁盘使用率超过设定阈值',
                 `${data.disk.disk_percent}%`,
                 `阈值: ${diskThreshold}%`
+            );
+        } else {
+            console.error('monitorManager不可用，无法添加告警');
+        }
+    }
+    
+    // 检查网络阈值
+    if (netThreshold > 0 && data.network && data.network.net_speed > netThreshold) {
+        console.log(`网络告警: ${data.network.net_speed}Mbps > ${netThreshold}Mbps`);
+        playAlertSound();
+        if (window.monitorManager) {
+            console.log('添加网络告警到monitorManager');
+            window.monitorManager.addAlert(
+                '网络告警',
+                '网络速率超过设定阈值',
+                `${data.network.net_speed}Mbps`,
+                `阈值: ${netThreshold}Mbps`
+            );
+        } else {
+            console.error('monitorManager不可用，无法添加告警');
+        }
+    }
+}
+
+// 页面初始化
+$(document).ready(function() {
+    // 绑定按钮事件
+    $("#clearStateBtn").click(function() {
+        clearTaskState();
+        alert("状态已重置，开始采集按钮现在应该可用了");
+    });
+    
+    $("#forceStopBtn").click(function() {
+        forceStopAllTasks();
+    });
+    
+    $("#startBtn").click(function() {
+        startBackgroundCollection();
+    });
+    
+    $("#overBtn").click(function() {
+        stopBackgroundCollection();
+    });
+    
+    $("#cleanupBtn").click(function() {
+        if (confirm("确定要清理所有任务吗？")) {
+            if (currentTaskId) {
+                $.ajax({
+                    url: '/api/background_collection/',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        action: 'cleanup',
+                        task_id: currentTaskId
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            alert("任务清理成功");
+                            clearTaskState();
+                        } else {
+                            alert("任务清理失败：" + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert("清理任务失败：" + error);
+                    }
+                });
+            } else {
+                alert("没有活动的任务需要清理");
+            }
+        }
+    });
+    
+    console.log('=== 页面初始化开始 ===');
+    
+    // 确保按钮初始状态正确
+    $("#startBtn").prop("disabled", false);
+    $("#overBtn").prop("disabled", true);
+    
+    // 清除可能的问题状态
+    if (localStorage.getItem('collectionTaskState')) {
+        console.log('发现保存的任务状态，尝试恢复...');
+        restoreTaskState();
+    } else {
+        console.log('没有保存的任务状态，使用默认状态');
+        // 确保UI状态正确
+        $("#taskStatus").removeClass('running starting error stopping').addClass('stopped');
+        $("#statusText").text("未启动");
+        $("#startBtn").prop("disabled", false);
+        $("#overBtn").prop("disabled", true);
+    }
+    
+    // 加载IP地址列表
+    requestTwoModel("cpu", "get_ipadress", "", function(data) {
+        console.log('IP地址加载成功:', data);
+        paddingIpSelectTag(data);
+    }, function(error) {
+        console.error('IP地址加载失败:', error);
+        showError('加载服务器列表失败');
+    });
+    
+    console.log('=== 页面初始化完成 ===');
+});
+
+// 清理任务状态（用于调试）
+function clearTaskState() {
+    console.log('清理任务状态...');
+    localStorage.removeItem('collectionTaskState');
+    localStorage.removeItem('isCollecting');
+    
+    // 重置状态变量
+    isCollecting = false;
+    currentTaskId = null;
+    
+    // 更新UI状态
+    $("#startBtn").prop("disabled", false);
+    $("#overBtn").prop("disabled", true);
+    $("#taskStatus").removeClass('running starting error stopping').addClass('stopped');
+    $("#statusText").text("未启动");
+    
+    console.log('任务状态已清理');
+}
+</script>
+{% endblock %}
