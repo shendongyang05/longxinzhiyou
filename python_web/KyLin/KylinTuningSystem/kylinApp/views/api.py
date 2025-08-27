@@ -800,14 +800,53 @@ def userManager(request, tp):
             logger.error(f"批量删除异常: {e}")
             return JsonResponse({"message": f"批量删除失败: {str(e)}"}, status=500)
     elif tp == "update":
-        old_value = json.loads(data.get("old", {}))
-        new_value = json.loads(data.get("new", {}))
-        new_user_name = new_value.get("username", "")
-        new_password = new_value.get("password", "")
-        encrypt_password = encrypt.encrypt_md5(new_password)
-        UserModels.objects.filter(username=new_user_name).update(password=encrypt_password)
+        try:
+            # 检查新的数据格式
+            if "username" in data and "userData" in data:
+                # 新格式：直接使用username和userData
+                username = data["username"]
+                new_data = data["userData"]
+                
+                # 查找用户
+                try:
+                    user = UserModels.objects.get(username=username)
+                    
+                    # 更新用户信息
+                    if "email" in new_data:
+                        user.email = new_data["email"]
+                    if "gender" in new_data:
+                        user.gender = new_data["gender"]
+                    if "userType" in new_data:
+                        user.userType = new_data["userType"]
+                    if "status" in new_data:
+                        user.status = new_data["status"]
+                    if "password" in new_data and new_data["password"]:
+                        encrypt_password = encrypt.encrypt_md5(new_data["password"])
+                        user.password = encrypt_password
+                    
+                    user.save()
+                    return JsonResponse({"message": "success"}, status=200)
+                except UserModels.DoesNotExist:
+                    return JsonResponse({"message": "用户不存在"}, status=400)
+            else:
+                # 旧格式：使用old和new
+                old_value = data.get("old", {})
+                new_value = data.get("new", {})
+                
+                # 如果old和new是字符串，则解析它们
+                if isinstance(old_value, str):
+                    old_value = json.loads(old_value)
+                if isinstance(new_value, str):
+                    new_value = json.loads(new_value)
+                
+                new_user_name = new_value.get("username", "")
+                new_password = new_value.get("password", "")
+                encrypt_password = encrypt.encrypt_md5(new_password)
+                UserModels.objects.filter(username=new_user_name).update(password=encrypt_password)
 
-        return JsonResponse({"message": "success"}, status=200)
+                return JsonResponse({"message": "success"}, status=200)
+        except Exception as e:
+            return JsonResponse({"message": f"更新失败: {str(e)}"}, status=500)
     return HttpResponse("地址请求成功")
 
 def realtime_update_pid_data(request):

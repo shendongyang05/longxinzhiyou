@@ -1042,77 +1042,78 @@ def create_thread(target_function, args=()):
 #print(send_command('set_cpu_affinity',"10.21.17.40",7788,326719,cpu_id=2))
 #print(send_command('get_cpuhe',"10.21.17.40",7788,326719))
 print(send_command('slove_auditd',"192.168.122.128",7788))
+
 #导入必要的库
+import torch
+import torch.nn as nn
+import torch.optim as optim
 import numpy as np
-import tensorflow as tf
 import random
-from collections import deque
-import time
-#深度强化学习调度器
-class SimpleDRLScheduler:
+import gym
+import matplotlib.pyplot as plt
+
 #创建深度强化学习类
+class simpleDRLScheduler:
+
 #初始化simpleDRLScheduler类
-    def __init__(self, machines_count, max_tasks):
-        self.machines_count = machines_count
-        self.max_tasks = max_tasks
-        self.actor = self._build_simple_actor()
-        self.critic = self._build_simple_critic()
-        self.state_size = 10
-        self.action_size = 10
-        self.memory = deque(maxlen=2000)
-        self.gamma = 0.95
-        self.epsilon = 1.0
-        self.epsilon_decay = 0.995
-        self.epsilon_min = 0.01
-        self.learning_rate = 0.001
+    def __init__(self, state_dim, action_dim, hidden_dim, learning_rate, gamma, tau, device):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.hidden_dim = hidden_dim
+        self.learning_rate = learning_rate
+        self.gamma = gamma
+        self.tau = tau
+        self.device = device
+
 #构建Actor网络
-    def _build_simple_actor(self):
-        model = tf.keras.Sequential([
-            tf.keras.layers.Dense(64, activation='relu', input_shape=(self.state_size,)),
-            tf.keras.layers.Dense(32, activation='relu'),
-            tf.keras.layers.Dense(self.action_size, activation='softmax')
-        ])
-        return model
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim),
+            nn.Tanh()
+        )
+
 #构建Critic网络
-    def _build_simple_critic(self):
-        model = tf.keras.Sequential([
-            tf.keras.layers.Dense(64, activation='relu', input_shape=(self.state_size,)),
-            tf.keras.layers.Dense(32, activation='relu'),
-            tf.keras.layers.Dense(1)
-        ])
-        return model
-#构建当前环境的状态向量
-    def get_state(self, machines, waiting_tasks):
-        state = []
-        for machine in machines:
-            state.append(machine.cpu_usage)
-            state.append(machine.memory_usage)
-            state.append(machine.disk_usage)
-        for task in waiting_tasks:
-            state.append(task.cpu_demand)
-            state.append(task.memory_demand)
-            state.append(task.disk_demand)
-        return np.array(state)
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
 
-#根据当前环境的状态向量选择动作
+#根据当前状态选择动作
     def select_action(self, state):
-        if np.random.rand() <= self.epsilon:
-            return np.random.randint(self.action_size)
-        actions = self.actor.predict(state.reshape(1, -1))
-        return np.argmax(actions)
-
-
+        state = torch.FloatTensor(state).to(self.device)
+        action = self.actor(state)
+        return action.detach().cpu().numpy()
 #将经验储存在经验回放缓冲区
-    def remember(self, state, action, reward, next_state, done):
+    def store_experience(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
-#从经验回放缓冲区中采样并训练网络
-    def replay(self):
-        if len(self.memory) < 20:
+#从经验回放缓冲区中采用并训练网络
+    def train(self, batch_size):
+        if len(self.memory) < batch_size:
             return
-        minibatch = random.sample(self.memory, 20)
-        for state, action, reward, next_state, done in minibatch:
-            target = reward
-            if not done:
-                target = reward + self.gamma * np.max(self.critic.predict(next_state.reshape(1, -1)))   
-
+        batch = random.sample(self.memory, batch_size)
+        state, action, reward, next_state, done = zip(*batch)
+        state = torch.FloatTensor(np.array(state)).to(self.device)
+    def calculate_reward(self, machines, task, assigned_machine):
+        """计算调度决策的奖励"""
+        # 资源利用率奖励
+        cpu_utilization = assigned_machine.cpu_usage + task.cpu_demand
+        memory_utilization = assigned_machine.memory_usage + task.memory_demand
+        
+        # 负载均衡奖励
+        load_balance_penalty = 0
+        for machine in machines:
+            if machine != assigned_machine:
+                load_diff = abs(cpu_utilization - machine.cpu_usage)
+                load_balance_penalty += load_diff
+        
+        # 资源约束惩罚
+        constraint_penalty = 0
+        if cpu_utilization > 1.0 or memory_utilization > 1.0:
+            constraint_penalty = -100
+        
+        # 综合奖励
+        reward = (cpu_utilization + memory_utilization) * 0.5 - load_balance_penalty * 0.1 + constraint_penalty
+        return reward

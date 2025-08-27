@@ -12,7 +12,7 @@ def index(request):
     return render(request, "main/JianKongXinXiFuWuGuanLi.html")
 
 
-def jiankongshujukuxinxiguanli(request):
+def Monitor_database(request):
     # 监控数据库信息管理
     return render(request, "main/JianKongShuJuKuXinXiGuanLi.html")
 
@@ -155,9 +155,9 @@ def tiaoyouqianhouduibi(request):
     return render(request, "main/TiaoYouQianHouDuiBi.html")
 
 
-def shujuzhongtai(request):
+def  shujuzhongtai(request):
     # 数据中台
-    return render(request, "main/ShuJuZhongTai.html")
+    return render(request, "main/Zhanshiguanjianshuju.html")
 
 def datadashboard(request):
     # 大屏监控

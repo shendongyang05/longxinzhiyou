@@ -404,18 +404,49 @@
 <script>
   // 磁盘性能数据查询函数
   function requestThreeModel(name, startTime, endTime, numberRange, ipValue) {
+    // 参数验证
+    if (!startTime || !endTime) {
+      console.warn("日期参数不完整，跳过查询")
+      return
+    }
+    
     var url = "/api/" + name + "/" + startTime + "/" + endTime + "/" + numberRange + "/" + ipValue + "/threeModel";
+    console.log("查询URL:", url)
+    console.log("查询参数:", {name, startTime, endTime, numberRange, ipValue})
+    
     $.ajax({
       url: url,
       method: "GET",
-      timeout: 10000,
+      timeout: 15000, // 增加超时时间
       success: function(response) {
         console.log("数据查询成功:", response);
-        paddingContentThree(response);
+        if (response && (response.all_data || response.data)) {
+          paddingContentThree(response);
+        } else {
+          console.warn("查询成功但数据为空:", response);
+          paddingContentThree({all_data: []}); // 显示空数据状态
+        }
       },
       error: function(xhr, status, error) {
-        console.error("数据查询失败:", error);
-        alert("数据查询失败，请检查网络连接或稍后重试");
+        console.error("数据查询失败:", {xhr, status, error});
+        
+        // 根据错误类型提供更友好的提示
+        var errorMessage = "数据查询失败";
+        if (status === "timeout") {
+          errorMessage = "查询超时，请稍后重试";
+        } else if (xhr.status === 404) {
+          errorMessage = "接口不存在，请联系管理员";
+        } else if (xhr.status === 500) {
+          errorMessage = "服务器内部错误，请稍后重试";
+        } else if (xhr.status === 0) {
+          errorMessage = "网络连接失败，请检查网络设置";
+        }
+        
+        // 使用更友好的提示方式，而不是alert
+        showErrorMessage(errorMessage);
+        
+        // 显示空数据状态
+        paddingContentThree({all_data: []});
       }
     });
   }
@@ -434,12 +465,6 @@
           "<td>" + (item.usedSpace || '-') + "</td>" +
           "<td>" + (item.availableSpace || '-') + "</td>" +
           "<td>" + (item.usagePercentage || '-') + "</td>" +
-          "<td>" + (item.readCount || '-') + "</td>" +
-          "<td>" + (item.writeCount || '-') + "</td>" +
-          "<td>" + (item.readBytes || '-') + "</td>" +
-          "<td>" + (item.writeBytes || '-') + "</td>" +
-          "<td>" + (item.readTime || '-') + "</td>" +
-          "<td>" + (item.writeTime || '-') + "</td>" +
           "<td>" + (item.currentTime || '-') + "</td>" +
           "</tr>";
         tbody.append(row);
@@ -448,19 +473,47 @@
       // 更新图表
       updateDiskChart(data.all_data);
     } else {
-      tbody.append('<tr><td colspan="13" style="text-align: center;">暂无数据</td></tr>');
+      tbody.append('<tr><td colspan="7" style="text-align: center;">暂无数据</td></tr>');
     }
   }
 
   // 更新磁盘性能图表
   function updateDiskChart(data) {
     var chartDom = document.getElementById('echartsMain');
+    if (!chartDom) {
+      console.warn("图表容器不存在");
+      return;
+    }
+    
     var myChart = echarts.init(chartDom);
 
-    var times = data.map(item => item.currentTime);
+    // 检查数据是否有效
+    if (!data || data.length === 0) {
+      // 显示无数据状态
+      var option = {
+        title: {
+          text: '磁盘性能趋势',
+          subtext: '暂无数据',
+          left: 'center',
+          top: 'center'
+        },
+        graphic: {
+          type: 'text',
+          left: 'center',
+          top: '60%',
+          style: {
+            text: '请先查询数据',
+            fontSize: 16,
+            fill: '#999'
+          }
+        }
+      };
+      myChart.setOption(option);
+      return;
+    }
+
+    var times = data.map(item => item.currentTime || '未知时间');
     var usageData = data.map(item => parseFloat(item.usagePercentage) || 0);
-    var readData = data.map(item => parseFloat(item.readBytes) || 0);
-    var writeData = data.map(item => parseFloat(item.writeBytes) || 0);
 
     var option = {
       title: {
@@ -470,41 +523,36 @@
         trigger: 'axis'
       },
       legend: {
-        data: ['使用率(%)', '读取字节', '写入字节']
+        data: ['使用率(%)']
       },
       xAxis: {
         type: 'category',
         data: times
       },
-      yAxis: [
-        {
-          type: 'value',
-          name: '使用率(%)',
-          max: 100
-        },
-        {
-          type: 'value',
-          name: '字节数'
-        }
-      ],
+      yAxis: {
+        type: 'value',
+        name: '使用率(%)',
+        max: 100
+      },
       series: [
         {
           name: '使用率(%)',
           type: 'line',
-          yAxisIndex: 0,
-          data: usageData
-        },
-        {
-          name: '读取字节',
-          type: 'line',
-          yAxisIndex: 1,
-          data: readData
-        },
-        {
-          name: '写入字节',
-          type: 'line',
-          yAxisIndex: 1,
-          data: writeData
+          data: usageData,
+          smooth: true,
+          lineStyle: {
+            color: '#007bff'
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                {offset: 0, color: 'rgba(0,123,255,0.3)'},
+                {offset: 1, color: 'rgba(0,123,255,0.1)'}
+              ]
+            }
+          }
         }
       ]
     };
@@ -517,65 +565,92 @@
     var model = "get_ipadress"
     var values = ""
 
-    requestTwoModel(tp, model, values)
+    // 设置默认日期为今天
+    var today = new Date()
+    var todayStr = today.toISOString().split('T')[0]
+    
+    // 设置开始日期和结束日期为今天
+    $("#startDate").val(todayStr)
+    $("#endDate").val(todayStr)
+    
+    console.log("设置默认日期:", todayStr)
 
+    requestTwoModel(tp, model, values)
   }
   // 加载服务器IP地址列表
   function loadServerIpList() {
-    console.log("Loading server IP list...")
-    
-    // 显示加载状态
-    $(".ip-selected").text("加载中...").addClass("loading")
-    
-    $.ajax({
-      url: "/api/JianKongFuWuQi/select/1-1000/oneModel",
-      method: "POST",
-      data: "{}",
-      contentType: "application/json",
-      timeout: 10000,
-      success: function(response) {
-        console.log("Server IP list loaded:", response)
-        if (response && response.all_data && response.all_data.length > 0) {
-          populateIpSelect(response)
-        } else {
-          console.warn("No server data in response:", response)
-          // 尝试使用备用接口
-          loadBackupServerList()
+    return new Promise(function(resolve, reject) {
+      console.log("Loading server IP list...")
+      
+      // 显示加载状态
+      $(".ip-selected").text("加载中...").addClass("loading")
+      
+      $.ajax({
+        url: "/api/JianKongFuWuQi/select/1-1000/oneModel",
+        method: "POST",
+        data: "{}",
+        contentType: "application/json",
+        timeout: 10000,
+        success: function(response) {
+          console.log("Server IP list loaded:", response)
+          if (response && response.all_data && response.all_data.length > 0) {
+            populateIpSelect(response)
+            resolve(response)
+          } else {
+            console.warn("No server data in response:", response)
+            // 尝试使用备用接口
+            loadBackupServerList().then(resolve).catch(reject)
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Failed to load server IP list:", error)
+          console.error("Status:", status)
+          console.error("Response:", xhr.responseText)
+          
+          // 使用默认IP列表作为备用方案
+          populateIpSelect({
+            all_data: [
+              {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
+              {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
+              {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
+            ]
+          })
+          resolve() // 即使失败也resolve，避免阻塞页面
         }
-      },
-      error: function(xhr, status, error) {
-        console.error("Failed to load server IP list:", error)
-        console.error("Status:", status)
-        console.error("Response:", xhr.responseText)
-        
-        // 使用默认IP列表作为备用方案
-        populateIpSelect({
-          all_data: [
-            {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
-            {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
-            {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
-          ]
-        })
-      }
+      })
     })
   }
 
   // 备用服务器列表加载
   function loadBackupServerList() {
-    console.log("Trying backup server list...")
-    
-    // 尝试从其他接口获取数据
-    $.ajax({
-      url: "/api/FuWuXinXi/select/1-1000/oneModel",
-      method: "POST",
-      data: "{}",
-      contentType: "application/json",
-      timeout: 5000,
-      success: function(response) {
-        console.log("Backup server list loaded:", response)
-        if (response && response.all_data && response.all_data.length > 0) {
-          populateIpSelect(response)
-        } else {
+    return new Promise(function(resolve, reject) {
+      console.log("Trying backup server list...")
+      
+      // 尝试从其他接口获取数据
+      $.ajax({
+        url: "/api/FuWuXinXi/select/1-1000/oneModel",
+        method: "POST",
+        data: "{}",
+        contentType: "application/json",
+        timeout: 5000,
+        success: function(response) {
+          console.log("Backup server list loaded:", response)
+          if (response && response.all_data && response.all_data.length > 0) {
+            populateIpSelect(response)
+            resolve(response)
+          } else {
+            // 使用硬编码的默认列表
+            populateIpSelect({
+              all_data: [
+                {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
+                {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
+                {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
+              ]
+            })
+            resolve()
+          }
+        },
+        error: function() {
           // 使用硬编码的默认列表
           populateIpSelect({
             all_data: [
@@ -584,19 +659,53 @@
               {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
             ]
           })
+          resolve()
         }
-      },
-      error: function() {
-        // 使用硬编码的默认列表
-        populateIpSelect({
-          all_data: [
-            {ip: "192.168.1.100", port: "7788", remarks: "麒麟服务器1"},
-            {ip: "192.168.1.101", port: "7789", remarks: "欧拉服务器"},
-            {ip: "192.168.1.102", port: "7790", remarks: "测试服务器"}
-          ]
-        })
-      }
+      })
     })
+  }
+
+  // 显示友好的错误提示
+  function showErrorMessage(message) {
+    // 移除已存在的错误提示
+    $(".error-message").remove();
+    
+    var errorHtml = `
+      <div class="error-message" style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border: 1px solid #ff6b6b;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        z-index: 1000;
+        max-width: 400px;
+        text-align: center;
+      ">
+        <div style="color: #ff6b6b; font-size: 18px; margin-bottom: 10px;">⚠️ 提示</div>
+        <div style="color: #333; margin-bottom: 20px;">${message}</div>
+        <button onclick="$(this).closest('.error-message').remove()" style="
+          background: #007bff;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+        ">确定</button>
+      </div>
+    `;
+    
+    $("body").append(errorHtml);
+    
+    // 3秒后自动消失
+    setTimeout(function() {
+      $(".error-message").fadeOut(function() {
+        $(this).remove();
+      });
+    }, 3000);
   }
 
   // 填充IP选择下拉框
@@ -687,18 +796,31 @@
     // 初始化自定义下拉框
     initCustomSelects()
 
-    // 加载服务器IP地址列表
-    loadServerIpList()
+    // 加载服务器IP地址列表，等待完成后再进行初始数据查询
+    // 定义页面级别的name变量
+    var pageName = "cipanxinnengzhibiao"
+    
+    loadServerIpList().then(function() {
+      // 等待IP列表加载完成后再进行初始数据查询
+      setTimeout(function() {
+        // 获取表单数据
+        var ipValue = $("#ipSelect").val() || "no"
+        var sTime = $("#startDate").val()
+        var eTime = $("#endDate").val()
+        var numberRange = "1-1000"
 
-    // 获取表单数据
-    var ipValue = $("#ipSelect").val()
-    var sTime = $("#startDate").val()
-    var eTime = $("#endDate").val()
-    var numberRange = "1-1000"
-    var name = "cipanxinnengzhibiao"
-
-    //页面初始数值为今天的日期，范围1-50
-    requestThreeModel(name, sTime, eTime, numberRange, ipValue)
+        // 只有在有有效日期时才进行初始查询
+        if (sTime && eTime) {
+          console.log("进行初始数据查询:", {name: pageName, sTime, eTime, numberRange, ipValue})
+          requestThreeModel(pageName, sTime, eTime, numberRange, ipValue)
+        } else {
+          console.log("日期未设置，跳过初始数据查询")
+        }
+      }, 1000) // 等待1秒确保IP列表加载完成
+    }).catch(function(error) {
+      console.error("IP列表加载失败:", error)
+      // 即使IP列表加载失败，也不阻止页面正常显示
+    })
 
     $("#selectTwoModel").on("click", function () {
       var statusIndicator = $("#statusIndicator")
@@ -730,9 +852,9 @@
       statusIndicator.show()
       selectBtn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> 查询中...')
 
-      console.log("查询参数:", {name, sTime, eTime, pageRange, ipValue})
+      console.log("查询参数:", {name: pageName, sTime, eTime, pageRange, ipValue})
 
-      requestThreeModel(name, sTime, eTime, pageRange, ipValue)
+      requestThreeModel(pageName, sTime, eTime, pageRange, ipValue)
 
       // 恢复按钮状态
       setTimeout(function() {
@@ -749,8 +871,8 @@
       var ipText = $(".ip-selected").text()
       var ipValue = (ipText !== "选择IP" && ipText !== "") ? ipText.split(" ")[0] : "no"
 
-      console.log("页数变化查询:", {name, sTime, eTime, pageRange, ipValue})
-      requestThreeModel(name, sTime, eTime, pageRange, ipValue)
+      console.log("页数变化查询:", {name: pageName, sTime, eTime, pageRange, ipValue})
+      requestThreeModel(pageName, sTime, eTime, pageRange, ipValue)
     })
 
     // 导出数据功能

@@ -809,12 +809,8 @@
 
         // 返回功能
         function goBack() {
-            // 返回上一页或首页
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.location.href = '/index/shujuzhongtai';
-            }
+            // 直接返回到用户管理页面
+            window.location.href = '/index/user';
         }
 
         // 获取最新性能数据

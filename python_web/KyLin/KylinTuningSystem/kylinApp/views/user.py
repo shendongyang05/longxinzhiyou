@@ -23,8 +23,7 @@ def login_index(request):
             error_message = "密码长度不能少于6位"
             return render(request, "user/login.html", context={"message": error_message})
         
-        encrypt_pwd = encrypt.encrypt_md5(pwd)
-        
+        encrypt_pwd =pwd
         # 查询条件
         conditions = {
             "username": user,
@@ -38,7 +37,7 @@ def login_index(request):
         # 成功
         request.session["info"] = {"user": user, "password": encrypt_pwd}
         request.session.set_expiry(60 * 60 * 24 * 7)
-        return redirect("/index/usermanager")
+        return redirect("/index/dataMonitor")
 
     return render(request, "user/login.html")
 

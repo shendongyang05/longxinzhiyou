@@ -3,7 +3,7 @@ from django.conf import settings
 
 
 def encrypt_md5(encrypt_string: str):
-    salt = settings.SECRET_KEY
-    obj = md5(salt.encode("utf-8"))
+    # 使用纯MD5加密，不使用盐值，以匹配数据库中的密码格式
+    obj = md5()
     obj.update(encrypt_string.encode("utf-8"))
     return obj.hexdigest()

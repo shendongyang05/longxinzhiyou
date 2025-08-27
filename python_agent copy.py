@@ -1043,3 +1043,77 @@ def create_thread(target_function, args=()):
 #print(send_command('get_cpuhe',"10.21.17.40",7788,326719))
 print(send_command('slove_auditd',"192.168.122.128",7788))
 
+#导入必要的库
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+import random
+import gym
+import matplotlib.pyplot as plt
+
+#创建深度强化学习类
+class simpleDRLScheduler:
+
+#初始化simpleDRLScheduler类
+    def __init__(self, state_dim, action_dim, hidden_dim, learning_rate, gamma, tau, device):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.hidden_dim = hidden_dim
+        self.learning_rate = learning_rate
+        self.gamma = gamma
+        self.tau = tau
+        self.device = device
+
+#构建Actor网络
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim),
+            nn.Tanh()
+        )
+
+#构建Critic网络
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+
+#根据当前状态选择动作
+    def select_action(self, state):
+        state = torch.FloatTensor(state).to(self.device)
+        action = self.actor(state)
+        return action.detach().cpu().numpy()
+#将经验储存在经验回放缓冲区
+    def store_experience(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
+
+#从经验回放缓冲区中采用并训练网络
+    def train(self, batch_size):
+        if len(self.memory) < batch_size:
+            return
+        batch = random.sample(self.memory, batch_size)
+        state, action, reward, next_state, done = zip(*batch)
+        state = torch.FloatTensor(np.array(state)).to(self.device)
+    def calculate_reward(self, machines, task, assigned_machine):
+        """计算调度决策的奖励"""
+        # 资源利用率奖励
+        cpu_utilization = assigned_machine.cpu_usage + task.cpu_demand
+        memory_utilization = assigned_machine.memory_usage + task.memory_demand
+        
+        # 负载均衡奖励
+        load_balance_penalty = 0
+        for machine in machines:
+            if machine != assigned_machine:
+                load_diff = abs(cpu_utilization - machine.cpu_usage)
+                load_balance_penalty += load_diff
+        
+        # 资源约束惩罚
+        constraint_penalty = 0
+        if cpu_utilization > 1.0 or memory_utilization > 1.0:
+            constraint_penalty = -100
+        
+        # 综合奖励
+        reward = (cpu_utilization + memory_utilization) * 0.5 - load_balance_penalty * 0.1 + constraint_penalty
+        return reward

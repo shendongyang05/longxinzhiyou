@@ -408,6 +408,9 @@
             <button class="btn btn-reset" id="aiOptimizeBtn">
                 <i class="fa fa-magic"></i> AI一键诊断
             </button>
+            <button class="btn btn-reset" id="oneClickOptimizeBtn">
+                <i class="fa fa-rocket"></i> 一键调优
+            </button>
         </div>
     </div>
 
@@ -779,6 +782,34 @@
           }
         });
       });
+
+      // 一键调优按钮点击事件
+      $("#oneClickOptimizeBtn").on("click", function () {
+        if (confirm("确认要执行一键调优吗？此操作将自动优化系统性能。")) {
+          // 显示调优进度弹窗
+          var progressDialog = $('<div id="optimizeProgressDialog" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 9999; text-align: center; min-width: 300px;">' +
+            '<h3 style="margin-bottom: 20px; color: #333;">系统调优中</h3>' +
+            '<div style="margin-bottom: 20px;"><i class="fa fa-spinner fa-spin fa-2x" style="color: #007bff;"></i></div>' +
+            '<p style="color: #666; margin-bottom: 20px;">正在根据AI建议调优中，请稍候...</p>' +
+            '<button id="closeOptimizeDialog" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">关闭</button>' +
+            '</div>');
+          
+          $('body').append(progressDialog);
+          
+          // 关闭弹窗事件
+          $('#closeOptimizeDialog').on('click', function() {
+            $('#optimizeProgressDialog').remove();
+          });
+          
+          // 3秒后自动关闭弹窗
+          setTimeout(function() {
+            if ($('#optimizeProgressDialog').length > 0) {
+              $('#optimizeProgressDialog').remove();
+            }
+          }, 3000);
+        }
+      });
+
       // 设置IP选择框
       setupDropdown("ip-selected", "ip-items");
 

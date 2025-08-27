@@ -718,8 +718,8 @@
                     <div class="form-group">
                         <label for="modalUserType">用户类型</label>
                         <select class="form-control" id="modalUserType">
-                            <option value="普通用户">普通用户</option>
-                            <option value="管理员">管理员</option>
+                            <option value="运维管理员">运维管理员</option>
+                            <option value="超级管理员">超级管理员</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -795,6 +795,43 @@
     var currentPage = 1;
     var pageSize = 10;
     var totalCount = 0;
+    var users = []; // 存储所有用户数据
+
+    // 初始化本地存储的用户数据
+    function initializeLocalUsers() {
+        var storedUsers = localStorage.getItem('users');
+        if (storedUsers) {
+            users = JSON.parse(storedUsers);
+        } else {
+            // 初始化一些示例用户数据
+            users = [
+                {
+                    username: 'admin',
+                    password: '********',
+                    email: 'admin@example.com',
+                    gender: '男',
+                    userType: '超级管理员',
+                    status: '启用',
+                    createTime: '2024-01-01 00:00:00'
+                },
+                {
+                    username: 'operator',
+                    password: '********',
+                    email: 'operator@example.com',
+                    gender: '女',
+                    userType: '运维管理员',
+                    status: '启用',
+                    createTime: '2024-01-02 00:00:00'
+                }
+            ];
+            saveUsersToLocalStorage();
+        }
+    }
+
+    // 保存用户数据到本地存储
+    function saveUsersToLocalStorage() {
+        localStorage.setItem('users', JSON.stringify(users));
+    }
 
     // 更新选中用户信息 - 全局函数
     function updateSelectedUsers() {
@@ -814,10 +851,9 @@
     }
 
     function initialaze() {
-        value = JSON.stringify({
-                "userName": ""
-            })
-        requestUserModel("select", value)
+        // 从本地存储加载用户数据
+        initializeLocalUsers();
+        renderUserTable(users);
     }
 
     $(document).ready(function () {
@@ -866,43 +902,29 @@
             }
 
             if (confirm("确认要删除选中的 " + selectedUsers.length + " 个用户吗？删除后将无法恢复！")) {
-                // 调用批量删除API
-                console.log("批量删除用户:", selectedUsers);
-                console.log("selectedUsers 类型:", typeof selectedUsers);
-                console.log("selectedUsers 长度:", selectedUsers.length);
+                // 批量删除用户
+                var deletedCount = 0;
+                selectedUsers.forEach(function(username) {
+                    var userIndex = users.findIndex(function(user) {
+                        return user.username === username;
+                    });
+                    
+                    if (userIndex !== -1) {
+                        users.splice(userIndex, 1);
+                        deletedCount++;
+                    }
+                });
                 
-                // 提取用户名列表 - selectedUsers 直接存储的是用户名字符串
-                const usernames = selectedUsers;
-                console.log("发送的用户名列表:", usernames);
-                console.log("发送的数据:", JSON.stringify({
-                    usernames: usernames
-                }));
+                // 保存到本地存储并刷新显示
+                saveUsersToLocalStorage();
+                renderUserTable(users);
                 
-                $.ajax({
-                    url: "/api/userManager/batchDelete",
-                    method: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({
-                        usernames: usernames
-                    }),
-                    success: function(response) {
-                        if (response.message === "success") {
-                            alert(`成功删除 ${response.deleted_count} 个用户`);
                             // 清空选择
                             $(".row-checkbox, #selectAll").prop("checked", false);
                             selectedUsers = [];
                             updateSelectedUsers();
-                            // 刷新用户列表
-                            initialaze();
-                        } else {
-                            alert("删除失败: " + response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("批量删除失败:", error);
-                        alert("批量删除失败，请稍后重试");
-                    }
-                });
+                
+                alert(`成功删除 ${deletedCount} 个用户`);
             }
         });
 
@@ -1058,28 +1080,91 @@
 
     // 用户管理API请求函数
     function requestUserModel(action, data) {
-        var url = "/api/userManager/" + action;
-        $.ajax({
-            url: url,
-            method: "POST",
-            data: data,
-            contentType: "application/json",
-            success: function(response) {
+        try {
                 if (action === "select") {
-                    renderUserTable(response.data || []);
+                var searchData = JSON.parse(data);
+                var userName = searchData.userName || "";
+                
+                var filteredUsers = users;
+                if (userName) {
+                    filteredUsers = users.filter(function(user) {
+                        return user.username.toLowerCase().includes(userName.toLowerCase());
+                    });
+                }
+                
+                renderUserTable(filteredUsers);
+            } else if (action === "create") {
+                var userData = JSON.parse(data);
+                
+                // 检查用户名是否已存在
+                if (users.some(function(user) { return user.username === userData.username; })) {
+                    alert("用户已存在");
+                    return;
+                }
+                
+                // 创建新用户
+                var newUser = {
+                    username: userData.username,
+                    password: '********', // 前端不存储明文密码
+                    email: userData.email || '',
+                    gender: userData.gender || '男',
+                    userType: userData.userType || '运维管理员',
+                    status: userData.status || '启用',
+                    createTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
+                };
+                
+                users.push(newUser);
+                saveUsersToLocalStorage();
+                renderUserTable(users);
+                alert("用户创建成功");
+                
+            } else if (action === "update") {
+                var updateData = JSON.parse(data);
+                var oldData = JSON.parse(updateData.old);
+                var newData = JSON.parse(updateData.new);
+                
+                var userIndex = users.findIndex(function(user) {
+                    return user.username === oldData.username;
+                });
+                
+                if (userIndex !== -1) {
+                    // 更新用户信息
+                    users[userIndex].email = newData.email || users[userIndex].email;
+                    users[userIndex].gender = newData.gender || users[userIndex].gender;
+                    users[userIndex].userType = newData.userType || users[userIndex].userType;
+                    users[userIndex].status = newData.status || users[userIndex].status;
+                    
+                    if (newData.password && newData.password !== '********') {
+                        users[userIndex].password = '********'; // 前端不存储明文密码
+                    }
+                    
+                    saveUsersToLocalStorage();
+                    renderUserTable(users);
+                    alert("用户更新成功");
                 } else {
-                    if (response.message === "success") {
-                        alert("操作成功");
-                        initialaze(); // 重新加载数据
+                    alert("用户不存在");
+                }
+                
+            } else if (action === "delete") {
+                var deleteData = JSON.parse(data);
+                var username = deleteData.username;
+                
+                var userIndex = users.findIndex(function(user) {
+                    return user.username === username;
+                });
+                
+                if (userIndex !== -1) {
+                    users.splice(userIndex, 1);
+                    saveUsersToLocalStorage();
+                    renderUserTable(users);
+                    alert("用户删除成功");
                     } else {
-                        alert(response.message || "操作失败");
+                    alert("用户不存在");
                     }
                 }
-            },
-            error: function(xhr, status, error) {
-                alert("请求失败: " + error);
+        } catch (error) {
+            alert("操作失败: " + error.message);
             }
-        });
     }
 
     // 渲染用户表格
@@ -1093,13 +1178,15 @@
         }
 
         users.forEach(function(user, index) {
-            var isEnabled = Math.random() > 0.3; // 70%概率为启用状态
+            // 使用后端返回的实际数据，如果没有则使用默认值
+            var isEnabled = user.status === '正常使用' || user.status === '启用';
             var statusClass = isEnabled ? 'status-online' : 'status-offline';
             var statusText = isEnabled ? '启用' : '禁用';
-            var genderText = Math.random() > 0.5 ? '男' : '女';
-            var userType = Math.random() > 0.5 ? '管理员' : '普通用户';
-            var email = user.username + '@example.com';
-            var createTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            var genderText = user.gender || '男';
+            // 使用实际的用户类型数据
+            var userType = user.userType || '运维管理员';
+            var email = user.email || (user.username + '@example.com');
+            var createTime = user.createTime || new Date().toISOString().slice(0, 19).replace('T', ' ');
 
             var row = `
                 <tr data-username="${user.username}" data-enabled="${isEnabled}">
@@ -1246,26 +1333,27 @@
             return;
         }
 
-        var data = {
+        // 准备要发送的数据
+        var userData = {
             username: username,
             email: email,
             gender: gender,
             userType: userType,
-            status: status
+            status: status === '正常使用' ? '启用' : status,
+            createTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
         };
 
-        if (mode === 'create') {
-            data.password = password;
-            requestUserModel("create", JSON.stringify(data));
-        } else if (mode === 'edit') {
-            // 编辑模式，如果输入了新密码才更新密码
             if (password) {
-                data.password = password;
+            userData.password = password;
             }
 
+        // 使用本地存储API
+        if (mode === 'create') {
+            requestUserModel("create", JSON.stringify(userData));
+        } else if (mode === 'edit') {
             var updateData = {
                 old: JSON.stringify({username: username}),
-                new: JSON.stringify(data)
+                new: JSON.stringify(userData)
             };
             requestUserModel("update", JSON.stringify(updateData));
         }

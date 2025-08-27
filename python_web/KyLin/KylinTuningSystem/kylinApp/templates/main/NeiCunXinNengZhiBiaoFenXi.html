@@ -690,7 +690,8 @@
     // 加载服务器IP地址列表
     loadServerIpList()
 
-    var name = "neicunxinnengzhibiao"
+    // 定义页面级别的name变量
+    var pageName = "neicunxinnengzhibiao"
     var numberRange = "1-50"
 
     // 设置默认日期
@@ -703,7 +704,7 @@
     var ipvalue = "no"
 
     //页面初始数值为今天的日期，范围1-50
-    requestThreeModel(name, sTime, eTime, numberRange, ipvalue)
+    requestThreeModel(pageName, sTime, eTime, numberRange, ipvalue)
 
     $("#selectTwoModel").on("click", function () {
       var statusIndicator = $("#statusIndicator")
@@ -735,9 +736,9 @@
       statusIndicator.show()
       selectBtn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> 查询中...')
 
-      console.log("查询参数:", {name, sTime, eTime, pageRange, ipValue})
+      console.log("查询参数:", {name: pageName, sTime, eTime, pageRange, ipValue})
 
-      requestThreeModel(name, sTime, eTime, pageRange, ipValue)
+      requestThreeModel(pageName, sTime, eTime, pageRange, ipValue)
 
       // 恢复按钮状态
       setTimeout(function() {
@@ -754,8 +755,8 @@
       var ipText = $(".ip-selected").text()
       var ipValue = (ipText !== "选择IP" && ipText !== "") ? ipText.split(" ")[0] : "no"
 
-      console.log("页数变化查询:", {name, sTime, eTime, pageRange, ipValue})
-      requestThreeModel(name, sTime, eTime, pageRange, ipValue)
+      console.log("页数变化查询:", {name: pageName, sTime, eTime, pageRange, ipValue})
+      requestThreeModel(pageName, sTime, eTime, pageRange, ipValue)
     })
 
     // 导出数据功能

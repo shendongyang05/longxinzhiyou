@@ -17,48 +17,43 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.shortcuts import redirect
 from kylinApp.views import view, user, api
 from kylinApp.views import ai_api
 from kylinApp.views import swagger
 
 urlpatterns = [
+    # 默认页面重定向
+    path('', lambda request: redirect('/index/dataMonitor')),
+    path('index/', lambda request: redirect('/index/dataMonitor')),
+    
     # 配置管理
     # path('admin/', admin.site.urls),
-    path("", view.yonghuguanli),
     # 用户管理
-    path("index/usermanager", view.yonghuguanli),
-    path('index/', view.index),
-    path('index/jiankongshujukuxinxiguanli', view.jiankongshujukuxinxiguanli),
-    path('index/fuwuxinxiguanli', view.fuwuxinxiguanli),
+    path("index/user", view.yonghuguanli),
+    path('index/server', view.index),
+    path('index/middleware', view.fuwuxinxiguanli),
     # 数据采集
-    path('index/caijicpuxinnengzhibiao', view.caijicpuxinnengzhibiao),
-    path('index/caijineicunxinnengzhibiao', view.caijineicunxinnengzhibiao),
-    path('index/caijicipanxinnengzhibiao', view.caijicipanxinnengzhibiao),
-    path('index/caijiwangluoxinnengzhibiao', view.caijiwangluoxinnengzhibiao),
-    path('index/caijiqitaxinxi', view.caijiqitaxinxi),
-    path('index/yijiancaiji', view.yijiancaiji),
+    path('index/cpuCollect', view.caijicpuxinnengzhibiao),
+    path('index/memoryCollect', view.caijineicunxinnengzhibiao),
+    path('index/diskCollect', view.caijicipanxinnengzhibiao),
+    path('index/netCollect', view.caijiwangluoxinnengzhibiao),
+    path('index/softHardCollect', view.caijiqitaxinxi),
+    path('index/pollingCollect', view.yijiancaiji),
     # 分析采集数据
-    path('index/cpuxinnengzhibiaofenxi', view.cpuxinnengzhibiaofenxi),
-    path('index/neicunxinnengzhibiaofenxi', view.leicunxinnengzhibiaofenxi),
-    path('index/cipanxinnengzhibiaofenxi', view.cipanxinnengzhibiaofenxi),
-    path('index/wangluoxinnengzhibiaofenxi', view.wangluoxinnengzhibiaofenxi),
-    path('index/ziyuanliantiao', view.ziyuanliantiao),
-    path('index/ziyuanliantiaofenxi', view.ziyuanliantiaofenxi),
-    path('index/tiaoyouqianhouduibi', view.tiaoyouqianhouduibi),
-    path('index/shujuzhongtai', view.shujuzhongtai),
-    path('index/datadashboard', view.datadashboard),
-    path('index/test_threshold', view.test_threshold),
-    path('index/global_monitor_test', view.global_monitor_test),
-    path('index/alert_test', view.alert_test),
-    path('index/test_polling', view.test_polling),
-    path('index/debug_polling', view.debug_polling),
+    path('index/cpuAnalysis', view.cpuxinnengzhibiaofenxi),
+    path('index/memoryAnalysis', view.leicunxinnengzhibiaofenxi),
+    path('index/diskAnalysis', view.cipanxinnengzhibiaofenxi),
+    path('index/netAnalysis', view.wangluoxinnengzhibiaofenxi),
+    path('index/resourceAnalysis', view.ziyuanliantiaofenxi),
+    path('index/resourceAnalysis', view.tiaoyouqianhouduibi),
+    path('index/dataDashboard', view.shujuzhongtai),
+    path('index/dataMonitor', view.datadashboard),
 
-    # path('api/doubao_chat/', api.doubao_chat),
-    path('index/test_doubao', view.test_doubao),
-    
+
 
     # 调优可视化
-    path('index/zhanshiguanjianshuju', view.zhanshiguanjianshuju),
+    # path('index/dataDashboard', view.zhanshiguanjianshuju),
     path('index/shezhitiaoyoucelue', view.shezhitiaoyoucelue),
     # 场景实别
     path('index/shujukuchangjingshibie', view.shujukuchangjingshibie),
@@ -106,7 +101,7 @@ urlpatterns = [
     path('api/docs/', swagger.swagger_ui),
     
     # 日志记录相关路由
-    path('index/rizhijilu', view.rizhijilu),
+    path('index/log', view.rizhijilu),
     path('api/upload_log/', api.upload_log),
     path('api/get_logs/', api.get_logs),
     path('api/view_log/<int:log_id>/', api.view_log),

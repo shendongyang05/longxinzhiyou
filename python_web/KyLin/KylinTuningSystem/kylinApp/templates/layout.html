@@ -1007,7 +1007,7 @@
                         <i class="el-icon-user-solid"></i>
                         <span>用户管理</span>
                     </template>
-                    <el-menu-item index="1-1" @click="navigateTo('/index/usermanager')">
+                    <el-menu-item index="1-1" @click="navigateTo('/index/user')">
                         用户管理
                     </el-menu-item>
                 </el-submenu>
@@ -1018,11 +1018,10 @@
                         <i class="el-icon-s-data"></i>
                         <span>信息管理</span>
                     </template>
-                    <el-menu-item index="2-1" @click="navigateTo('/index/')">
+                    <el-menu-item index="2-1" @click="navigateTo('/index/server')">
                         服务器信息管理
                     </el-menu-item>
-
-                    <el-menu-item index="2-3" @click="navigateTo('/index/fuwuxinxiguanli')">
+                    <el-menu-item index="2-2" @click="navigateTo('/index/middleware')">
                         中间件信息管理
                     </el-menu-item>
                 </el-submenu>
@@ -1031,25 +1030,22 @@
                 <el-submenu index="3">
                     <template slot="title">
                         <i class="el-icon-download"></i>
-                        <span>数据采集优化</span>
+                        <span>采集调优</span>
                     </template>
-                    <el-menu-item index="3-1" @click="navigateTo('/index/caijicpuxinnengzhibiao')">
-                        CPU性能指标
+                    <el-menu-item index="3-1" @click="navigateTo('/index/cpuCollect')">
+                        CPU性能调优
                     </el-menu-item>
-                    <el-menu-item index="3-2" @click="navigateTo('/index/caijineicunxinnengzhibiao')">
-                        内存性能指标
+                    <el-menu-item index="3-2" @click="navigateTo('/index/memoryCollect')">
+                        内存性能调优
                     </el-menu-item>
-                    <el-menu-item index="3-3" @click="navigateTo('/index/caijicipanxinnengzhibiao')">
-                        磁盘性能指标
+                    <el-menu-item index="3-3" @click="navigateTo('/index/diskCollect')">
+                        磁盘性能调优
                     </el-menu-item>
-                    <el-menu-item index="3-4" @click="navigateTo('/index/caijiwangluoxinnengzhibiao')">
-                        网络性能指标
+                    <el-menu-item index="3-4" @click="navigateTo('/index/netCollect')">
+                        网络性能调优
                     </el-menu-item>
-                    <el-menu-item index="3-5" @click="navigateTo('/index/caijiqitaxinxi')">
-                        软硬件信息
-                    </el-menu-item>
-                    <el-menu-item index="3-6" @click="navigateTo('/index/yijiancaiji')">
-                        数据轮询采集
+                    <el-menu-item index="3-6" @click="navigateTo('/index/pollingCollect')">
+                        数据轮询
                     </el-menu-item>
                 </el-submenu>
                 
@@ -1057,39 +1053,41 @@
                 <el-submenu index="4">
                     <template slot="title">
                         <i class="el-icon-data-analysis"></i>
-                        <span>采集数据分析</span>
+                        <span>数据分析</span>
                     </template>
-                    <el-menu-item index="4-1" @click="navigateTo('/index/cpuxinnengzhibiaofenxi')">
+                    <el-menu-item index="4-1" @click="navigateTo('/index/cpuAnalysis')">
                         CPU性能指标分析
                     </el-menu-item>
-                    <el-menu-item index="4-2" @click="navigateTo('/index/neicunxinnengzhibiaofenxi')">
+                    <el-menu-item index="4-2" @click="navigateTo('/index/memoryAnalysis')">
                         内存性能指标分析
                     </el-menu-item>
-                    <el-menu-item index="4-3" @click="navigateTo('/index/cipanxinnengzhibiaofenxi')">
+                    <el-menu-item index="4-3" @click="navigateTo('/index/diskAnalysis')">
                         磁盘性能指标分析
                     </el-menu-item>
-                    <el-menu-item index="4-4" @click="navigateTo('/index/wangluoxinnengzhibiaofenxi')">
+                    <el-menu-item index="4-4" @click="navigateTo('/index/netAnalysis')">
                         网络性能指标分析
                     </el-menu-item>
-                    <el-menu-item index="4-5" @click="navigateTo('/index/ziyuanliantiaofenxi')">
+                    <el-menu-item index="4-5" @click="navigateTo('/index/resourceAnalysis')">
                         资源链条分析
+                    </el-menu-item>
+                    <el-menu-item index="4-6" @click="navigateTo('/index/dataDashboard')">
+                        数据中台
+                    </el-menu-item>
+                    <el-menu-item index="4-7" @click="navigateTo('/index/dataMonitor')">
+                        大屏监控
                     </el-menu-item>
                 </el-submenu>
                 
                 <!-- 调优可视化 -->
-                <el-submenu index="5">
+                <!-- <el-submenu index="5">
                     <template slot="title">
                         <i class="el-icon-view"></i>
                         <span>调优可视化</span>
                     </template>
-           <el-menu-item index="5-4" @click="navigateTo('/index/datadashboard')">
-               大屏监控
-           </el-menu-item>
-                    <el-menu-item index="5-2" @click="navigateTo('/index/zhanshiguanjianshuju')">
-                        关键数据展示
+                    <el-menu-item index="5-1" @click="navigateTo('/index/shezhitiaoyoucelue')">
+                        设置调优策略
                     </el-menu-item>
-
-                </el-submenu>
+                </el-submenu> -->
 
                 <!-- 数据统计及分析 -->
                 <el-submenu index="6">
@@ -1097,29 +1095,49 @@
                         <i class="el-icon-s-data"></i>
                         <span>数据统计及分析</span>
                     </template>
+                    <el-menu-item index="6-1" @click="navigateTo('/index/iozhanshujutonglifenxi')">
+                        IO栈数据统计及分析
+                    </el-menu-item>
                     <el-menu-item index="6-2" @click="navigateTo('/index/cpushujutongjifenxi')">
                         CPU数据统计及分析
                     </el-menu-item>
+                    <el-menu-item index="6-3" @click="navigateTo('/index/cephshujutongjifenxi')">
+                        Ceph数据统计及分析
+                    </el-menu-item>
                 </el-submenu>
                 
+                <!-- 场景识别 -->
+                <!-- <el-submenu index="7">
+                    <template slot="title">
+                        <i class="el-icon-s-operation"></i>
+                        <span>场景识别</span>
+                    </template>
+                    <el-menu-item index="7-1" @click="navigateTo('/index/shujukuchangjingshibie')">
+                        数据库场景识别
+                    </el-menu-item>
+                    <el-menu-item index="7-2" @click="navigateTo('/index/fenbushicunchushibie')">
+                        分布式存储识别
+                    </el-menu-item>
+                </el-submenu> -->
+                
                 <!-- 日志记录 -->
-                <el-submenu index="7">
+                <el-submenu index="8">
                     <template slot="title">
                         <i class="el-icon-document"></i>
-                        <span>运维日志记录</span>
+                        <span>运维日志管理</span>
                     </template>
-                    <el-menu-item index="7-1" @click="navigateTo('/index/rizhijilu')">
+                    <el-menu-item index="8-1" @click="navigateTo('/index/log')">
                         运维日志上传管理
                     </el-menu-item>
                 </el-submenu>
                 
                 <!-- 亲和性自动调整 -->
-                <!-- <el-submenu index="8">
+                <!-- <el-submenu index="9">
                     <template slot="title">
                         <i class="el-icon-setting"></i>
                         <span>亲和性自动调整</span>
                     </template>
-                    <el-menu-item index="8-1" @click="navigateTo('/index/qinhexintiaozheng')">
+                    <el-menu-item index="9-1" @click="navigateTo('/index/qinhexintiaozheng')">
                         自动迁移进程
                     </el-menu-item>
                 </el-submenu> -->
@@ -2701,63 +2719,65 @@
                     localStorage.setItem('targetUrl', url);
                     
                     // 保存当前激活的菜单项，以便在新页面加载后恢复
-                    // 信息管理
-                    if (url.includes('jiankongshujukuxinxiguanli')) {
-                        localStorage.setItem('activeMenuIndex', '2-2');
-                        localStorage.setItem('openSubmenu', '2');
-                    } else if (url.includes('fuwuxinxiguanli')) {
-                        localStorage.setItem('activeMenuIndex', '2-3');
-                        localStorage.setItem('openSubmenu', '2');
-                    } else if (url === '/index/') {
-                        localStorage.setItem('activeMenuIndex', '2-1');
-                        localStorage.setItem('openSubmenu', '2');
-                    } else if (url.includes('usermanager')) {
+                    // 用户管理
+                    if (url.includes('user')) {
                         localStorage.setItem('activeMenuIndex', '1-1');
                         localStorage.setItem('openSubmenu', '1');
                     } 
+                    // 信息管理
+                    else if (url.includes('server')) {
+                        localStorage.setItem('activeMenuIndex', '2-1');
+                        localStorage.setItem('openSubmenu', '2');
+                    } else if (url.includes('middleware')) {
+                        localStorage.setItem('activeMenuIndex', '2-2');
+                        localStorage.setItem('openSubmenu', '2');
+                    } 
                     // 数据采集
-                    else if (url.includes('caijicpuxinnengzhibiao')) {
+                    else if (url.includes('cpuCollect')) {
                         localStorage.setItem('activeMenuIndex', '3-1');
                         localStorage.setItem('openSubmenu', '3');
-                    } else if (url.includes('caijineicunxinnengzhibiao')) {
+                    } else if (url.includes('memoryCollect')) {
                         localStorage.setItem('activeMenuIndex', '3-2');
                         localStorage.setItem('openSubmenu', '3');
-                    } else if (url.includes('caijicipanxinnengzhibiao')) {
+                    } else if (url.includes('diskCollect')) {
                         localStorage.setItem('activeMenuIndex', '3-3');
                         localStorage.setItem('openSubmenu', '3');
-                    } else if (url.includes('caijiwangluoxinnengzhibiao')) {
+                    } else if (url.includes('netCollect')) {
                         localStorage.setItem('activeMenuIndex', '3-4');
                         localStorage.setItem('openSubmenu', '3');
-                    } else if (url.includes('caijiqitaxinxi')) {
+                    } else if (url.includes('softHardCollect')) {
                         localStorage.setItem('activeMenuIndex', '3-5');
                         localStorage.setItem('openSubmenu', '3');
-                    } else if (url.includes('yijiancaiji')) {
+                    } else if (url.includes('pollingCollect')) {
                         localStorage.setItem('activeMenuIndex', '3-6');
                         localStorage.setItem('openSubmenu', '3');
                     } 
                     // 采集数据分析
-                    else if (url.includes('cpuxinnengzhibiaofenxi')) {
+                    else if (url.includes('cpuAnalysis')) {
                         localStorage.setItem('activeMenuIndex', '4-1');
                         localStorage.setItem('openSubmenu', '4');
-                    } else if (url.includes('neicunxinnengzhibiaofenxi')) {
+                    } else if (url.includes('memoryAnalysis')) {
                         localStorage.setItem('activeMenuIndex', '4-2');
                         localStorage.setItem('openSubmenu', '4');
-                    } else if (url.includes('cipanxinnengzhibiaofenxi')) {
+                    } else if (url.includes('diskAnalysis')) {
                         localStorage.setItem('activeMenuIndex', '4-3');
                         localStorage.setItem('openSubmenu', '4');
-                    } else if (url.includes('wangluoxinnengzhibiaofenxi')) {
+                    } else if (url.includes('netAnalysis')) {
                         localStorage.setItem('activeMenuIndex', '4-4');
                         localStorage.setItem('openSubmenu', '4');
-                    } else if (url.includes('ziyuanliantiaofenxi')) {
+                    } else if (url.includes('resourceAnalysis')) {
                         localStorage.setItem('activeMenuIndex', '4-5');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('dataDashboard')) {
+                        localStorage.setItem('activeMenuIndex', '4-6');
+                        localStorage.setItem('openSubmenu', '4');
+                    } else if (url.includes('dataMonitor')) {
+                        localStorage.setItem('activeMenuIndex', '4-7');
                         localStorage.setItem('openSubmenu', '4');
                     } 
                     // 调优可视化
-                    else if (url.includes('datadashboard')) {
-                        localStorage.setItem('activeMenuIndex', '5-4');
-                        localStorage.setItem('openSubmenu', '5');
-                    } else if (url.includes('zhanshiguanjianshuju')) {
-                        localStorage.setItem('activeMenuIndex', '5-2');
+                    else if (url.includes('shezhitiaoyoucelue')) {
+                        localStorage.setItem('activeMenuIndex', '5-1');
                         localStorage.setItem('openSubmenu', '5');
                     } 
                     // 数据统计及分析
@@ -2767,22 +2787,28 @@
                     } else if (url.includes('cpushujutongjifenxi')) {
                         localStorage.setItem('activeMenuIndex', '6-2');
                         localStorage.setItem('openSubmenu', '6');
+                    } else if (url.includes('cephshujutongjifenxi')) {
+                        localStorage.setItem('activeMenuIndex', '6-3');
+                        localStorage.setItem('openSubmenu', '6');
                     } 
-                    // 日志记录
-                    else if (url.includes('rizhijilu')) {
+                    // 场景识别
+                    else if (url.includes('shujukuchangjingshibie')) {
                         localStorage.setItem('activeMenuIndex', '7-1');
                         localStorage.setItem('openSubmenu', '7');
-                    } 
-                    // 亲和性自动调整
-                    else if (url.includes('qinhexintiaozheng')) {
+                    } else if (url.includes('fenbushicunchushibie')) {
+                        localStorage.setItem('activeMenuIndex', '7-2');
+                        localStorage.setItem('openSubmenu', '7');
+                    }
+                    // 日志记录
+                    else if (url.includes('Log_recording')) {
                         localStorage.setItem('activeMenuIndex', '8-1');
                         localStorage.setItem('openSubmenu', '8');
                     } 
-                    // 设置调优策略（放在调优可视化下）
-                    else if (url.includes('shezhitiaoyoucelue')) {
-                        localStorage.setItem('activeMenuIndex', '5-3');
-                        localStorage.setItem('openSubmenu', '5');
-                    }
+                    // 亲和性自动调整
+                    else if (url.includes('qinhexintiaozheng')) {
+                        localStorage.setItem('activeMenuIndex', '9-1');
+                        localStorage.setItem('openSubmenu', '9');
+                    } 
                     
                     window.location.href = url;
                 },
@@ -2872,16 +2898,122 @@
                             this.breadcrumbPath = ['首页', '信息管理', '服务器信息管理'];
                             break;
                         case '2-2':
-                            this.currentPageTitle = '监控数据库信息管理';
-                            this.currentPage = 'system';
-                            this.breadcrumbPath = ['首页', '信息管理', '监控数据库信息管理'];
-                            break;
-                        case '2-3':
                             this.currentPageTitle = '中间件信息管理';
                             this.currentPage = 'system';
                             this.breadcrumbPath = ['首页', '信息管理', '中间件信息管理'];
                             break;
-                        // 其他菜单项...
+                        case '3-1':
+                            this.currentPageTitle = 'CPU性能指标采集';
+                            this.currentPage = 'monitor';
+                            this.breadcrumbPath = ['首页', '数据采集', 'CPU性能指标采集'];
+                            break;
+                        case '3-2':
+                            this.currentPageTitle = '内存性能指标采集';
+                            this.currentPage = 'monitor';
+                            this.breadcrumbPath = ['首页', '数据采集', '内存性能指标采集'];
+                            break;
+                        case '3-3':
+                            this.currentPageTitle = '磁盘性能指标采集';
+                            this.currentPage = 'monitor';
+                            this.breadcrumbPath = ['首页', '数据采集', '磁盘性能指标采集'];
+                            break;
+                        case '3-4':
+                            this.currentPageTitle = '网络性能指标采集';
+                            this.currentPage = 'monitor';
+                            this.breadcrumbPath = ['首页', '数据采集', '网络性能指标采集'];
+                            break;
+                        case '3-5':
+                            this.currentPageTitle = '软硬件信息采集';
+                            this.currentPage = 'monitor';
+                            this.breadcrumbPath = ['首页', '数据采集', '软硬件信息采集'];
+                            break;
+                        case '3-6':
+                            this.currentPageTitle = '数据轮询采集';
+                            this.currentPage = 'monitor';
+                            this.breadcrumbPath = ['首页', '数据采集', '数据轮询采集'];
+                            break;
+                        case '4-1':
+                            this.currentPageTitle = 'CPU性能指标分析';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '采集数据分析', 'CPU性能指标分析'];
+                            break;
+                        case '4-2':
+                            this.currentPageTitle = '内存性能指标分析';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '采集数据分析', '内存性能指标分析'];
+                            break;
+                        case '4-3':
+                            this.currentPageTitle = '磁盘性能指标分析';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '采集数据分析', '磁盘性能指标分析'];
+                            break;
+                        case '4-4':
+                            this.currentPageTitle = '网络性能指标分析';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '采集数据分析', '网络性能指标分析'];
+                            break;
+                        case '4-5':
+                            this.currentPageTitle = '资源链条分析';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '采集数据分析', '资源链条分析'];
+                            break;
+                        case '4-6':
+                            this.currentPageTitle = '数据中台';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '采集数据分析', '数据中台'];
+                            break;
+                        case '4-7':
+                            this.currentPageTitle = '大屏监控';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '采集数据分析', '大屏监控'];
+                            break;
+                        case '5-1':
+                            this.currentPageTitle = '设置调优策略';
+                            this.currentPage = 'visualization';
+                            this.breadcrumbPath = ['首页', '调优可视化', '设置调优策略'];
+                            break;
+                        case '6-1':
+                            this.currentPageTitle = 'IO栈数据统计及分析';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '数据统计及分析', 'IO栈数据统计及分析'];
+                            break;
+                        case '6-2':
+                            this.currentPageTitle = 'CPU数据统计及分析';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '数据统计及分析', 'CPU数据统计及分析'];
+                            break;
+                        case '6-3':
+                            this.currentPageTitle = 'Ceph数据统计及分析';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '数据统计及分析', 'Ceph数据统计及分析'];
+                            break;
+                        case '7-1':
+                            this.currentPageTitle = '数据库场景识别';
+                            this.currentPage = 'recognition';
+                            this.breadcrumbPath = ['首页', '场景识别', '数据库场景识别'];
+                            break;
+                        case '7-2':
+                            this.currentPageTitle = '分布式存储识别';
+                            this.currentPage = 'recognition';
+                            this.breadcrumbPath = ['首页', '场景识别', '分布式存储识别'];
+                            break;
+                        case '8-1':
+                            this.currentPageTitle = '日志上传管理';
+                            this.currentPage = 'log';
+                            this.breadcrumbPath = ['首页', '日志记录', '日志上传管理'];
+                            break;
+                        case '9-1':
+                            this.currentPageTitle = '自动迁移进程';
+                            this.currentPage = 'optimize';
+                            this.breadcrumbPath = ['首页', '亲和性自动调整', '自动迁移进程'];
+                            break;
+                        default:
+                            // 默认显示大屏监控
+                            this.currentPageTitle = '大屏监控';
+                            this.currentPage = 'analysis';
+                            this.breadcrumbPath = ['首页', '采集数据分析', '大屏监控'];
+                            this.activeMenuIndex = '4-7';
+                            break;
                     }
                 },
                 
@@ -2926,86 +3058,91 @@
                 updatePageInfo() {
                     // 根据当前URL更新页面信息和面包屑
                     const path = window.location.pathname;
-                    if (path.includes('usermanager')) {
+                    if (path.includes('user')) {
                         this.currentPageTitle = '用户管理';
                         this.currentPage = 'system';
                         this.breadcrumbPath = ['首页', '系统管理', '用户管理'];
                         this.activeMenuIndex = '1-1';
-                    } else if (path.includes('jiankongshujukuxinxiguanli')) {
-                        this.currentPageTitle = '监控数据库信息管理';
+                    } else if (path.includes('server')) {
+                        this.currentPageTitle = '服务器信息管理';
                         this.currentPage = 'system';
-                        this.breadcrumbPath = ['首页', '信息管理', '监控数据库信息管理'];
-                        this.activeMenuIndex = '2-2';
-                    } else if (path.includes('fuwuxinxiguanli')) {
+                        this.breadcrumbPath = ['首页', '信息管理', '服务器信息管理'];
+                        this.activeMenuIndex = '2-1';
+                    } else if (path.includes('middleware')) {
                         this.currentPageTitle = '中间件信息管理';
                         this.currentPage = 'system';
                         this.breadcrumbPath = ['首页', '信息管理', '中间件信息管理'];
-                        this.activeMenuIndex = '2-3';
-                    } else if (path.includes('caijicpuxinnengzhibiao')) {
+                        this.activeMenuIndex = '2-2';
+                    } else if (path.includes('cpuCollect')) {
                         this.currentPageTitle = 'CPU性能指标采集';
                         this.currentPage = 'monitor';
                         this.breadcrumbPath = ['首页', '数据采集', 'CPU性能指标采集'];
                         this.activeMenuIndex = '3-1';
-                    } else if (path.includes('caijineicunxinnengzhibiao')) {
+                    } else if (path.includes('memoryCollect')) {
                         this.currentPageTitle = '内存性能指标采集';
                         this.currentPage = 'monitor';
                         this.breadcrumbPath = ['首页', '数据采集', '内存性能指标采集'];
                         this.activeMenuIndex = '3-2';
-                    } else if (path.includes('caijicipanxinnengzhibiao')) {
+                    } else if (path.includes('diskCollect')) {
                         this.currentPageTitle = '磁盘性能指标采集';
                         this.currentPage = 'monitor';
                         this.breadcrumbPath = ['首页', '数据采集', '磁盘性能指标采集'];
                         this.activeMenuIndex = '3-3';
-                    } else if (path.includes('caijiwangluoxinnengzhibiao')) {
+                    } else if (path.includes('netCollect')) {
                         this.currentPageTitle = '网络性能指标采集';
                         this.currentPage = 'monitor';
                         this.breadcrumbPath = ['首页', '数据采集', '网络性能指标采集'];
                         this.activeMenuIndex = '3-4';
-                    } else if (path.includes('caijiqitaxinxi')) {
+                    } else if (path.includes('softHardCollect')) {
                         this.currentPageTitle = '软硬件信息采集';
                         this.currentPage = 'monitor';
                         this.breadcrumbPath = ['首页', '数据采集', '软硬件信息采集'];
                         this.activeMenuIndex = '3-5';
-                    } else if (path.includes('yijiancaiji')) {
+                    } else if (path.includes('pollingCollect')) {
                         this.currentPageTitle = '数据轮询采集';
                         this.currentPage = 'monitor';
                         this.breadcrumbPath = ['首页', '数据采集', '数据轮询采集'];
                         this.activeMenuIndex = '3-6';
-                    } else if (path.includes('cpuxinnengzhibiaofenxi')) {
+                    } else if (path.includes('cpuAnalysis')) {
                         this.currentPageTitle = 'CPU性能指标分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '采集数据分析', 'CPU性能指标分析'];
                         this.activeMenuIndex = '4-1';
-                    } else if (path.includes('neicunxinnengzhibiaofenxi')) {
+                    } else if (path.includes('memoryAnalysis')) {
                         this.currentPageTitle = '内存性能指标分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '采集数据分析', '内存性能指标分析'];
                         this.activeMenuIndex = '4-2';
-                    } else if (path.includes('cipanxinnengzhibiaofenxi')) {
+                    } else if (path.includes('diskAnalysis')) {
                         this.currentPageTitle = '磁盘性能指标分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '采集数据分析', '磁盘性能指标分析'];
                         this.activeMenuIndex = '4-3';
-                    } else if (path.includes('wangluoxinnengzhibiaofenxi')) {
+                    } else if (path.includes('netAnalysis')) {
                         this.currentPageTitle = '网络性能指标分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '采集数据分析', '网络性能指标分析'];
                         this.activeMenuIndex = '4-4';
-                    } else if (path.includes('ziyuanliantiaofenxi')) {
+                    } else if (path.includes('resourceAnalysis')) {
                         this.currentPageTitle = '资源链条分析';
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '采集数据分析', '资源链条分析'];
                         this.activeMenuIndex = '4-5';
-                    } else if (path.includes('datadashboard')) {
+                    } else if (path.includes('dataDashboard')) {
+                        this.currentPageTitle = '数据中台';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '数据中台'];
+                        this.activeMenuIndex = '4-6';
+                    } else if (path.includes('dataMonitor')) {
                         this.currentPageTitle = '大屏监控';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '大屏监控'];
+                        this.activeMenuIndex = '4-7';
+                    } else if (path.includes('shezhitiaoyoucelue')) {
+                        this.currentPageTitle = '设置调优策略';
                         this.currentPage = 'visualization';
-                        this.breadcrumbPath = ['首页', '调优可视化', '大屏监控'];
-                        this.activeMenuIndex = '5-4';
-                    } else if (path.includes('zhanshiguanjianshuju')) {
-                        this.currentPageTitle = '关键数据展示';
-                        this.currentPage = 'visualization';
-                        this.breadcrumbPath = ['首页', '调优可视化', '关键数据展示'];
-                        this.activeMenuIndex = '5-2';
+                        this.breadcrumbPath = ['首页', '调优可视化', '设置调优策略'];
+                        this.activeMenuIndex = '5-1';
                     } else if (path.includes('iozhanshujutonglifenxi')) {
                         this.currentPageTitle = 'IO栈数据统计及分析';
                         this.currentPage = 'analysis';
@@ -3016,31 +3153,41 @@
                         this.currentPage = 'analysis';
                         this.breadcrumbPath = ['首页', '数据统计及分析', 'CPU数据统计及分析'];
                         this.activeMenuIndex = '6-2';
-                    } else if (path.includes('rizhijilu')) {
+                    } else if (path.includes('cephshujutongjifenxi')) {
+                        this.currentPageTitle = 'Ceph数据统计及分析';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '数据统计及分析', 'Ceph数据统计及分析'];
+                        this.activeMenuIndex = '6-3';
+                    } else if (path.includes('shujukuchangjingshibie')) {
+                        this.currentPageTitle = '数据库场景识别';
+                        this.currentPage = 'recognition';
+                        this.breadcrumbPath = ['首页', '场景识别', '数据库场景识别'];
+                        this.activeMenuIndex = '7-1';
+                    } else if (path.includes('fenbushicunchushibie')) {
+                        this.currentPageTitle = '分布式存储识别';
+                        this.currentPage = 'recognition';
+                        this.breadcrumbPath = ['首页', '场景识别', '分布式存储识别'];
+                        this.activeMenuIndex = '7-2';
+                    } else if (path.includes('Log_recording')) {
                         this.currentPageTitle = '日志上传管理';
                         this.currentPage = 'log';
                         this.breadcrumbPath = ['首页', '日志记录', '日志上传管理'];
-                        this.activeMenuIndex = '7-1';
+                        this.activeMenuIndex = '8-1';
                     } else if (path.includes('qinhexintiaozheng')) {
                         this.currentPageTitle = '自动迁移进程';
                         this.currentPage = 'optimize';
                         this.breadcrumbPath = ['首页', '亲和性自动调整', '自动迁移进程'];
-                        this.activeMenuIndex = '8-1';
-                    } else if (path.includes('shezhitiaoyoucelue')) {
-                        this.currentPageTitle = 'AI';
-                        this.currentPage = 'visualization';
-                        this.breadcrumbPath = ['首页', '调优可视化', 'AI一键诊断'];
-                        this.activeMenuIndex = '5-3';
+                        this.activeMenuIndex = '9-1';
                     } else if (path === '/index/' || path === '/') {
-                        this.currentPageTitle = '服务器信息管理';
-                        this.currentPage = 'system';
-                        this.breadcrumbPath = ['首页', '信息管理', '服务器信息管理'];
-                        this.activeMenuIndex = '2-1';
+                        this.currentPageTitle = '大屏监控';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '大屏监控'];
+                        this.activeMenuIndex = '4-7';
                     } else {
-                        this.currentPageTitle = '系统管理';
-                        this.currentPage = 'system';
-                        this.breadcrumbPath = ['首页', '系统管理'];
-                        this.activeMenuIndex = '1-1';
+                        this.currentPageTitle = '大屏监控';
+                        this.currentPage = 'analysis';
+                        this.breadcrumbPath = ['首页', '采集数据分析', '大屏监控'];
+                        this.activeMenuIndex = '4-7';
                     }
                     
                     // 保存当前激活的菜单项到localStorage
@@ -3095,17 +3242,17 @@
                             
                             const currentPageEl = document.getElementById('currentPage');
                             if (currentPageEl && window.location.pathname !== '/index/') {
-                                const pathMap = {
-                                    '/index/usermanager': '用户管理',
-                                    '/index/jiankongshujukuxinxiguanli': '数据库信息管理',
-                                    '/index/fuwuxinxiguanli': '中间件信息管理',
-                                    '/index/caijicpuxinnengzhibiao': 'CPU性能指标采集',
-                                    '/index/caijineicunxinnengzhibiao': '内存性能指标采集',
-                                    '/index/caijicipanxinnengzhibiao': '磁盘性能指标采集',
-                                    '/index/caijiwangluoxinnengzhibiao': '网络性能指标采集',
-                                    '/index/caijiqitaxinxi': '软硬件信息采集',
-                                    '/index/yijiancaiji': '数据轮询采集'
-                                };
+                                                            const pathMap = {
+                                '/index/user': '用户管理',
+                                '/index/server': '服务器信息管理',
+                                '/index/middleware': '中间件信息管理',
+                                '/index/cpuCollect': 'CPU性能指标采集',
+                                '/index/memoryCollect': '内存性能指标采集',
+                                '/index/diskCollect': '磁盘性能指标采集',
+                                '/index/netCollect': '网络性能指标采集',
+                                '/index/softHardCollect': '软硬件信息采集',
+                                '/index/pollingCollect': '数据轮询采集'
+                            };
                                 currentPageEl.textContent = pathMap[window.location.pathname] || '系统管理';
                             }
                         },

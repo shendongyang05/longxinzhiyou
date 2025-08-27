@@ -121,7 +121,14 @@ def set_os_info(data):
 
 
 def set_info(data, host, tp):
-    data = data[tp]
+    try:
+        data = data[tp]
+    except KeyError:
+        print(f"警告: 数据中没有找到 '{tp}' 键")
+        print(f"可用的键: {list(data.keys())}")
+        # 返回一个默认的空数据结构
+        data = {}
+    
     insert_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     data.update({"host": host})
     data.update({"time": insert_time})
@@ -139,7 +146,13 @@ def set_info(data, host, tp):
 
 
 def category(data, tp):
-    return data[tp]
+    try:
+        return data[tp]
+    except KeyError:
+        print(f"警告: category函数中找不到 '{tp}' 键")
+        print(f"可用的键: {list(data.keys())}")
+        # 返回一个默认的空字典
+        return {}
 
 
 def get_info(host, port: int, tp):
