@@ -1064,20 +1064,20 @@ class simpleDRLScheduler:
         self.gamma = gamma
         self.tau = tau
         self.device = device
-
 #构建Actor网络
+    def build_actor(self):
         self.actor = nn.Sequential(
-            nn.Linear(state_dim, hidden_dim),
+            nn.Linear(self.state_dim, self.hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, action_dim),
+            nn.Linear(self.hidden_dim, self.action_dim),
             nn.Tanh()
         )
-
 #构建Critic网络
+    def build_critic(self):
         self.critic = nn.Sequential(
-            nn.Linear(state_dim, hidden_dim),
+            nn.Linear(self.state_dim, self.hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, 1)
+            nn.Linear(self.hidden_dim, 1)
         )
 
 #根据当前状态选择动作
@@ -1088,7 +1088,6 @@ class simpleDRLScheduler:
 #将经验储存在经验回放缓冲区
     def store_experience(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
-
 #从经验回放缓冲区中采用并训练网络
     def train(self, batch_size):
         if len(self.memory) < batch_size:
@@ -1096,24 +1095,23 @@ class simpleDRLScheduler:
         batch = random.sample(self.memory, batch_size)
         state, action, reward, next_state, done = zip(*batch)
         state = torch.FloatTensor(np.array(state)).to(self.device)
-    def calculate_reward(self, machines, task, assigned_machine):
-        """计算调度决策的奖励"""
-        # 资源利用率奖励
-        cpu_utilization = assigned_machine.cpu_usage + task.cpu_demand
-        memory_utilization = assigned_machine.memory_usage + task.memory_demand
-        
-        # 负载均衡奖励
-        load_balance_penalty = 0
+        action = torch.FloatTensor(np.array(action)).to(self.device)
+    def calculate_reward(self,machines,task,assigned_machine):
+        cpu_utilization= assifned_machine.cpu_usage+tak.cpu_demand
+        memory_utilization=assigned_machin.memory_usage+task.memory_demand
+        load_balance_penalty= 0
         for machine in machines:
-            if machine != assigned_machine:
-                load_diff = abs(cpu_utilization - machine.cpu_usage)
-                load_balance_penalty += load_diff
-        
-        # 资源约束惩罚
-        constraint_penalty = 0
-        if cpu_utilization > 1.0 or memory_utilization > 1.0:
+            if machin !=assined_machine:
+                load_diff = abs(cpu_utilization-machine.cpu_usage )
+                load_balance_penalty +=load_diff
+        constraint_penaly = 0
+        if cpu_utilization>1.0 or memory_utilization >1.0:
             constraint_penalty = -100
-        
-        # 综合奖励
-        reward = (cpu_utilization + memory_utilization) * 0.5 - load_balance_penalty * 0.1 + constraint_penalty
+        reward= (cpu_utilization+memory_utilization)*0.5-load_balance_penalty*0.1+constraint_penalty
         return reward
+    
+    
+
+
+
+

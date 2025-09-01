@@ -279,6 +279,13 @@
             flex-shrink: 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-header:hover {
+            background: rgba(15, 30, 60, 0.8);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .sidebar-header::before {
@@ -985,7 +992,7 @@
         <!-- 侧边栏 -->
         <div class="sidebar" :class="{ collapsed: isCollapsed }">
             <!-- 侧边栏头部 -->
-            <div class="sidebar-header">
+            <div class="sidebar-header" @click="navigateToHeader" style="cursor: pointer;">
                 <span v-if="!isCollapsed">龙芯智优</span>
                 <span v-else>麒麟</span>
             </div>
@@ -1055,6 +1062,9 @@
                         <i class="el-icon-data-analysis"></i>
                         <span>数据分析</span>
                     </template>
+                    <el-menu-item index="4-6" @click="navigateTo('/index/dataDashboard')">
+                        数据中台
+                    </el-menu-item>
                     <el-menu-item index="4-1" @click="navigateTo('/index/cpuAnalysis')">
                         CPU性能指标分析
                     </el-menu-item>
@@ -1070,12 +1080,7 @@
                     <el-menu-item index="4-5" @click="navigateTo('/index/resourceAnalysis')">
                         资源链条分析
                     </el-menu-item>
-                    <el-menu-item index="4-6" @click="navigateTo('/index/dataDashboard')">
-                        数据中台
-                    </el-menu-item>
-                    <el-menu-item index="4-7" @click="navigateTo('/index/dataMonitor')">
-                        大屏监控
-                    </el-menu-item>
+
                 </el-submenu>
                 
                 <!-- 调优可视化 -->
@@ -2713,6 +2718,10 @@
                 toggleCollapse() {
                     this.isCollapsed = !this.isCollapsed;
                 },
+                navigateToHeader() {
+                    // 跳转到大屏监控页面
+                    this.navigateTo('/index/dataMonitor');
+                },
                 navigateTo(url) {
                     // 保存当前URL，以便在新页面加载后可以判断是否真的发生了导航
                     localStorage.setItem('lastUrl', window.location.pathname);
@@ -2800,7 +2809,7 @@
                         localStorage.setItem('openSubmenu', '7');
                     }
                     // 日志记录
-                    else if (url.includes('Log_recording')) {
+                    else if (url.includes('log')) {
                         localStorage.setItem('activeMenuIndex', '8-1');
                         localStorage.setItem('openSubmenu', '8');
                     } 
@@ -3168,7 +3177,7 @@
                         this.currentPage = 'recognition';
                         this.breadcrumbPath = ['首页', '场景识别', '分布式存储识别'];
                         this.activeMenuIndex = '7-2';
-                    } else if (path.includes('Log_recording')) {
+                    } else if (path.includes('log')) {
                         this.currentPageTitle = '日志上传管理';
                         this.currentPage = 'log';
                         this.breadcrumbPath = ['首页', '日志记录', '日志上传管理'];

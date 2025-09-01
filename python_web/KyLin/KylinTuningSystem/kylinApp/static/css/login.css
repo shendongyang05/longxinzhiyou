@@ -3,7 +3,7 @@ body {
   padding: 0;
   height: 100vh;
   overflow: hidden;
-  background-image: url("../img/LoginBg.png");
+  background-image: url("../img/login.jpg");
   background-repeat: no-repeat;
   background-size: cover;
 }

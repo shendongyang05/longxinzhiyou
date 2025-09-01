@@ -516,7 +516,7 @@
                     </div>
                     <div class="status-grid">
                         <div class="status-item">
-                            <div class="status-value">376</div>
+                            <div class="status-value">2</div>
                             <div class="status-label">在线设备</div>
                         </div>
                         <div class="status-item">
@@ -536,32 +536,7 @@
                         <i class="el-icon-monitor"></i>
                         系统性能指标 / SYSTEM PERFORMANCE
                     </div>
-                    <div class="rate-grid">
-                        <div class="rate-item">
-                            <div class="rate-circle" id="cpu-circle" style="--percentage: 0deg;">
-                                <div class="rate-value" id="cpu-value">0%</div>
-                            </div>
-                            <div class="rate-label">CPU使用率</div>
-                        </div>
-                        <div class="rate-item">
-                            <div class="rate-circle" id="memory-circle" style="--percentage: 0deg;">
-                                <div class="rate-value" id="memory-value">0%</div>
-                            </div>
-                            <div class="rate-label">内存使用率</div>
-                        </div>
-                        <div class="rate-item">
-                            <div class="rate-circle" id="disk-circle" style="--percentage: 0deg;">
-                                <div class="rate-value" id="disk-value">0%</div>
-                            </div>
-                            <div class="rate-label">硬盘使用率</div>
-                        </div>
-                        <div class="rate-item">
-                            <div class="rate-circle" id="network-circle" style="--percentage: 0deg;">
-                                <div class="rate-value" id="network-value">0%</div>
-                            </div>
-                            <div class="rate-label">网络性能</div>
-                        </div>
-                    </div>
+                  
                 </div>
 
                 <!-- 实时告警 -->
@@ -775,7 +750,7 @@
         <!-- 底部统计 -->
         <div class="footer-stats">
             <div class="stat-item">
-                <div class="stat-value">总设备数: 773</div>
+                <div class="stat-value">总设备数: 399</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">在线率: 48.6%</div>
@@ -858,22 +833,23 @@
                     } else {
                         console.error('API返回失败:', data.message);
                         // 如果API失败，使用模拟数据
-                        updateMockData();
+                        // 注意：这里不需要调用updateMockData()，因为startMockDataUpdate()已经在运行
                     }
                 })
                 .catch(error => {
                     console.error('API请求失败:', error);
                     // 如果API失败，使用模拟数据
-                    updateMockData();
+                    // 注意：这里不需要调用updateMockData()，因为startMockDataUpdate()已经在运行
                 });
         }
 
         // 模拟数据更新（备用方案）
         function updateMockData() {
-            const cpuValue = Math.floor(Math.random() * 40) + 30; // 30-70%
-            const memoryValue = Math.floor(Math.random() * 30) + 40; // 40-70%
-            const diskValue = Math.floor(Math.random() * 20) + 60; // 60-80%
-            const networkValue = Math.floor(Math.random() * 30) + 50; // 50-80%
+            // 生成50以内的随机值
+            const cpuValue = Math.floor(Math.random() * 50); // 0-49%
+            const memoryValue = Math.floor(Math.random() * 50); // 0-49%
+            const diskValue = Math.floor(Math.random() * 50); // 0-49%
+            const networkValue = Math.floor(Math.random() * 50); // 0-49%
             
             document.getElementById('cpu-value').textContent = cpuValue + '%';
             document.getElementById('cpu-circle').style.setProperty('--percentage', (cpuValue * 3.6) + 'deg');
@@ -888,6 +864,16 @@
             document.getElementById('network-circle').style.setProperty('--percentage', (networkValue * 3.6) + 'deg');
         }
 
+        // 持续更新模拟数据（每2秒更新一次）
+        function startMockDataUpdate() {
+            // 立即更新一次
+            updateMockData();
+            // 每2秒更新一次
+            setInterval(updateMockData, 2000);
+            
+            console.log('模拟数据更新已启动 - 每2秒更新一次，范围：0-49%');
+        }
+
         // 初始化
         updateTime();
         setInterval(updateTime, 1000);
@@ -896,6 +882,9 @@
         fetchLatestData();
         // 每5秒更新一次数据
         setInterval(fetchLatestData, 5000);
+        
+        // 启动模拟数据更新（每2秒更新一次，范围在50以内）
+        startMockDataUpdate();
 
         // 添加调试信息
         console.log('DataDashboard页面已加载');

@@ -52,7 +52,7 @@ from kylinApp.util import dict_to_custom_str, get_info_to_ai
 # 扣子平台配置信息
 COZE_CONFIG = {
     "BOT_ID": "7525399030261284916",  # 机器人ID
-    "ACCESS_TOKEN": "pat_H9dxbfanHsWDv6Fw7hofhfkwe2Sdy6YVuJBnrLSxIY0lAC7DZjPklsQypLsXn5Su",  # 访问令牌
+    "ACCESS_TOKEN": "pat_g66hT0gq8592rgYgnGTW7l6T7bturLPbYpYbgsk1j7Zd7kFvPiMIc6Ha5VlHphFk",  # 访问令牌
     "BASE_URL": "https://api.coze.cn"  # API基础URL
 }
 
