@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 OPENAPI_SPEC = {
     "openapi": "3.0.3",
     "info": {
-        "title": "KyLin 系统优化 API",
+        "title": "Dragon Optimize API",
         "version": "1.0.0",
         "description": "KyLin 系统优化平台的HTTP接口文档（基于Django函数视图，非DRF）。"
     },

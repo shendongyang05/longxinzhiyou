@@ -734,7 +734,7 @@
         $("#startBtn").prop("disabled", false).text("开始采集");
         $("#overBtn").prop("disabled", true);
       })
-
+        
       $(document).on("click", "#ipSelect .ip", function () {
         var selectedText = $(this).text();
         var selectedIp = $(this).attr("data-ip");  // 获取存储的实际IP地址
