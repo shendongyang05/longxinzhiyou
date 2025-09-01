@@ -879,7 +879,6 @@ function renderCard(cardId, data, range, type) {
         content += `<div class="data-row"><span class="icon">⏰</span><span class="label">CPU运行时间</span><span class="value">${data.cpu_system_time ?? '-'}</span></div>`;
         content += `<div class="data-row"><span class="icon">⏰</span><span class="label">CPU空闲时间</span><span class="value">${data.cpu_idle_time ?? '-'}</span></div>`;
         content += `<div class="data-row"><span class="icon">⏰</span><span class="label">CPU等待时间</span><span class="value">${data.cpu_wait_time ?? '-'}</span></div>`;
-        content += `<div class="data-row"><span class="icon">🖥️</span><span class="label">CPU型号</span><span class="value">${data.cpu_model ?? '-'}</span></div>`;
         time = data.time || '';
     } else if (type === 'mem') {
         let percent = data.mem_percent ?? 0;

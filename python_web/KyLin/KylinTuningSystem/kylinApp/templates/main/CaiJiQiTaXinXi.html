@@ -550,7 +550,6 @@
       const otherFieldMap = {
         os: { label: "操作系统", icon: "💻" },
         kernel: { label: "内核版本", icon: "🧬" },
-        cpu: { label: "CPU型号", icon: "🖥️" },
         memory: { label: "内存大小", icon: "💾" },
         disk: { label: "磁盘信息", icon: "💽" },
         host: { label: "主机", icon: "🖥️" },
@@ -569,7 +568,7 @@
       }
       // 再渲染未定义字段
       for (let key in info) {
-        if (!otherFieldMap[key]) {
+        if (!otherFieldMap[key] && key !== 'cpu_model' && key !== 'cpu') {
           html += `<div style="margin:4px 0;">
             <span style="margin-left:8px; color:#333;">${key}：</span>
             <span style="color:#007bff;">${info[key]}</span>

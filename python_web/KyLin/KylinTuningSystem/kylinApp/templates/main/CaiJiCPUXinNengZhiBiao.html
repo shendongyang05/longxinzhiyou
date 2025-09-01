@@ -605,9 +605,9 @@
           </div>`;
         }
       }
-      // 再渲染未定义字段
+      // 再渲染未定义字段，但排除cpu_model
       for (let key in info) {
-        if (!cpuFieldMap[key]) {
+        if (!cpuFieldMap[key] && key !== 'cpu_model') {
           html += `<div style="margin:4px 0;">
             <span style="margin-left:8px; color:#333;">${key}：</span>
             <span style="color:#007bff;">${info[key]}</span>
