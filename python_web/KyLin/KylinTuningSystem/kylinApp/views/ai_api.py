@@ -28,6 +28,17 @@ import re
 from datetime import datetime, timezone
 import sys
 
+# 导入AI配置
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../..'))
+try:
+    from ai_config import get_ai_config, is_groq_enabled
+except ImportError:
+    # 如果导入失败，使用默认配置
+    def get_ai_config():
+        return {"API_KEY": "", "BASE_URL": "", "MODEL": ""}
+    def is_groq_enabled():
+        return False
+
 # 配置日志记录器
 logger = logging.getLogger(__name__)
 
@@ -659,13 +670,23 @@ def doubao_chat(request):
         # 调用Groq API
         try:
             logger.info("调用Groq API...")
-            groq_url = "https://api.groq.com/openai/v1/chat/completions"
+            
+            # 获取Groq配置
+            groq_config = get_ai_config()
+            groq_url = groq_config.get("BASE_URL", "https://api.groq.com/openai/v1/chat/completions")
+            api_key = groq_config.get("API_KEY", "")
+            model = groq_config.get("MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
+            
+            if not api_key:
+                logger.error("Groq API密钥未配置")
+                raise ValueError("Groq API密钥未配置")
+            
             groq_headers = {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer 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"
+                "Authorization": f"Bearer {api_key}"
             }
             groq_payload = {
-                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+                "model": model,
                 "messages": messages
             }
             
