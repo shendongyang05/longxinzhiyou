@@ -4,6 +4,8 @@
 AI配置文件
 """
 
+import os
+
 # ========= 扣子平台配置 =========
 COZE_CONFIG = {
     "BOT_ID": "7525399030261284916",
@@ -19,7 +21,7 @@ VOLCENGINE_CONFIG = {
 
 # ========= Groq平台配置 =========
 GROQ_CONFIG = {
-    "API_KEY": "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",
+    "API_KEY": os.getenv("GROQ_API_KEY", ""),  # 从环境变量获取API密钥
     "BASE_URL": "https://api.groq.com/openai/v1/chat/completions",
     "MODEL": "meta-llama/llama-4-scout-17b-16e-instruct"
 }
