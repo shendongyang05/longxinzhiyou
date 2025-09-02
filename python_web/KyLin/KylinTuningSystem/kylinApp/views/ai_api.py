@@ -612,9 +612,9 @@ def execute_ai_strategy(request):
 @csrf_exempt
 def doubao_chat(request):
     """
-    豆包API聊天接口（兼容前端代码）
+    AI聊天接口（使用Groq API）
     
-    这个接口用于处理前端AI小助手的聊天请求，将请求转发到扣子平台。
+    这个接口用于处理前端AI小助手的聊天请求，将请求转发到Groq API。
     
     Args:
         request: Django HTTP请求对象，包含message和system_context
@@ -640,60 +640,78 @@ def doubao_chat(request):
                 'error': '消息内容不能为空'
             }, status=400)
         
-        # 构建完整的提示词
-        full_prompt = f"{system_context}\n\n用户问题：{user_message}"
+        # 构建消息数组
+        messages = []
         
-        # 建立会话并调用扣子平台
-        user_id = str(uuid.uuid4())
-        conversation_id = create_conversation(user_id)
-        logger.info(f"创建会话成功 - User ID: {user_id}, Conversation ID: {conversation_id}")
+        # 如果有系统上下文，添加系统消息
+        if system_context:
+            messages.append({
+                "role": "system",
+                "content": system_context
+            })
         
-        # 尝试流式对话获取回复
+        # 添加用户消息
+        messages.append({
+            "role": "user", 
+            "content": user_message
+        })
+        
+        # 调用Groq API
         try:
-            logger.info("尝试流式对话...")
-            response = chat_stream(conversation_id, user_id, full_prompt, capture_result=True)
+            logger.info("调用Groq API...")
+            groq_url = "https://api.groq.com/openai/v1/chat/completions"
+            groq_headers = {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer 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"
+            }
+            groq_payload = {
+                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+                "messages": messages
+            }
             
-            # 检查响应是否为空或无效
-            if not response or response.strip() == '':
-                logger.warning("扣子平台返回空响应，尝试同步对话...")
-                # 尝试同步对话
-                try:
-                    response = chat_sync(conversation_id, user_id, full_prompt)
-                    if response and response.strip():
-                        return JsonResponse({
-                            'success': True,
-                            'response': response
-                        })
-                except Exception as sync_error:
-                    logger.error(f"同步对话也失败: {sync_error}")
-                
-                # 如果都失败了，使用本地回复
-                logger.warning("所有AI调用都失败，使用本地回复")
-                local_response = get_local_response(user_message)
+            # 发送请求到Groq API
+            response = requests.post(
+                groq_url, 
+                headers=groq_headers, 
+                json=groq_payload, 
+                timeout=30
+            )
+            response.raise_for_status()
+            
+            # 解析响应
+            groq_response = response.json()
+            logger.info(f"Groq API响应: {groq_response}")
+            
+            # 提取AI回复
+            if 'choices' in groq_response and len(groq_response['choices']) > 0:
+                ai_response = groq_response['choices'][0]['message']['content']
                 return JsonResponse({
                     'success': True,
-                    'response': local_response
+                    'response': ai_response
                 })
-            
+            else:
+                logger.error(f"Groq API响应格式异常: {groq_response}")
+                raise ValueError("Groq API响应格式异常")
+                
+        except requests.exceptions.Timeout:
+            logger.error("Groq API请求超时")
+            # 使用本地回复作为备选
+            local_response = get_local_response(user_message)
             return JsonResponse({
                 'success': True,
-                'response': response
+                'response': local_response
+            })
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Groq API请求失败: {e}")
+            # 使用本地回复作为备选
+            local_response = get_local_response(user_message)
+            return JsonResponse({
+                'success': True,
+                'response': local_response
             })
         except Exception as e:
-            logger.error(f"扣子平台流式调用失败: {e}")
-            # 尝试同步对话作为备选
-            try:
-                logger.info("尝试同步对话作为备选...")
-                response = chat_sync(conversation_id, user_id, full_prompt)
-                if response and response.strip():
-                    return JsonResponse({
-                        'success': True,
-                        'response': response
-                    })
-            except Exception as sync_error:
-                logger.error(f"同步对话备选也失败: {sync_error}")
-            
-            # 如果都失败了，返回本地回复
+            logger.error(f"Groq API调用异常: {e}")
+            # 使用本地回复作为备选
             local_response = get_local_response(user_message)
             return JsonResponse({
                 'success': True,
@@ -706,7 +724,7 @@ def doubao_chat(request):
             'error': f'JSON解析失败: {str(e)}'
         }, status=400)
     except Exception as e:
-        logger.error(f"豆包API接口异常: {e}")
+        logger.error(f"AI聊天接口异常: {e}")
         return JsonResponse({
             'success': False,
             'error': f'请求处理失败: {str(e)}'
