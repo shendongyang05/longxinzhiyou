@@ -28,17 +28,6 @@ import re
 from datetime import datetime, timezone
 import sys
 
-# 导入AI配置
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../..'))
-try:
-    from ai_config import get_ai_config, is_groq_enabled
-except ImportError:
-    # 如果导入失败，使用默认配置
-    def get_ai_config():
-        return {"API_KEY": "", "BASE_URL": "", "MODEL": ""}
-    def is_groq_enabled():
-        return False
-
 # 配置日志记录器
 logger = logging.getLogger(__name__)
 
@@ -653,15 +642,12 @@ def doubao_chat(request):
         
         # 构建消息数组
         messages = []
-        
-        # 如果有系统上下文，添加系统消息
         if system_context:
             messages.append({
                 "role": "system",
                 "content": system_context
             })
         
-        # 添加用户消息
         messages.append({
             "role": "user", 
             "content": user_message
@@ -670,69 +656,41 @@ def doubao_chat(request):
         # 调用Groq API
         try:
             logger.info("调用Groq API...")
-            
-            # 获取Groq配置
-            groq_config = get_ai_config()
-            groq_url = groq_config.get("BASE_URL", "https://api.groq.com/openai/v1/chat/completions")
-            api_key = groq_config.get("API_KEY", "")
-            model = groq_config.get("MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
-            
-            if not api_key:
-                logger.error("Groq API密钥未配置")
-                raise ValueError("Groq API密钥未配置")
-            
+            groq_url = "https://api.groq.com/openai/v1/chat/completions"
             groq_headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}"
+                "Authorization": "Bearer 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"
             }
-            groq_payload = {
-                "model": model,
+            groq_data = {
+                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
                 "messages": messages
             }
             
-            # 发送请求到Groq API
             response = requests.post(
                 groq_url, 
                 headers=groq_headers, 
-                json=groq_payload, 
+                json=groq_data, 
                 timeout=30
             )
             response.raise_for_status()
             
-            # 解析响应
-            groq_response = response.json()
-            logger.info(f"Groq API响应: {groq_response}")
+            result = response.json()
             
             # 提取AI回复
-            if 'choices' in groq_response and len(groq_response['choices']) > 0:
-                ai_response = groq_response['choices'][0]['message']['content']
+            if "choices" in result and len(result["choices"]) > 0:
+                ai_response = result["choices"][0]["message"]["content"]
+                logger.info(f"Groq API调用成功，响应长度: {len(ai_response)}")
                 return JsonResponse({
                     'success': True,
                     'response': ai_response
                 })
             else:
-                logger.error(f"Groq API响应格式异常: {groq_response}")
-                raise ValueError("Groq API响应格式异常")
+                logger.warning("Groq API返回格式异常")
+                raise ValueError("API返回格式异常")
                 
-        except requests.exceptions.Timeout:
-            logger.error("Groq API请求超时")
-            # 使用本地回复作为备选
-            local_response = get_local_response(user_message)
-            return JsonResponse({
-                'success': True,
-                'response': local_response
-            })
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Groq API请求失败: {e}")
-            # 使用本地回复作为备选
-            local_response = get_local_response(user_message)
-            return JsonResponse({
-                'success': True,
-                'response': local_response
-            })
         except Exception as e:
-            logger.error(f"Groq API调用异常: {e}")
-            # 使用本地回复作为备选
+            logger.error(f"Groq API调用失败: {e}")
+            # 如果API调用失败，使用本地回复
             local_response = get_local_response(user_message)
             return JsonResponse({
                 'success': True,

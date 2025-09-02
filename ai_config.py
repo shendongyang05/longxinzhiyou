@@ -4,8 +4,6 @@
 AI配置文件
 """
 
-import os
-
 # ========= 扣子平台配置 =========
 COZE_CONFIG = {
     "BOT_ID": "7525399030261284916",
@@ -19,16 +17,9 @@ VOLCENGINE_CONFIG = {
     "MODEL": "bot-20250702164711-8jhhd"
 }
 
-# ========= Groq平台配置 =========
-GROQ_CONFIG = {
-    "API_KEY": os.getenv("GROQ_API_KEY", ""),  # 从环境变量获取API密钥
-    "BASE_URL": "https://api.groq.com/openai/v1/chat/completions",
-    "MODEL": "meta-llama/llama-4-scout-17b-16e-instruct"
-}
-
 # ========= AI提供商选择 =========
-# 设置为 "coze" 使用扣子平台，设置为 "volcengine" 使用火山引擎，设置为 "groq" 使用Groq平台
-AI_PROVIDER = "groq"
+# 设置为 "coze" 使用扣子平台，设置为 "volcengine" 使用火山引擎
+AI_PROVIDER = "coze"
 
 def get_ai_config():
     """获取AI配置"""
@@ -36,8 +27,6 @@ def get_ai_config():
         return COZE_CONFIG
     elif AI_PROVIDER == "volcengine":
         return VOLCENGINE_CONFIG
-    elif AI_PROVIDER == "groq":
-        return GROQ_CONFIG
     else:
         raise ValueError(f"不支持的AI提供商: {AI_PROVIDER}")
 
@@ -47,8 +36,4 @@ def is_coze_enabled():
 
 def is_volcengine_enabled():
     """检查是否启用火山引擎"""
-    return AI_PROVIDER == "volcengine"
-
-def is_groq_enabled():
-    """检查是否启用Groq平台"""
-    return AI_PROVIDER == "groq" 
+    return AI_PROVIDER == "volcengine" 
