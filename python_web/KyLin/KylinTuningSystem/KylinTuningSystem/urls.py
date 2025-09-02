@@ -86,6 +86,8 @@ urlpatterns = [
     path('api/ai_optimize/', ai_api.ai_optimize_api),
     # 执行AI策略接口 - 使用新的ai_api模块
     path('api/execute_ai_strategy/', ai_api.execute_ai_strategy),
+    # 豆包API聊天接口
+    path('api/doubao_chat/', ai_api.doubao_chat),
     
     # 后台采集任务管理接口
     path('api/background_collection/', api.background_collection_api),
