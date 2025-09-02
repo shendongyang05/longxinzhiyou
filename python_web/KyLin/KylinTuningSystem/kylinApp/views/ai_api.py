@@ -652,9 +652,9 @@ def doubao_chat(request):
             "role": "user", 
             "content": user_message
         })
-        
+        #aaaa
         # 调用Groq API
-        try:
+        try: 
             logger.info("调用Groq API...")
             groq_url = "https://api.groq.com/openai/v1/chat/completions"
             groq_headers = {
