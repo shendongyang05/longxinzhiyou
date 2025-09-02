@@ -7,7 +7,7 @@ AI配置文件
 # ========= 扣子平台配置 =========
 COZE_CONFIG = {
     "BOT_ID": "7525399030261284916",
-    "ACCESS_TOKEN": "pat_H9dxbfanHsWDv6Fw7hofhfkwe2Sdy6YVuJBnrLSxIY0lAC7DZjPklsQypLsXn5Su",
+    "ACCESS_TOKEN": "pat_g66hT0gq8592rgYgnGTW7l6T7bturLPbYpYbgsk1j7Zd7kFvPiMIc6Ha5VlHphFk",
     "BASE_URL": "https://api.coze.cn"
 }
 
