@@ -536,7 +536,32 @@
                         <i class="el-icon-monitor"></i>
                         系统性能指标 / SYSTEM PERFORMANCE
                     </div>
-                  
+                    <div class="rate-grid">
+                        <div class="rate-item">
+                            <div class="rate-circle" id="cpu-circle" style="--percentage: 0deg;">
+                                <div class="rate-value" id="cpu-value">0%</div>
+                            </div>
+                            <div class="rate-label">CPU使用率</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-circle" id="memory-circle" style="--percentage: 0deg;">
+                                <div class="rate-value" id="memory-value">0%</div>
+                            </div>
+                            <div class="rate-label">内存使用率</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-circle" id="disk-circle" style="--percentage: 0deg;">
+                                <div class="rate-value" id="disk-value">0%</div>
+                            </div>
+                            <div class="rate-label">硬盘使用率</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-circle" id="network-circle" style="--percentage: 0deg;">
+                                <div class="rate-value" id="network-value">0%</div>
+                            </div>
+                            <div class="rate-label">网络使用率</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 实时告警 -->
@@ -556,27 +581,27 @@
                         <tbody>
                             <tr>
                                 <td>路由器A2</td>
-                                <td>2025.8.11 12:30</td>
+                                <td id="alarm-time-1">2025.8.11 12:30</td>
                                 <td><span class="alarm-type alarm-offline">离线</span></td>
                             </tr>
                             <tr>
                                 <td>路由器A2</td>
-                                <td>2025.8.11 12:30</td>
+                                <td id="alarm-time-2">2025.8.11 12:30</td>
                                 <td><span class="alarm-type alarm-fault">故障</span></td>
                             </tr>
                             <tr>
                                 <td>路由器A2</td>
-                                <td>2025.8.11 12:30</td>
+                                <td id="alarm-time-3">2025.8.11 12:30</td>
                                 <td><span class="alarm-type alarm-offline">离线</span></td>
                             </tr>
                             <tr>
                                 <td>路由器A2</td>
-                                <td>2025.8.11 12:30</td>
+                                <td id="alarm-time-4">2025.8.11 12:30</td>
                                 <td><span class="alarm-type alarm-high-temp">高温</span></td>
                             </tr>
                             <tr>
                                 <td>路由器A2</td>
-                                <td>2025.8.11 12:30</td>
+                                <td id="alarm-time-5">2025.8.11 12:30</td>
                                 <td><span class="alarm-type alarm-high-temp">高温</span></td>
                             </tr>
                         </tbody>
@@ -753,7 +778,7 @@
                 <div class="stat-value">总设备数: 399</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value">在线率: 48.6%</div>
+                <div class="stat-value">在线率: 0.5%</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">告警率: 16.6%</div>
@@ -780,6 +805,24 @@
                              now.getHours().toString().padStart(2, '0') + ':' + 
                              now.getMinutes().toString().padStart(2, '0');
             document.getElementById('currentTime').textContent = timeString;
+        }
+
+        // 更新告警时间
+        function updateAlarmTime() {
+            const now = new Date();
+            const alarmTimeString = now.getFullYear() + '.' + 
+                                  (now.getMonth() + 1) + '.' + 
+                                  now.getDate() + ' ' + 
+                                  now.getHours().toString().padStart(2, '0') + ':' + 
+                                  now.getMinutes().toString().padStart(2, '0');
+            
+            // 更新所有告警时间
+            for (let i = 1; i <= 5; i++) {
+                const element = document.getElementById('alarm-time-' + i);
+                if (element) {
+                    element.textContent = alarmTimeString;
+                }
+            }
         }
 
         // 返回功能
@@ -876,7 +919,9 @@
 
         // 初始化
         updateTime();
+        updateAlarmTime();
         setInterval(updateTime, 1000);
+        setInterval(updateAlarmTime, 1000);
         
         // 页面加载时获取数据
         fetchLatestData();
